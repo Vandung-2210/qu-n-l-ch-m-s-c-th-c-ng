@@ -1,0 +1,673 @@
+import { getSettings, getSchedules, getPrescriptions } from './storageService';
+import { matchSmartSimulatedConsultation } from './aiKnowledgeBase';
+
+/**
+ * Xây dựng Multi-tier System Prompt nạp sâu bệnh án, dị ứng, vắc-xin và đơn thuốc
+ */
+export const buildVetSystemPrompt = (petContext) => {
+  let contextBlock = '';
+  if (petContext) {
+    let recentSchedules = [];
+    let recentPrescriptions = [];
+    try {
+      if (typeof getSchedules === 'function') {
+        recentSchedules = (getSchedules() || [])
+          .filter(s => s.petId === petContext.id)
+          .slice(0, 3);
+      }
+      if (typeof getPrescriptions === 'function') {
+        recentPrescriptions = (getPrescriptions() || [])
+          .filter(p => p.petId === petContext.id)
+          .slice(0, 3);
+      }
+    } catch (e) {
+      console.warn('Could not load pet medical details for context injection', e);
+    }
+
+    // Tính tuổi
+    let ageStr = 'Trưởng thành';
+    if (petContext.birthDate) {
+      const bDate = new Date(petContext.birthDate);
+      const diffMonths = Math.floor((new Date() - bDate) / (1000 * 60 * 60 * 24 * 30.4375));
+      if (diffMonths < 12) {
+        ageStr = `${diffMonths} tháng tuổi`;
+      } else {
+        const years = Math.floor(diffMonths / 12);
+        const remMonths = diffMonths % 12;
+        ageStr = remMonths > 0 ? `${years} tuổi ${remMonths} tháng` : `${years} tuổi`;
+      }
+    }
+
+    contextBlock = `
+=== HỒ SƠ Y TẾ CỦA BÉ ĐANG KHÁM (PET CONTEXT INJECTION) ===
+- Tên bé: ${petContext.name}
+- Loài: ${petContext.species === 'dog' ? 'Chó' : petContext.species === 'cat' ? 'Mèo' : petContext.species === 'rabbit' ? 'Thỏ' : petContext.species}
+- Giống thuần chủng: ${petContext.breed || 'Chưa rõ giống'}
+- Độ tuổi: ${ageStr} (Sinh ngày: ${petContext.birthDate || 'Chưa cập nhật'})
+- Cân nặng hiện tại: ${petContext.weight} kg
+- Tình trạng triệt sản: ${petContext.isNeutered ? 'Đã triệt sản' : 'Chưa triệt sản'}
+- Số vi mạch (Microchip): ${petContext.microchip || 'Chưa cấy'}
+- Tiền sử bệnh án & Dị ứng: ${petContext.notes || 'Bình thường, chưa ghi nhận dị ứng'}
+${recentSchedules.length > 0 ? `- Lịch vắc-xin / chăm sóc gần nhất: ${recentSchedules.map(s => `${s.title} (${s.date})`).join(', ')}` : ''}
+${recentPrescriptions.length > 0 ? `- Đơn thuốc y bạ đang điều trị: ${recentPrescriptions.map(p => `${p.medicineName} [Liều: ${p.dosage}]`).join(', ')}` : ''}
+==========================================================
+`;
+  }
+
+  return `
+Bạn là "Dr. Paw" - Bác sĩ Thú y AI Cấp cao & Chuyên gia Dinh dưỡng Thú cưng thuộc Hệ sinh thái PetCare PRO AI.
+Nhiệm vụ của bạn là tư vấn sức khỏe, dinh dưỡng, chẩn đoán sơ bộ triệu chứng và hướng dẫn sơ cứu an toàn cho thú cưng (Chó, Mèo, Thỏ,...).
+
+${contextBlock}
+
+QUY TẮC PHẢN HỒI Y KHOA BẮT BUỘC:
+1. TRỰC TIẾP CÁ NHÂN HÓA: Hãy gọi tên bé (${petContext ? petContext.name : 'bé cưng'}), đối chiếu trực tiếp với thể trạng ${petContext?.species || 'thú cưng'}, cân nặng (${petContext?.weight ? `${petContext.weight}kg` : ''}) và tuổi tác.
+2. KIỂM SOÁT DỊ ỨNG & CHỐNG CHỈ ĐỊNH: Nếu bé có tiền sử dị ứng (ví dụ: dị ứng thịt bò), BẮT BUỘC phải cảnh báo loại trừ mọi thực phẩm, thuốc hoặc gel có chứa thành phần dị ứng đó.
+3. PHẢN HỒI THEO CẤU TRÚC CHUẨN 3 PHẦN:
+   - ### 🩺 1. Đánh giá sơ bộ & Nguyên nhân theo thể trạng bé
+     Phân tích chuyên môn y khoa dễ hiểu, giải thích cơ chế sinh lý tại sao bé lại có triệu chứng đó.
+   - ### 🩹 2. Hướng dẫn sơ cứu & Chăm sóc tại nhà an toàn
+     Đưa ra các bước can thiệp chi tiết, ĐỊNH LƯỢNG RÕ RÀNG THEO CÂN NẶNG (ví dụ: lượng Oresol ml/kg, lượng hạt g/ngày, thời gian nhịn ăn bao nhiêu tiếng). Cảnh báo rõ những điều TUYỆT ĐỐI KHÔNG LÀM (vd: không dùng Paracetamol của người vì gây tử vong cho mèo).
+   - ### 🚨 3. Dấu hiệu nguy hiểm bắt buộc phải đến phòng khám thú y ngay
+     Liệt kê các dấu hiệu báo động đỏ cần đưa đến cơ sở thú y hoặc liên hệ Hotline cấp cứu 1900 6868.
+4. ĐỊNH DẠNG: Sử dụng Markdown chuẩn (tiêu đề ###, in đậm **, danh sách gạch đầu dòng -, trích dẫn >). Giọng điệu ân cần, yêu thương động vật, chuẩn xác y học.
+`;
+};
+
+/**
+ * Gọi Google Gemini API chính thức REST (gemini-1.5-flash)
+ * Endpoint: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}
+ * Header: 'Content-Type': 'application/json'
+ * Body chuẩn:
+ * {
+ *   "contents": [
+ *     {
+ *       "role": "user",
+ *       "parts": [{ "text": `${systemPrompt}\n\nCâu hỏi của người dùng: ${userMessage}` }]
+ *     }
+ *   ],
+ *   "generationConfig": {
+ *     "temperature": 0.7,
+ *     "maxOutputTokens": 1000
+ *   }
+ * }
+ */
+export const callGeminiApi = async (userMessage, petContext = null) => {
+  const settings = getSettings();
+  const envKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) ? import.meta.env.VITE_GEMINI_API_KEY.trim() : '';
+  const apiKey = (envKey && envKey !== 'your_actual_gemini_api_key_here')
+    ? envKey
+    : ((typeof window !== 'undefined' ? localStorage.getItem('petcare_gemini_api_key') : '') || settings.geminiApiKey?.trim() || '');
+
+  // Nếu chưa có API Key hoặc đang để key mặc định: Kích hoạt Mock Vet Advisor thông minh ngay tức thì
+  if (!apiKey || apiKey === 'your_actual_gemini_api_key_here') {
+    return smartSimulatedAiConsultation(userMessage, petContext);
+  }
+
+  // Model chuẩn: gemini-1.5-flash
+  const model = settings.selectedModel || 'gemini-1.5-flash';
+  const systemPrompt = buildVetSystemPrompt(petContext);
+
+  // Trích xuất chuỗi câu hỏi người dùng
+  let textToSend = userMessage;
+  if (Array.isArray(userMessage)) {
+    const lastUser = [...userMessage].reverse().find(m => m.sender === 'user' || m.role === 'user');
+    textToSend = lastUser?.text || lastUser?.parts?.[0]?.text || '';
+  } else if (typeof userMessage === 'object' && userMessage !== null) {
+    textToSend = userMessage.text || '';
+  }
+
+  // 1. Endpoint REST chính thức của Google Gemini
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+  // 2. Cấu trúc Body chuẩn Google Gemini
+  const requestBody = {
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: `${systemPrompt}\n\nCâu hỏi của người dùng: ${textToSend}` }]
+      }
+    ],
+    generationConfig: {
+      temperature: 0.7,
+      maxOutputTokens: 1000
+    }
+  };
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      console.warn(`Gemini API returned status ${response.status}. Automatically using Smart Mock Vet Advisor.`);
+      return smartSimulatedAiConsultation(userMessage, petContext);
+    }
+
+    const responseData = await response.json();
+    const reply = (responseData?.data || responseData)?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+    if (!reply) {
+      return smartSimulatedAiConsultation(userMessage, petContext);
+    }
+
+    return reply;
+  } catch (err) {
+    console.warn("Gemini API Error, falling back to Smart Mock Vet Advisor:", err);
+    return smartSimulatedAiConsultation(userMessage, petContext);
+  }
+};
+
+/**
+ * Smart Simulated Knowledge Engine: Tra cứu kho tri thức thú y hơn 50+ ca bệnh lâm sàng
+ */
+export const smartSimulatedAiConsultation = (userMessage, petContext = null) => {
+  return matchSmartSimulatedConsultation(userMessage, petContext);
+};
+
+
+/**
+ * AI Sinh lộ trình tiêm phòng và chăm sóc định kỳ tự động theo tiêu chuẩn WSAVA
+ */
+export const generateAiCarePlan = (pet) => {
+  const plans = [];
+  const today = new Date();
+  
+  let ageInMonths = 12;
+  if (pet.birthDate) {
+    const bDate = new Date(pet.birthDate);
+    const diffTime = Math.abs(today - bDate);
+    ageInMonths = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30.4375));
+  }
+
+  const addDays = (d, days) => {
+    const res = new Date(d);
+    res.setDate(res.getDate() + days);
+    return res.toISOString().split('T')[0];
+  };
+
+  const isDog = pet.species === 'dog';
+  const isCat = pet.species === 'cat';
+  const isPuppyOrKitten = ageInMonths < 12;
+
+  if (isDog) {
+    if (isPuppyOrKitten) {
+      plans.push({
+        title: `Vắc-xin 5 bệnh mũi 1 (Chó con ${pet.name})`,
+        type: 'vaccine',
+        date: addDays(today, 3),
+        time: '09:00',
+        location: 'Phòng khám thú y',
+        repeat: 'none',
+        notes: 'Phòng ngừa Care, Parvo, Viêm gan, Ho cũi chó, Cúm. Nhịn ăn 2h trước tiêm.'
+      });
+      plans.push({
+        title: `Vắc-xin 7 bệnh mũi 2 nhắc lại`,
+        type: 'vaccine',
+        date: addDays(today, 24),
+        time: '09:00',
+        location: 'Phòng khám thú y',
+        repeat: 'none',
+        notes: 'Tiêm cách mũi 1 đúng 21-28 ngày để đạt kháng thể tối đa.'
+      });
+      plans.push({
+        title: `Tiêm phòng bệnh Dại (Rabies)`,
+        type: 'vaccine',
+        date: addDays(today, 50),
+        time: '10:00',
+        location: 'Trạm thú y / Phòng khám',
+        repeat: 'yearly',
+        notes: 'Bắt buộc tiêm khi thú cưng đủ 3 tháng tuổi trở lên. Lặp lại hàng năm.'
+      });
+    } else {
+      plans.push({
+        title: `Tiêm vắc-xin 7 bệnh nhắc lại hàng năm cho ${pet.name}`,
+        type: 'vaccine',
+        date: addDays(today, 15),
+        time: '09:30',
+        location: 'Bệnh viện thú y',
+        repeat: 'yearly',
+        notes: 'Duy trì nồng độ kháng thể bảo vệ chó trưởng thành khỏi Parvo và Care.'
+      });
+      plans.push({
+        title: `Tiêm phòng Dại định kỳ hàng năm`,
+        type: 'vaccine',
+        date: addDays(today, 45),
+        time: '10:00',
+        location: 'Bệnh viện thú y',
+        repeat: 'yearly',
+        notes: 'Tiêm phòng Dại bắt buộc theo quy định thú y.'
+      });
+    }
+
+    plans.push({
+      title: `Nhỏ gáy phòng ve rận & ghẻ tai cho ${pet.name}`,
+      type: 'deworm',
+      date: addDays(today, 7),
+      time: '19:00',
+      location: 'Tại nhà',
+      repeat: 'monthly',
+      notes: 'Sử dụng Bravecto hoặc Nexgard / Frontline. Không tắm trong vòng 48h.'
+    });
+    plans.push({
+      title: `Uống thuốc tẩy giun định kỳ (Drontal / Endogard)`,
+      type: 'deworm',
+      date: addDays(today, 20),
+      time: '08:00',
+      location: 'Tại nhà',
+      repeat: 'quarterly',
+      notes: `Uống theo trọng lượng hiện tại (${pet.weight || '20'}kg). Cho uống vào buổi sáng.`
+    });
+    plans.push({
+      title: `Tắm spa, cắt tỉa lông & vệ sinh móng cho ${pet.name}`,
+      type: 'grooming',
+      date: addDays(today, 10),
+      time: '14:00',
+      location: 'Tiệm Spa thú cưng',
+      repeat: 'monthly',
+      notes: 'Vệ sinh tuyến hôi hậu môn và nhổ lông tai sạch sẽ.'
+    });
+    plans.push({
+      title: `Khám sức khỏe tổng quát & xét nghiệm máu cho ${pet.name}`,
+      type: 'vet',
+      date: addDays(today, 90),
+      time: '09:00',
+      location: 'Bệnh viện thú y trung tâm',
+      repeat: 'yearly',
+      notes: 'Kiểm tra chức năng gan thận, tim mạch và xương khớp.'
+    });
+
+  } else if (isCat) {
+    if (isPuppyOrKitten) {
+      plans.push({
+        title: `Vắc-xin 4 bệnh mũi 1 cho mèo con ${pet.name}`,
+        type: 'vaccine',
+        date: addDays(today, 5),
+        time: '09:30',
+        location: 'Phòng khám thú y',
+        repeat: 'none',
+        notes: 'Phòng Giảm bạch cầu FPV, Viêm mũi khí quản FHV, Calicivirus FCV và Chlamydia.'
+      });
+      plans.push({
+        title: `Vắc-xin 4 bệnh mũi 2 nhắc lại`,
+        type: 'vaccine',
+        date: addDays(today, 26),
+        time: '09:30',
+        location: 'Phòng khám thú y',
+        repeat: 'none',
+        notes: 'Cách mũi 1 từ 3 đến 4 tuần.'
+      });
+      plans.push({
+        title: `Tiêm phòng Dại cho ${pet.name}`,
+        type: 'vaccine',
+        date: addDays(today, 55),
+        time: '10:00',
+        location: 'Phòng khám thú y',
+        repeat: 'yearly',
+        notes: 'Tiêm khi mèo đủ 3 tháng tuổi.'
+      });
+    } else {
+      plans.push({
+        title: `Tiêm nhắc vắc-xin 4 bệnh hàng năm cho ${pet.name}`,
+        type: 'vaccine',
+        date: addDays(today, 20),
+        time: '10:00',
+        location: 'Phòng khám thú y',
+        repeat: 'yearly',
+        notes: 'Nhắc lại vắc-xin tổng hợp để phòng bệnh hô hấp và đường ruột mèo.'
+      });
+    }
+
+    plans.push({
+      title: `Nhỏ gáy trị rận, giun sán & bọ chét (Revolution Plus)`,
+      type: 'deworm',
+      date: addDays(today, 4),
+      time: '20:00',
+      location: 'Tại nhà',
+      repeat: 'monthly',
+      notes: 'Vạch lông ở gáy và nhỏ trực tiếp vào da để mèo không liếm được.'
+    });
+    plans.push({
+      title: `Khám siêu âm ổ bụng & kiểm tra hệ tiết niệu cho ${pet.name}`,
+      type: 'vet',
+      date: addDays(today, 60),
+      time: '10:30',
+      location: 'Phòng khám thú y',
+      repeat: 'yearly',
+      notes: 'Phát hiện sớm sỏi bàng quang và bệnh thận mạn tính ở mèo.'
+    });
+  } else {
+    plans.push({
+      title: `Khám sức khỏe tổng quát & kiểm tra răng cho ${pet.name}`,
+      type: 'vet',
+      date: addDays(today, 7),
+      time: '10:00',
+      location: 'Phòng khám thú y thú ngoại lai (Exotic Pets)',
+      repeat: 'quarterly',
+      notes: 'Kiểm tra mài răng cửa, kiểm tra tai và móng.'
+    });
+  }
+
+  return plans;
+};
+
+/**
+ * AI Tính toán nhu cầu Năng lượng Dinh dưỡng (Calorie & Nutrition)
+ */
+export const calculatePetNutrition = (pet) => {
+  const weight = Number(pet.weight) || (pet.species === 'cat' ? 4 : 15);
+  const rer = Math.round(70 * Math.pow(weight, 0.75));
+
+  let factor = 1.4;
+  if (pet.species === 'dog') {
+    factor = pet.isNeutered ? 1.6 : 1.8;
+  } else if (pet.species === 'cat') {
+    factor = pet.isNeutered ? 1.2 : 1.4;
+  } else {
+    factor = 1.0;
+  }
+
+  const dailyCalories = Math.round(rer * factor);
+  const dryFoodGrams = Math.round((dailyCalories / 380) * 100);
+  const waterMl = Math.round(weight * 55);
+
+  return {
+    rer,
+    dailyCalories,
+    dryFoodGrams,
+    waterMl,
+    mealsPerDay: weight > 10 ? '2 bữa/ngày' : '2-3 bữa/ngày',
+    proteinRecommendation: pet.species === 'cat' ? 'Tối thiểu 30-35% (Mèo ăn thịt bắt buộc - cần Taurine)' : 'Tối thiểu 22-26% (Chó)',
+    toxicFoods: ['Socola', 'Hành tây & Tỏi', 'Nho tươi & Nho khô', 'Đường nhân tạo Xylitol', 'Bơ (Avocado)', 'Cà phê & Trà', 'Xương gà nấu chín nhọn']
+  };
+};
+
+/**
+ * AI Phân tích Tài chính & Chi tiêu (Expense AI Analyst)
+ */
+export const analyzePetExpense = (expenses, pet) => {
+  const total = expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
+  
+  // Nhóm theo danh mục
+  const byCategory = expenses.reduce((acc, e) => {
+    acc[e.category] = (acc[e.category] || 0) + (Number(e.amount) || 0);
+    return acc;
+  }, {});
+
+  const foodPercent = total > 0 ? Math.round(((byCategory.food || 0) / total) * 100) : 0;
+  const medicalPercent = total > 0 ? Math.round((((byCategory.medical || 0) + (byCategory.vaccine || 0)) / total) * 100) : 0;
+
+  let advice = 'Chi tiêu của bạn cho thú cưng đang ở mức rất cân bằng và hợp lý.';
+  if (foodPercent > 70) {
+    advice = 'Chi phí thức ăn đang chiếm trên 70% ngân sách. Bạn có thể cân nhắc mua bao thức ăn size lớn (10kg-15kg) để tiết kiệm 15-25% chi phí so với túi nhỏ.';
+  } else if (medicalPercent > 50) {
+    advice = 'Chi phí thú y và thuốc đang khá cao. Hãy chú trọng phòng bệnh chủ động bằng việc nhỏ gáy ve rận định kỳ và bổ sung men vi sinh để giảm thiểu tần suất đi khám.';
+  }
+
+  const estMonthlyBudget = pet ? (pet.species === 'dog' ? 1200000 : 750000) : 1000000;
+
+  return {
+    totalSpent: total,
+    byCategory,
+    foodPercent,
+    medicalPercent,
+    estMonthlyBudget,
+    advice,
+    tips: [
+      'Đăng ký thành viên tại phòng khám thân thiết để được giảm 10-15% phí tiêm chủng.',
+      'Tự tắm và chải lông tại nhà xen kẽ giữa các lần spa để giảm chi phí grooming.',
+      'Sử dụng cát vệ sinh hữu cơ có thể xả bồn cầu để tiết kiệm chi phí túi đựng rác.'
+    ]
+  };
+};
+
+/**
+ * BỘ CƠ SỞ TRI THỨC BỆNH HỌC & GIỐNG LOÀI NỘI TẠI (LOCAL VISION KNOWLEDGE BASE)
+ */
+export const VISION_LOCAL_KNOWLEDGE_BASE = {
+  poodle: {
+    species_breed: "Chó Poodle (Toy / Tiny Poodle) lông xoăn thuần chủng",
+    confidence: "98.6%",
+    origin: "Pháp / Đức (Chó săn vịt nguồn gốc Tây Âu)",
+    traits: "Bộ lông xoăn xù đặc trưng, thông minh thứ 2 thế giới loài chó, cực kỳ ít rụng lông, rất quấn chủ và giàu tình cảm.",
+    lifespan: "12 - 15 năm",
+    diseases: "Trật xương bánh chè (Patellar Luxation), viêm tai ngoài do lông mọc sâu trong ống tai, sỏi bàng quang, bệnh đục thủy tinh thể khi về già.",
+    care_advice: "Nhổ lông tai và vệ sinh tai định kỳ hàng tuần; chải lông hàng ngày chống rối; cắt tỉa lông tạo kiểu 4-6 tuần/lần; hạn chế cho bé nhảy từ trên giường/ghế cao xuống đất để bảo vệ khớp gối.",
+    is_dermatology_issue: false
+  },
+  golden: {
+    species_breed: "Chó Golden Retriever thuần chủng",
+    confidence: "97.4%",
+    origin: "Scotland (Vương quốc Anh)",
+    traits: "Cực kỳ thân thiện, năng động, kiên nhẫn với trẻ nhỏ, rất thích bơi lội và có bản năng tha mồi mạnh mẽ.",
+    lifespan: "10 - 12 năm",
+    diseases: "Loạn sản xương hông & khuỷu tay (Hip Dysplasia), viêm da dị ứng ẩm ướt (Hot spot), ung thư hạch bạch huyết khi lớn tuổi.",
+    care_advice: "Cần vận động ít nhất 45-60 phút mỗi ngày; sấy thật khô lớp lông lót sau khi tắm hoặc bơi; kiểm soát cân nặng không để béo phì gây áp lực lên khớp háng.",
+    is_dermatology_issue: false
+  },
+  bsh: {
+    species_breed: "Mèo Anh Lông Ngắn (British Shorthair - BSH thuần chủng)",
+    confidence: "96.8%",
+    origin: "Anh Quốc",
+    traits: "Thân hình mập mạp (Cobby), khung xương to, má tròn phúng phính (nọng lớn), lông dày êm như nhung; tính cách điềm tĩnh, độc lập và dễ chịu.",
+    lifespan: "12 - 17 năm",
+    diseases: "Bệnh cơ tim phì đại di truyền (HCM), bệnh thận đa nang (PKD), dễ béo phì tích mỡ và tắc búi lông ruột (Hairball).",
+    care_advice: "Khuyến khích uống nhiều nước qua đài phun tự động ngừa sỏi thận; bổ sung gel tiêu búi lông định kỳ 2-3 lần/tuần; kiểm soát khẩu phần ăn chống béo phì.",
+    is_dermatology_issue: false
+  },
+  rabbit_minilop: {
+    species_breed: "Thỏ Kiểng Minilop thuần chủng (Holland Lop / Minilop tai cụp)",
+    confidence: "96.2%",
+    origin: "Hà Lan / Đức",
+    traits: "Đôi tai cụp tròn sát hai bên má, khuôn mặt bầu bĩnh đáng yêu, vóc dáng tròn trịa, tính cách ngoan ngoãn, thích được vuốt ve nhẹ nhàng.",
+    lifespan: "8 - 12 năm",
+    diseases: "Hội chứng đình trệ dạ dày (GI Stasis nguy cấp), răng cửa và răng hàm mọc lệch đâm loét nướu, ghẻ tai vảy trắng do mạt Psoroptes cuniculi.",
+    care_advice: "Cung cấp cỏ khô Timothy chiếm 85% khẩu phần 24/7 để mài răng liên tục; tuyệt đối không để nhịn ăn quá 12h; giữ chuồng khô ráo và chải lông thường xuyên.",
+    is_dermatology_issue: false
+  },
+  fad: {
+    species_breed: "Viêm da dị ứng bọ chét (Flea Allergy Dermatitis - FAD)",
+    confidence: "92.4%",
+    origin: "Ký sinh trùng ngoại sinh (bọ chét Ctenocephalides và ve chó)",
+    traits: "Mảng mẩn đỏ li ti vùng da bụng và sống lưng; da dày sừng sẫm màu; rụng lông do liếm gãi cắn rứt liên tục.",
+    lifespan: "Thuyên giảm sau 5 - 7 ngày diệt sạch ve rận",
+    diseases: "Thiếu máu mạn tính do ve hút máu, nhiễm sán dây lây qua bọ chét, viêm da mủ thứ phát.",
+    care_advice: "Vệ sinh bằng nước muối sinh lý, dùng viên nhai Bravecto/Nexgard, đeo loa chống liếm Elizabeth, tuyệt đối không tự ý bôi thuốc người.",
+    is_dermatology_issue: true
+  },
+  ringworm: {
+    species_breed: "Tổn thương Da Liễu: Nấm da tròn có vảy (Ringworm / Microsporum canis)",
+    confidence: "95.8%",
+    origin: "Lây truyền qua bào tử nấm trong môi trường hoặc tiếp xúc thú cưng khác",
+    traits: "Vết rụng lông tròn như đồng xu, vùng trung tâm bong vảy gàu trắng li ti, viền ngoài ửng đỏ nổi sần cộm.",
+    lifespan: "Thời gian điều trị tiêu chuẩn: 3 - 6 tuần",
+    diseases: "Bội nhiễm vi khuẩn mưng mủ do gãi trầy xước, nấm lây lan toàn thân hoặc lây chéo sang người trong gia đình (Zoonosis).",
+    care_advice: "Vệ sinh vùng nấm bằng nước muối sinh lý, bôi kem kháng nấm Ketoconazole / Fungikur 2 lần/ngày; BẮT BUỘC đeo loa chống liếm Elizabeth; tắm bằng dầu tắm trị nấm Sebazole 2 lần/tuần và sấy khô tuyệt đối; khử trùng ổ nằm.",
+    is_dermatology_issue: true
+  },
+  demodex: {
+    species_breed: "Viêm kẽ móng & Viêm da do ký sinh trùng Demodex / nấm men Malassezia",
+    confidence: "88.6%",
+    origin: "Mạt Demodex cư trú sâu trong nang lông kết hợp nấm men Malassezia",
+    traits: "Kẽ ngón chân, móng và khóe mắt sưng đỏ, nhờn dính bốc mùi chua; rụng lông cục bộ; vảy gàu sừng hóa.",
+    lifespan: "Điều trị từ 4 - 8 tuần tùy mức độ cạo da",
+    diseases: "Viêm mô tế bào bàn chân, viêm mủ quanh móng gây đi khập khiễng.",
+    care_advice: "Ngâm rửa kẽ chân bằng nước muối sinh lý ấm hoặc Chlorhexidine 2%, sấy khô kỹ từng kẽ móng, đeo loa chống liếm Elizabeth.",
+    is_dermatology_issue: true
+  },
+  pyoderma: {
+    species_breed: "Viêm da mủ nông (Superficial Pyoderma / Nhiễm tụ cầu khuẩn)",
+    confidence: "89.5%",
+    origin: "Nhiễm khuẩn tụ cầu vàng Staphylococcus intermedius thứ phát sau cắn cào",
+    traits: "Bọc mụn mủ nhỏ li ti rải rác; vết trầy xước rỉ dịch vàng đóng vảy tiết nâu; mô da xung quanh sưng nóng đỏ.",
+    lifespan: "Hồi phục sau 7 - 14 ngày dùng kháng sinh da liễu",
+    diseases: "Áp xe dưới da, viêm mô tế bào sâu, nhiễm trùng máu nếu không sát trùng sớm.",
+    care_advice: "Sát khuẩn vết thương bằng Povidone Iodine 1% pha loãng hoặc nước muối sinh lý, đeo loa chống liếm Elizabeth, không tự ý bôi thuốc người.",
+    is_dermatology_issue: true
+  },
+  flea_allergy: {
+    species_breed: "Viêm da dị ứng bọ chét (FAD)",
+    confidence: "92.4%",
+    origin: "Ký sinh trùng ngoại sinh",
+    traits: "Mẩn đỏ li ti, ngứa rát dữ dội.",
+    lifespan: "5 - 7 ngày",
+    diseases: "Nhiễm khuẩn da thứ phát",
+    care_advice: "Nhỏ gáy / uống viên diệt ve rận",
+    is_dermatology_issue: true
+  }
+};
+
+/**
+ * AI Thị Giác: Nhận diện giống loài hoặc Chẩn đoán triệu chứng qua hình ảnh (Vision AI Scanner)
+ * Hỗ trợ Multimodal Gemini 1.5 Flash Vision & Fallback Tri Thức Nội Tại Chuẩn Y Khoa
+ */
+export const analyzeVisionImage = async (imageInput, scanType = 'breed', sampleKey = null) => {
+  const envKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) ? import.meta.env.VITE_GEMINI_API_KEY.trim() : '';
+  const apiKey = (envKey && envKey !== 'your_actual_gemini_api_key_here')
+    ? envKey
+    : ((typeof window !== 'undefined' ? localStorage.getItem('petcare_gemini_api_key') : '') || '');
+
+  // 1. Kiểm tra nếu có dữ liệu Base64 và có API Key -> Gọi Gemini Vision 1.5 Flash thực tế
+  let base64Data = null;
+  let mimeType = 'image/jpeg';
+
+  if (typeof imageInput === 'string') {
+    if (imageInput.startsWith('data:image/')) {
+      const parts = imageInput.split(',');
+      base64Data = parts[1];
+      const match = imageInput.match(/data:(image\/[a-zA-Z0-9.+_-]+);base64/);
+      if (match) mimeType = match[1];
+    }
+  }
+
+  if (apiKey && base64Data) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const visionPrompt = "Bạn là chuyên gia Thú Y & Giám định Giống loài của PetCare PRO AI. Hãy phân tích kỹ bức ảnh này và trả về JSON thuần (không bọc markdown) với cấu trúc sau: { \"species_breed\": \"Tên giống loài chính xác kèm độ thuần chủng\", \"confidence\": \"9x.x%\", \"origin\": \"Nguồn gốc xuất xứ\", \"traits\": \"Tính cách & đặc điểm sinh học\", \"lifespan\": \"Tuổi thọ trung bình\", \"diseases\": \"Các bệnh lý di truyền hoặc bệnh ngoài da phát hiện qua ảnh\", \"care_advice\": \"Khuyến nghị chăm sóc dinh dưỡng và y tế chi tiết\", \"is_dermatology_issue\": true/false }";
+
+      const payload = {
+        contents: [
+          {
+            parts: [
+              {
+                inline_data: {
+                  mime_type: mimeType,
+                  data: base64Data
+                }
+              },
+              {
+                text: visionPrompt
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 600,
+          responseMimeType: "application/json"
+        }
+      };
+
+      let response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!response.ok && response.status === 404) {
+        response = await fetch(fallbackUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawText) {
+          let cleaned = rawText.trim();
+          if (cleaned.startsWith('```')) {
+            cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
+          }
+          const firstBrace = cleaned.indexOf('{');
+          const lastBrace = cleaned.lastIndexOf('}');
+          if (firstBrace !== -1 && lastBrace !== -1) {
+            const parsed = JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
+            return {
+              source: 'gemini_vision',
+              ...parsed
+            };
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("Gemini Vision API error, falling back to local KB:", err);
+    }
+  }
+
+  // 2. Fallback sang Bộ Cơ Sở Tri Thức Nội Tại (Local Knowledge Base)
+  await new Promise(r => setTimeout(r, 1000));
+
+  if (sampleKey && VISION_LOCAL_KNOWLEDGE_BASE[sampleKey]) {
+    return {
+      source: 'local_kb',
+      ...VISION_LOCAL_KNOWLEDGE_BASE[sampleKey]
+    };
+  }
+
+  if (scanType === 'symptom') {
+    return {
+      source: 'local_kb',
+      ...VISION_LOCAL_KNOWLEDGE_BASE.ringworm
+    };
+  }
+
+  return {
+    source: 'local_kb',
+    ...VISION_LOCAL_KNOWLEDGE_BASE.poodle
+  };
+};
+
+/**
+ * AI Phân tích xu hướng nhật ký sức khỏe (Daily Health Trend AI)
+ */
+export const analyzeDailyHealthTrend = (logs, pet) => {
+  if (!logs || logs.length === 0) {
+    return {
+      status: 'GOOD',
+      message: 'Chưa có đủ nhật ký sức khỏe. Hãy bắt đầu ghi chép mỗi ngày để AI phát hiện bệnh sớm!'
+    };
+  }
+
+  const badPoopCount = logs.filter(l => l.poopStatus === 'diarrhea' || l.poopStatus === 'soft').length;
+  const badPeeCount = logs.filter(l => l.peeStatus === 'dark' || l.peeStatus === 'painful').length;
+  const lowWalkCount = logs.filter(l => Number(l.walkMinutes) < 15).length;
+
+  if (badPeeCount > 0) {
+    return {
+      status: 'CRITICAL',
+      title: '🚨 CẢNH BÁO TIẾT NIỆU: DẤU HIỆU TIỂU BẤT THƯỜNG',
+      message: `Hệ thống ghi nhận dấu hiệu tiểu sẫm màu hoặc khó tiểu ở ${pet ? pet.name : 'thú cưng'}. Ở mèo và chó đực, sỏi bàng quang hoặc viêm đường tiết niệu có thể gây tắc nghẽn nguy hiểm tính mạng trong 24-48h. Hãy đưa bé đi siêu âm ngay!`
+    };
+  }
+
+  if (badPoopCount >= 2) {
+    return {
+      status: 'WARNING',
+      title: '⚠️ CẢNH BÁO ĐƯỜNG RUỘT: RỐI LOẠN TIÊU HÓA LIÊN TỤC',
+      message: `${pet ? pet.name : 'Bé'} có 2 lần đi phân mềm hoặc tiêu chảy gần đây. Cần bổ sung men vi sinh Biotic và cho ăn cháo loãng, kiêng hoàn toàn dầu mỡ và đồ ngọt.`
+    };
+  }
+
+  return {
+    status: 'EXCELLENT',
+    title: '🌟 THỂ TRẠNG TUYỆT VỜI',
+    message: `${pet ? pet.name : 'Bé cưng'} có chỉ số vệ sinh, mức độ vận động và tâm trạng rất ổn định trong các ngày qua. Hãy tiếp tục duy trì chế độ này!`
+  };
+};

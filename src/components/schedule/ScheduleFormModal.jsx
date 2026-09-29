@@ -1,0 +1,278 @@
+import React, { useState, useEffect } from 'react';
+import { X, CalendarPlus, Check, Clock, MapPin } from 'lucide-react';
+import { SCHEDULE_TYPES } from '../../constants/mockData';
+
+export const ScheduleFormModal = ({
+  isOpen,
+  onClose,
+  onSave,
+  pets = [],
+  scheduleToEdit = null,
+  initialDate = null,
+  initialType = null,
+  initialTitle = null,
+  initialPetId = null
+}) => {
+  // Helper chuẩn hóa mã thú cưng an toàn giữa 'mochi'/'pet-1', 'luna'/'pet-2', 'banh-bao'/'pet-3'
+  const resolveTargetPetId = (targetId, petsList = []) => {
+    if (!targetId || !Array.isArray(petsList) || petsList.length === 0) {
+      return petsList?.[0]?.id || '';
+    }
+    const directMatch = petsList.find(p => p.id === targetId);
+    if (directMatch) return directMatch.id;
+
+    const targetStr = String(targetId).toLowerCase().trim();
+    const aliasMatch = petsList.find(p => {
+      const pId = String(p.id).toLowerCase().trim();
+      const pName = String(p.name || '').toLowerCase().trim();
+      if ((targetStr === 'mochi' || targetStr === 'pet-1') && (pId === 'pet-1' || pName.includes('mochi'))) return true;
+      if ((targetStr === 'luna' || targetStr === 'pet-2') && (pId === 'pet-2' || pName.includes('luna'))) return true;
+      if ((targetStr === 'banh-bao' || targetStr === 'banhbao' || targetStr === 'pet-3') && 
+          (pId === 'pet-3' || pName.includes('bánh bao') || pName.includes('banh bao'))) return true;
+      return pId === targetStr || pName.includes(targetStr);
+    });
+
+    return aliasMatch ? aliasMatch.id : (petsList[0]?.id || '');
+  };
+
+  const [formData, setFormData] = useState({
+    petId: resolveTargetPetId(initialPetId, pets),
+    title: initialTitle || '',
+    type: initialType || 'vaccine',
+    date: initialDate || new Date().toISOString().split('T')[0],
+    time: '09:00',
+    location: '',
+    repeat: 'none',
+    notes: ''
+  });
+
+  useEffect(() => {
+    if (scheduleToEdit) {
+      setFormData({
+        ...scheduleToEdit,
+        petId: resolveTargetPetId(scheduleToEdit.petId, pets)
+      });
+    } else {
+      setFormData({
+        petId: resolveTargetPetId(initialPetId, pets),
+        title: initialTitle || '',
+        type: initialType || 'vaccine',
+        date: initialDate || new Date().toISOString().split('T')[0],
+        time: '09:00',
+        location: '',
+        repeat: 'none',
+        notes: ''
+      });
+    }
+  }, [scheduleToEdit, initialDate, initialType, initialTitle, initialPetId, pets, isOpen]);
+
+  if (!isOpen) return null;
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.title.trim()) {
+      alert('Vui lòng nhập tiêu đề lịch hẹn!');
+      return;
+    }
+    if (!formData.petId) {
+      alert('Vui lòng chọn thú cưng!');
+      return;
+    }
+
+    const matchedPet = pets.find(p => p.id === formData.petId);
+    const resolvedPetName = matchedPet?.name || 
+      (formData.petId === 'pet-1' ? 'Mochi' : formData.petId === 'pet-2' ? 'Luna' : 'Bánh Bao');
+
+    // Đính kèm cả petName và petId để đồng bộ dữ liệu chuẩn xác
+    onSave({
+      ...formData,
+      petName: resolvedPetName,
+      petId: formData.petId,
+      id: formData.id || `sch-${Date.now()}`
+    });
+    onClose();
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-100 my-8">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
+              <CalendarPlus className="w-5 h-5" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-slate-900">
+                {scheduleToEdit ? 'Chỉnh Sửa Lịch Hẹn' : 'Thêm Lịch Chăm Sóc Mới'}
+              </h2>
+              <p className="text-xs text-slate-500">Thiết lập mốc thời gian và lời nhắc nhở cho bé</p>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          
+          {/* Select Pet */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Áp dụng cho Thú cưng *
+            </label>
+            <select
+              required
+              value={formData.petId}
+              onChange={(e) => setFormData({ ...formData, petId: e.target.value })}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 text-sm font-semibold text-slate-800 outline-hidden"
+            >
+              {pets.map((pet) => (
+                <option key={pet.id} value={pet.id}>
+                  {pet.name} ({pet.breed} - {pet.species})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Schedule Type */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Loại sự kiện *
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {Object.entries(SCHEDULE_TYPES).map(([typeKey, config]) => (
+                <button
+                  type="button"
+                  key={typeKey}
+                  onClick={() => setFormData({ ...formData, type: typeKey })}
+                  className={`p-2 rounded-xl text-xs font-semibold border text-left transition-all ${
+                    formData.type === typeKey
+                      ? 'bg-emerald-50 border-emerald-500 text-emerald-800 shadow-xs'
+                      : 'border-slate-200 text-slate-600 hover:border-slate-300'
+                  }`}
+                >
+                  {config.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Title */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Tiêu đề lịch hẹn *
+            </label>
+            <input
+              type="text"
+              required
+              placeholder="Ví dụ: Tiêm phòng vắc-xin 7 bệnh mũi 2, Tẩy giun định kỳ..."
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-hidden text-sm"
+            />
+          </div>
+
+          {/* Date & Time */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Ngày thực hiện *
+              </label>
+              <input
+                type="date"
+                required
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-hidden focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Giờ hẹn
+              </label>
+              <input
+                type="time"
+                value={formData.time}
+                onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-hidden focus:border-emerald-500"
+              />
+            </div>
+          </div>
+
+          {/* Location & Repeat */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Địa điểm
+              </label>
+              <input
+                type="text"
+                placeholder="Ví dụ: Tại nhà, Bệnh viện thú y..."
+                value={formData.location}
+                onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-hidden focus:border-emerald-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                Lặp lại chu kỳ
+              </label>
+              <select
+                value={formData.repeat}
+                onChange={(e) => setFormData({ ...formData, repeat: e.target.value })}
+                className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-hidden focus:border-emerald-500 font-medium"
+              >
+                <option value="none">Không lặp lại (1 lần)</option>
+                <option value="weekly">Hàng tuần</option>
+                <option value="monthly">Hàng tháng</option>
+                <option value="quarterly">Mỗi 3 tháng (Tẩy giun)</option>
+                <option value="yearly">Hàng năm (Vắc-xin dại/7 bệnh)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Ghi chú & Dặn dò
+            </label>
+            <textarea
+              rows={2}
+              placeholder="Ví dụ: Nhịn ăn sáng, mang theo sổ tiêm chủng, cân lại trước khi uống thuốc..."
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-emerald-500 outline-hidden text-xs"
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+            >
+              Hủy bỏ
+            </button>
+            <button
+              type="submit"
+              className="px-5 py-2.5 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1.5"
+            >
+              <Check className="w-4 h-4" />
+              <span>{scheduleToEdit ? 'Lưu Thay Đổi' : 'Tạo Lịch Chăm Sóc'}</span>
+            </button>
+          </div>
+
+        </form>
+
+      </div>
+    </div>
+  );
+};
