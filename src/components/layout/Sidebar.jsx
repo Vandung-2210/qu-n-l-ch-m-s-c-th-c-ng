@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { 
   LayoutDashboard, 
   PawPrint, 
@@ -15,7 +14,11 @@ import {
   Users, 
   DollarSign, 
   Flame, 
-  Utensils 
+  Utensils,
+  Heart,
+  Calendar,
+  Maximize2,
+  ShieldAlert
 } from 'lucide-react';
 import { sound } from '../../services/soundService';
 
@@ -31,7 +34,7 @@ export const Sidebar = ({
   onOpenProfileModal = () => {}
 }) => {
   // Core icons required by Obsidian Spatial Canvas specification:
-  // Dashboard, Lịch trình, Hồ sơ Thú cưng, Sổ Tiêm Vắc-xin, Chi tiêu, AI Vision Chẩn đoán, Avatar chủ nuôi ở đáy
+  // Dashboard, Lịch trình, Hồ sơ Thú cưng, Tâm lý & Gắn kết, Sổ Tiêm Vắc-xin, Chi tiêu, AI Vision Chẩn đoán, Avatar chủ nuôi ở đáy
   const primaryNavItems = [
     {
       id: 'dashboard',
@@ -51,6 +54,12 @@ export const Sidebar = ({
       icon: PawPrint
     },
     {
+      id: 'bonding',
+      label: 'Tâm lý & Gắn kết',
+      icon: Heart,
+      badge: 'NEW'
+    },
+    {
       id: 'medical',
       label: 'Sổ Tiêm Vắc-xin',
       icon: Stethoscope,
@@ -66,11 +75,17 @@ export const Sidebar = ({
       label: 'AI Vision Chẩn đoán',
       icon: Scan
     },
-    ...(currentUser?.role === 'CLINIC_ADMIN' ? [{
+    ...((currentUser?.role === 'CLINIC_ADMIN' || (currentUser?.role === 'vet_doctor' && currentUser?.vetStatus === 'approved')) ? [{
       id: 'clinic-os',
       label: 'Bệnh viện Thú y (Clinic OS)',
       icon: Building2,
       badge: 'PRO'
+    }] : []),
+    ...(currentUser?.role === 'system_admin' ? [{
+      id: 'admin-portal-switch',
+      label: 'Cổng Quản Trị Hệ Thống',
+      icon: ShieldAlert,
+      badge: 'ADMIN'
     }] : [])
   ];
 

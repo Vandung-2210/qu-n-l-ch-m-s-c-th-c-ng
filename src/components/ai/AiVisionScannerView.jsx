@@ -243,106 +243,7 @@ export const AiVisionScannerView = ({
     setScanError(null);
   };
 
-  // Gọi mô hình Gemini Vision nếu có ảnh tải lên và có key
-  const callGeminiVisionApi = async (base64Info) => {
-    const envKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) ? import.meta.env.VITE_GEMINI_API_KEY.trim() : '';
-    const activeKey = (envKey && envKey !== 'your_actual_gemini_api_key_here')
-      ? envKey
-      : ((typeof window !== 'undefined' ? (localStorage.getItem('petcare_gemini_api_key') || localStorage.getItem('gemini_api_key')) : '') || '');
-
-    if (!activeKey) {
-      throw new Error('Chưa có Gemini API Key');
-    }
-
-    const visionPrompt = `Bạn là Bác sĩ Thú y AI chuyên khoa Da liễu & Bệnh học Lâm sàng Thú cưng của PetCare PRO.
-Hãy phân tích bức ảnh vùng da tổn thương thực thể này và chẩn đoán bệnh lý (viêm da dị ứng bọ chét FAD, nấm tròn Microsporum, xà mâu Demodex/nấm men Malassezia, viêm da mủ Pyoderma,...).
-Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo định dạng:
-{
-  "name": "Tên bệnh lý đầy đủ kèm tên khoa học",
-  "category": "Ngoại ký sinh trùng" hoặc "Nhiễm vi nấm biểu bì" hoặc "Ký sinh trùng bao lông & Nấm men" hoặc "Nhiễm khuẩn tụ cầu da (Staphylococcus)",
-  "confidence": 94.5,
-  "riskLevel": "Khẩn cấp" hoặc "Trung bình" hoặc "Nhẹ",
-  "riskColor": "text-rose-400 bg-rose-500/10 border-rose-500/20",
-  "symptoms": [
-    "Triệu chứng 1...",
-    "Triệu chứng 2...",
-    "Triệu chứng 3..."
-  ],
-  "firstAid": [
-    "Sơ cứu khẩn cấp 1...",
-    "Sơ cứu 2...",
-    "Sơ cứu 3..."
-  ],
-  "clinicalAdvice": "Chỉ định y khoa của Bác sĩ thú y..."
-}`;
-
-    const requestPayload = {
-      contents: [
-        {
-          parts: [
-            {
-              inline_data: {
-                mime_type: base64Info.mimeType || 'image/jpeg',
-                data: base64Info.data
-              }
-            },
-            {
-              text: visionPrompt
-            }
-          ]
-        }
-      ],
-      generationConfig: {
-        temperature: 0.1,
-        maxOutputTokens: 800,
-        responseMimeType: "application/json"
-      }
-    };
-
-    const endpoints = [
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${activeKey}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${activeKey}`
-    ];
-
-    let lastError = null;
-    for (const url of endpoints) {
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(requestPayload)
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) continue;
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (!rawText) throw new Error('API không trả về nội dung');
-
-        let cleaned = rawText.trim();
-        if (cleaned.startsWith('```')) {
-          cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
-        }
-        const firstBrace = cleaned.indexOf('{');
-        const lastBrace = cleaned.lastIndexOf('}');
-        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-          return JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
-        }
-        return JSON.parse(cleaned);
-      } catch (err) {
-        lastError = err;
-        if (err.message?.includes('404')) continue;
-        throw err;
-      }
-    }
-
-    throw lastError || new Error('Không thể kết nối đến máy chủ Gemini Vision.');
-  };
-
-  // Quét tổn thương thực thể bằng Laser Scanner (thời gian quét 1.000ms = 1s)
+  // Quét tổn thương thực thể bằng Laser Scanner (sử dụng Cơ sở dữ liệu Bệnh lý Da liễu Thú y nội tại)
   const triggerScan = async () => {
     if (isScanning || !selectedImage) return;
 
@@ -351,42 +252,10 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
     setScanResult(null);
     setScanError(null);
 
-    const scanDelayPromise = new Promise(resolve => setTimeout(resolve, 1000));
+    const scanDelayPromise = new Promise(resolve => setTimeout(resolve, 800));
 
-    let finalResult = null;
-
-    // 1. Thử gọi Gemini Vision nếu là ảnh người dùng tải lên và có base64
-    if (!activeCaseKey && imageBase64Info) {
-      try {
-        const parsed = await callGeminiVisionApi(imageBase64Info);
-        finalResult = {
-          id: 'custom_upload',
-          name: parsed.name || 'Viêm da dị ứng nghi ngờ ký sinh trùng',
-          category: parsed.category || 'Bệnh ngoài da thú cưng',
-          confidence: Number(parsed.confidence) || 92.5,
-          riskLevel: parsed.riskLevel || 'Trung bình',
-          riskColor: parsed.riskLevel === 'Khẩn cấp' 
-            ? 'text-rose-400 bg-rose-500/10 border-rose-500/20' 
-            : 'text-amber-400 bg-amber-500/10 border-amber-500/20',
-          image: selectedImage,
-          boxCoordinates: { top: '25%', left: '25%', width: '50%', height: '50%' },
-          symptoms: Array.isArray(parsed.symptoms) && parsed.symptoms.length > 0 
-            ? parsed.symptoms 
-            : ['Mẩn đỏ, rụng lông cục bộ, bề mặt da viêm sung huyết.'],
-          firstAid: Array.isArray(parsed.firstAid) && parsed.firstAid.length > 0 
-            ? parsed.firstAid 
-            : ['Đeo loa Elizabeth chống liếm, giữ khô thoáng vùng da bệnh.'],
-          clinicalAdvice: parsed.clinicalAdvice || 'Đưa bé đến phòng khám để cạo da soi tươi xác định chủng vi nấm hoặc ký sinh trùng.'
-        };
-      } catch (err) {
-        console.warn('Gemini Vision fallback to Pathology Engine:', err);
-      }
-    }
-
-    // 2. Chẩn đoán theo Bộ Dữ Liệu Bệnh Lý Thường Gặp
-    if (!finalResult) {
-      finalResult = PET_PATHOLOGY_DATASET[activeCaseKey || 'fad'] || PET_PATHOLOGY_DATASET.fad;
-    }
+    // Chẩn đoán theo Bộ Dữ Liệu Bệnh Lý Thường Gặp (Mô phỏng y khoa cục bộ)
+    const finalResult = PET_PATHOLOGY_DATASET[activeCaseKey || 'fad'] || PET_PATHOLOGY_DATASET.fad;
 
     await scanDelayPromise;
 
@@ -402,7 +271,7 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
   const currentPet = pets?.find(p => p.id === selectedPetId) || pets?.[0] || { name: 'Mochi', species: 'Chó Golden' };
 
   return (
-    <div className="space-y-6 pb-12 text-white">
+    <div className="space-y-6 pb-12 text-slate-900 dark:text-white">
       
       {/* Laser Scanning Animation Keyframes (Tia laser xanh ngọc quét dọc) */}
       <style>{`
@@ -425,20 +294,20 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
         }
       `}</style>
 
-      {/* Header: Dark Spatial Glassmorphism */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl">
+      {/* Header: Medical Minimalist Porcelain */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-3xl bg-white dark:bg-[#12192A] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] dark:shadow-2xl">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-rose-500/20 border border-rose-400/30 text-rose-400 flex items-center justify-center font-black shadow-lg shadow-rose-500/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-600 dark:text-rose-400 flex items-center justify-center font-black shadow-md shadow-rose-500/15 shrink-0">
             <Scan className="w-6 h-6 stroke-[2.5] animate-pulse" />
           </div>
           <div>
-            <h1 className="text-xl lg:text-2xl font-black text-white tracking-wide flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-xl lg:text-2xl font-bold text-slate-900 dark:text-white tracking-wide flex items-center gap-2.5 flex-wrap">
               <span>AI Thị Giác & Chẩn Đoán Bệnh Lý Da Liễu Thú Cưng</span>
-              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-400/30 font-bold normal-case">
+              <span className="text-[10px] font-mono px-2.5 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-400/30 font-bold normal-case">
                 Veterinary Pathology AI
               </span>
             </h1>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               Phân tích quang học vi tổn thương biểu bì, phát hiện ký sinh trùng, nấm men và ổ viêm mủ thực thể
             </p>
           </div>
@@ -446,15 +315,15 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
 
         <div className="flex items-center gap-2.5 shrink-0 self-start sm:self-auto">
           {pets && pets.length > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/80 border border-white/10 text-xs">
-              <span className="text-slate-400 text-[11px]">Bệnh nhân:</span>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100/80 dark:bg-slate-800/80 border border-slate-200 dark:border-white/10 text-xs">
+              <span className="text-slate-500 dark:text-slate-400 text-[11px]">Bệnh nhân:</span>
               <select
                 value={selectedPetId}
                 onChange={(e) => setSelectedPetId(e.target.value)}
-                className="bg-transparent text-cyan-300 font-bold focus:outline-hidden cursor-pointer text-xs"
+                className="bg-transparent text-slate-900 dark:text-cyan-300 font-bold focus:outline-hidden cursor-pointer text-xs"
               >
                 {pets.map(pet => (
-                  <option key={pet.id} value={pet.id} className="bg-slate-900 text-white">
+                  <option key={pet.id} value={pet.id} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-white">
                     {pet.name} ({pet.species || 'Thú cưng'})
                   </option>
                 ))}
@@ -462,8 +331,8 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
             </div>
           )}
 
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs font-bold shadow-xs">
-            <Microscope className="w-4 h-4 text-rose-400 animate-pulse" />
+          <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/30 text-rose-700 dark:text-rose-300 text-xs font-bold shadow-xs">
+            <Microscope className="w-4 h-4 text-rose-600 dark:text-rose-400 animate-pulse" />
             <span>Chẩn Đoán Tổn Thương Thực Thể</span>
           </div>
         </div>
@@ -471,8 +340,8 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
 
       {/* Thông báo lỗi nếu có */}
       {scanError && (
-        <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-400" />
+        <div className="p-3.5 rounded-2xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 shrink-0 text-amber-500 dark:text-amber-400" />
           <span>{scanError}</span>
         </div>
       )}
@@ -483,22 +352,26 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
         {/* ================================================================= */}
         {/* CỘT TRÁI: KHUNG CHỨA ẢNH, AI BOUNDING BOX & TIA LASER XANH QUÉT   */}
         {/* ================================================================= */}
-        <div className="bg-slate-900/60 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 shadow-2xl space-y-4">
+        <div className="bg-white dark:bg-[#12192A] backdrop-blur-2xl rounded-3xl p-6 border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] dark:shadow-2xl space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-2">
-              <Camera className="w-4 h-4 text-rose-400" />
+            <h3 className="text-xs font-bold text-slate-900 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
+              <Camera className="w-4 h-4 text-rose-500" />
               <span>Ảnh Macro Cận Cảnh Tổn Thương Da</span>
             </h3>
             {activeCaseKey && (
-              <span className="text-[11px] font-mono text-rose-300 bg-rose-500/15 px-2.5 py-0.5 rounded-lg border border-rose-500/30 flex items-center gap-1 font-bold">
-                <Check className="w-3 h-3 text-rose-400" />
+              <span className="text-[11px] font-mono text-rose-700 dark:text-rose-300 bg-rose-50 dark:bg-rose-500/15 px-2.5 py-0.5 rounded-lg border border-rose-200 dark:border-rose-500/30 flex items-center gap-1 font-bold">
+                <Check className="w-3 h-3 text-rose-600 dark:text-rose-400" />
                 <span>Bệnh phẩm: {PET_PATHOLOGY_DATASET[activeCaseKey]?.name?.split('(')[0]?.trim()}</span>
               </span>
             )}
           </div>
 
           {/* 1. KHUNG ẢNH VỚI EMPTY STATE HOẶC AI BOUNDING BOX HUD VÀ TIA LASER QUÉT */}
-          <div className="relative h-72 sm:h-96 w-full rounded-2xl overflow-hidden border border-white/15 bg-slate-950 flex items-center justify-center group shadow-2xl">
+          <div className={`relative h-72 sm:h-96 w-full rounded-2xl overflow-hidden flex items-center justify-center group shadow-xs dark:shadow-2xl ${
+            selectedImage 
+              ? 'border border-slate-200 dark:border-white/15 bg-slate-950'
+              : 'bg-slate-50 border-2 border-dashed border-slate-200 text-slate-500 dark:bg-slate-950 dark:border-white/15 dark:text-slate-400'
+          }`}>
             {selectedImage ? (
               <>
                 <img
@@ -510,7 +383,6 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
                     isScanning ? 'scale-105 brightness-90 filter contrast-110' : ''
                   }`}
                   onError={(e) => {
-                    // Safe fallback if local or remote fails, without dog in sweater
                     const fallback = PET_PATHOLOGY_DATASET[activeCaseKey]?.fallbackImage;
                     if (fallback && e.target.src !== fallback) {
                       e.target.src = fallback;
@@ -535,7 +407,7 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
                       height: boxCoords?.height || '45%'
                     }}
                   >
-                    {/* Nhãn gắn kèm khung quét HUD: [ 🔴 Vùng tổn thương: Viêm mẩn đỏ FAD (94.6%) ] */}
+                    {/* Nhãn gắn kèm khung quét HUD */}
                     <div className={`absolute -top-3.5 left-2 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold shadow-lg backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap border ${
                       scanResult.riskLevel === 'Khẩn cấp'
                         ? 'bg-slate-950/95 text-rose-300 border-rose-500/80'
@@ -618,19 +490,19 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
                 )}
               </>
             ) : (
-              /* EMPTY STATE: Chưa có ảnh nào được chọn */
+              /* EMPTY STATE (PLACEHOLDER): Xám ngọc thanh tao chuẩn Porcelain */
               <div className="flex flex-col items-center justify-center p-6 text-center">
-                <div className="w-16 h-16 rounded-2xl bg-white/5 border border-dashed border-white/20 flex items-center justify-center mb-3 text-slate-400 group-hover:text-rose-400 transition-colors">
-                  <Camera className="w-8 h-8 opacity-70" />
+                <div className="w-16 h-16 rounded-2xl bg-white dark:bg-white/5 border border-slate-200 dark:border-white/20 flex items-center justify-center mb-3 text-slate-400 group-hover:text-rose-500 dark:group-hover:text-rose-400 transition-colors shadow-xs">
+                  <Camera className="w-8 h-8 opacity-75" />
                 </div>
-                <h4 className="text-sm font-bold text-white mb-1">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1">
                   Chưa có ảnh vi tổn thương da
                 </h4>
-                <p className="text-xs text-slate-400 max-w-sm mb-4 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mb-4 leading-relaxed">
                   Tải lên ảnh chụp cận cảnh vùng da bệnh (mẩn đỏ, rụng lông, mụn mủ) hoặc chọn nhanh 1 trong 4 ca bệnh phẩm mẫu bên dưới để bắt đầu quét AI.
                 </p>
-                <label className="py-2 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/10 text-xs font-bold text-slate-200 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-md">
-                  <Upload className="w-4 h-4 text-rose-400" />
+                <label className="py-2.5 px-5 rounded-xl bg-white dark:bg-white/10 hover:bg-slate-100 dark:hover:bg-white/15 border border-slate-200 dark:border-white/10 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2 cursor-pointer transition-all active:scale-95 shadow-xs">
+                  <Upload className="w-4 h-4 text-rose-500" />
                   <span>Tải ảnh từ máy</span>
                   <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                 </label>
@@ -641,8 +513,8 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
           {/* Action Buttons: Tải ảnh & Bắt đầu quét */}
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <label className="flex-1 py-2.5 px-4 rounded-xl border border-white/10 bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98">
-                <Upload className="w-4 h-4 text-rose-400" />
+              <label className="flex-1 py-2.5 px-4 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/[0.04] hover:bg-slate-100 dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-98">
+                <Upload className="w-4 h-4 text-rose-500" />
                 <span>{selectedImage ? 'Đổi ảnh khác' : 'Tải ảnh tổn thương'}</span>
                 <input
                   type="file"
@@ -670,10 +542,10 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
             </div>
 
             {/* ------------------------------------------------------------- */}
-            {/* BỘ CHỌN 4 CA BỆNH LÝ MẪU CẬN CẢNH (KÈM THUMBNAIL MACRO THẬT)  */}
+            {/* BỘ CHỌN 4 CA BỆNH LÝ MẪU (THẺ NỀN TRẮNG BO GÓC, BÓNG MỜ NHẸ) */}
             {/* ------------------------------------------------------------- */}
             <div>
-              <span className="text-[11px] font-bold text-slate-400 block mb-1">
+              <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 block mb-1">
                 Hoặc chọn nhanh 4 ca bệnh lý thực tế trong từ điển bệnh học:
               </span>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 mt-2">
@@ -687,26 +559,30 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
                       onClick={() => handleSelectCase(item.id)}
                       className={`p-2.5 rounded-2xl text-left transition-all group cursor-pointer border flex items-center gap-3 ${
                         isSelected
-                          ? 'bg-rose-500/20 border-rose-500/70 shadow-lg shadow-rose-500/20 ring-1 ring-rose-500/40'
-                          : 'bg-white/[0.03] hover:bg-rose-500/10 border-white/10 hover:border-rose-500/40'
+                          ? 'bg-rose-50/80 border-rose-300 dark:bg-rose-500/20 dark:border-rose-500/70 shadow-md ring-2 ring-rose-400/40 dark:shadow-rose-500/20'
+                          : 'bg-white hover:bg-slate-50 border-slate-200/90 shadow-[0_2px_8px_-2px_rgba(15,23,42,0.06)] hover:border-slate-300 dark:bg-white/[0.03] dark:hover:bg-rose-500/10 dark:border-white/10 dark:hover:border-rose-500/40'
                       }`}
                     >
                       {/* Macro Thumbnail Preview */}
                       <img 
                         src={itemData.image} 
                         alt={item.shortName} 
-                        className="w-12 h-12 rounded-xl object-cover border border-white/15 shrink-0 group-hover:scale-105 transition-transform"
+                        className="w-12 h-12 rounded-xl object-cover border border-slate-200 dark:border-white/15 shrink-0 group-hover:scale-105 transition-transform"
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1 mb-0.5">
-                          <span className="text-xs font-bold text-white group-hover:text-rose-300 truncate">
+                          <span className="text-xs font-bold text-slate-900 group-hover:text-rose-600 dark:text-white dark:group-hover:text-rose-300 truncate">
                             {item.shortName}
                           </span>
-                          <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md border font-semibold shrink-0 ${itemData.riskColor}`}>
+                          <span className={`text-[10px] font-mono px-1.5 py-0.2 rounded-md border font-bold shrink-0 ${
+                            itemData.riskLevel === 'Khẩn cấp'
+                              ? 'text-rose-700 bg-rose-50 border-rose-200 dark:text-rose-400 dark:bg-rose-500/10 dark:border-rose-500/20'
+                              : 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/20'
+                          }`}>
                             {itemData.riskLevel}
                           </span>
                         </div>
-                        <p className="text-[11px] text-slate-400 leading-snug line-clamp-2">
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-snug line-clamp-2">
                           {item.summary}
                         </p>
                       </div>
@@ -722,52 +598,52 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
         {/* ================================================================= */}
         {/* CỘT PHẢI: BẢNG KẾT QUẢ CHẨN ĐOÁN BỆNH LÝ & TỔN THƯƠNG THỰC THỂ    */}
         {/* ================================================================= */}
-        <div className="bg-slate-900/60 backdrop-blur-2xl rounded-3xl p-6 border border-white/10 shadow-2xl text-slate-100 flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#12192A] backdrop-blur-2xl rounded-3xl p-6 border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] dark:shadow-2xl text-slate-800 dark:text-slate-100 flex flex-col justify-between">
           <div className="space-y-4">
             {/* Header kết quả */}
-            <div className="flex items-center justify-between pb-3 border-b border-white/10">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
               <div className="flex items-center gap-2">
-                <Microscope className="w-5 h-5 text-rose-400" />
+                <Microscope className="w-5 h-5 text-rose-500" />
                 <div>
-                  <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                  <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                     Hồ Sơ Chẩn Đoán Bệnh Lý Lâm Sàng
                   </h3>
-                  <span className="text-[10px] text-slate-400">
-                    Bệnh nhân: <strong className="text-cyan-300">{currentPet.name}</strong>
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                    Bệnh nhân: <strong className="text-cyan-700 dark:text-cyan-300">{currentPet.name}</strong>
                   </span>
                 </div>
               </div>
 
               {hasScanned && scanResult && (
                 <div className="flex items-center gap-2">
-                  <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-500/20 border border-rose-500/30 text-rose-300 flex items-center gap-1 font-mono">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-rose-400" />
+                  <span className="px-3 py-1 rounded-full text-xs font-black bg-rose-50 border border-rose-200 text-rose-700 dark:bg-rose-500/20 dark:border-rose-500/30 dark:text-rose-300 flex items-center gap-1 font-mono shadow-xs">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-rose-500" />
                     <span>Độ tin cậy: {scanResult.confidence}%</span>
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Lưu ý y khoa bắt buộc */}
-            <div className="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-2.5 shadow-sm text-rose-200">
-              <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            {/* Thẻ khuyến cáo lâm sàng / Lưu ý y khoa bắt buộc */}
+            <div className="p-3.5 rounded-2xl bg-rose-50/80 border border-rose-200/80 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200 flex items-start gap-2.5 shadow-xs">
+              <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
               <p className="text-xs leading-relaxed">
-                <strong className="font-bold text-rose-300 mr-1">Cảnh báo y khoa:</strong>
+                <strong className="font-bold text-rose-950 dark:text-rose-300 mr-1">Cảnh báo y khoa:</strong>
                 Chẩn đoán quang học AI giúp sàng lọc nhanh tổn thương thực thể. Cần kết hợp cạo sâu biểu bì soi tươi hoặc đèn Wood tại phòng khám thú y để quyết định phác đồ điều trị chính xác.
               </p>
             </div>
 
             {/* EMPTY STATE: Chưa quét */}
             {!hasScanned || !scanResult ? (
-              <div className="py-14 text-center text-slate-400 space-y-4 my-auto">
-                <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center mx-auto text-rose-400 shadow-lg shadow-rose-500/10">
+              <div className="py-14 text-center text-slate-500 dark:text-slate-400 space-y-4 my-auto">
+                <div className="w-16 h-16 rounded-2xl bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 flex items-center justify-center mx-auto text-rose-600 dark:text-rose-400 shadow-sm">
                   <Microscope className="w-8 h-8 opacity-80" />
                 </div>
                 <div className="space-y-1.5">
-                  <h4 className="text-sm font-bold text-white">
+                  <h4 className="text-sm font-bold text-slate-900 dark:text-white">
                     Chưa có kết quả chẩn đoán y khoa
                   </h4>
-                  <p className="text-xs max-w-sm mx-auto text-slate-400 leading-relaxed">
+                  <p className="text-xs max-w-sm mx-auto text-slate-500 dark:text-slate-400 leading-relaxed">
                     {selectedImage 
                       ? 'Ảnh tổn thương đã được nạp vào kính soi quang học. Hãy nhấn nút "Bắt Đầu Quét AI" để phân tích vi tổn thương.'
                       : 'Vui lòng nạp ảnh chụp cận cảnh vùng da tổn thương (mẩn đỏ, rụng lông, mụn mủ) hoặc chọn 1 ca bệnh mẫu, sau đó bấm "Bắt Đầu Quét AI" để nhận diện bệnh lý, mức độ rủi ro và phác đồ sơ cứu ban đầu.'
@@ -790,31 +666,35 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
               /* ĐÃ CÓ KẾT QUẢ CHẨN ĐOÁN SAU KHI QUÉT */
               <div className="space-y-3.5 text-xs leading-relaxed animate-in fade-in duration-300">
                 {/* Khối 1: Tên bệnh lý & Phân loại & Mức độ rủi ro */}
-                <div className="p-4 rounded-2xl bg-slate-950/70 border border-white/10 space-y-2">
+                <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/70 border border-slate-200/80 dark:border-white/10 space-y-2">
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Bệnh lý da liễu xác định:
                     </span>
-                    <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full border ${scanResult.riskColor}`}>
+                    <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
+                      scanResult.riskLevel === 'Khẩn cấp'
+                        ? 'text-rose-700 bg-rose-50 border-rose-200 dark:text-rose-400 dark:bg-rose-500/10 dark:border-rose-500/20'
+                        : 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-500/10 dark:border-amber-500/20'
+                    }`}>
                       Mức độ rủi ro: {scanResult.riskLevel}
                     </span>
                   </div>
-                  <h4 className="text-base sm:text-lg font-black text-white leading-snug">
+                  <h4 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-snug">
                     {scanResult.name}
                   </h4>
-                  <div className="flex items-center gap-2 text-[11px] text-cyan-300 font-semibold">
-                    <Info className="w-3.5 h-3.5 text-cyan-400" />
+                  <div className="flex items-center gap-2 text-[11px] text-cyan-700 dark:text-cyan-300 font-semibold">
+                    <Info className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
                     <span>Nhóm bệnh học: {scanResult.category}</span>
                   </div>
                 </div>
 
                 {/* Khối 2: Triệu chứng lâm sàng quan sát được (Symptoms) */}
-                <div className="p-4 rounded-2xl bg-slate-950/60 border border-white/5 space-y-2">
-                  <div className="flex items-center gap-2 text-rose-300 font-bold text-xs">
-                    <Activity className="w-4 h-4 text-rose-400 shrink-0" />
+                <div className="p-4 rounded-2xl bg-rose-50/50 dark:bg-slate-950/60 border border-rose-100 dark:border-white/5 space-y-2">
+                  <div className="flex items-center gap-2 text-rose-900 dark:text-rose-300 font-bold text-xs">
+                    <Activity className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
                     <span>Triệu chứng lâm sàng điển hình quan sát được:</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-slate-300 pl-6 list-disc">
+                  <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 pl-6 list-disc">
                     {scanResult.symptoms?.map((symptom, idx) => (
                       <li key={idx} className="leading-relaxed">
                         {symptom}
@@ -824,12 +704,12 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
                 </div>
 
                 {/* Khối 3: Khuyến cáo sơ cứu ban đầu (First Aid) */}
-                <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/25 space-y-2">
-                  <div className="flex items-center gap-2 text-indigo-300 font-bold text-xs">
-                    <Bandage className="w-4 h-4 text-indigo-400 shrink-0" />
+                <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-500/25 space-y-2">
+                  <div className="flex items-center gap-2 text-indigo-900 dark:text-indigo-300 font-bold text-xs">
+                    <Bandage className="w-4 h-4 text-indigo-600 dark:text-indigo-400 shrink-0" />
                     <span>Khuyến cáo sơ cứu ban đầu tại nhà:</span>
                   </div>
-                  <ul className="space-y-1.5 text-xs text-slate-300 pl-6 list-disc">
+                  <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 pl-6 list-disc">
                     {scanResult.firstAid?.map((aid, idx) => (
                       <li key={idx} className="leading-relaxed">
                         {aid}
@@ -839,12 +719,12 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
                 </div>
 
                 {/* Khối 4: Lời khuyên & Chỉ định Bác sĩ Thú y (Clinical Advice) */}
-                <div className="p-3.5 rounded-2xl bg-amber-950/30 border border-amber-500/25 space-y-1.5">
-                  <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
-                    <ShieldCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                <div className="p-3.5 rounded-2xl bg-amber-50/60 dark:bg-amber-950/30 border border-amber-200/80 dark:border-amber-500/25 space-y-1.5">
+                  <div className="flex items-center gap-2 text-amber-900 dark:text-amber-300 font-bold text-xs">
+                    <ShieldCheck className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
                     <span>Chỉ định & Lời khuyên Bác sĩ Thú y:</span>
                   </div>
-                  <p className="text-xs text-amber-100/90 leading-relaxed pl-6 italic">
+                  <p className="text-xs text-amber-950 dark:text-amber-100/90 leading-relaxed pl-6 italic">
                     "{scanResult.clinicalAdvice}"
                   </p>
                 </div>
@@ -852,9 +732,9 @@ Trả về DUY NHẤT một chuỗi JSON thuần (không kèm markdown) theo đ�
             )}
           </div>
 
-          {/* Nút hành động nổi bật: [ 🩺 Đặt Lịch Khám Da Liễu Ngay ] (Chỉ hiển thị khi đã có kết quả quét) */}
+          {/* Nút hành động nổi bật: [ 🩺 Đặt Lịch Khám Da Liễu Ngay ] */}
           {hasScanned && scanResult && (
-            <div className="pt-4 border-t border-white/10 mt-4 flex flex-col gap-2.5">
+            <div className="pt-4 border-t border-slate-100 dark:border-white/10 mt-4 flex flex-col gap-2.5">
               <button
                 type="button"
                 onClick={() => {

@@ -9,7 +9,7 @@ export const INITIAL_PETS = [
     birthDate: '2023-08-15',
     weight: 24.5, // kg
     color: 'Vàng kem',
-    microchip: 'VN-9820003412',
+    microchip: '98200036412',
     isNeutered: true,
     avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=600&q=80',
     notes: 'Rất thích bơi, hơi nhát tiếng sấm sét. Dị ứng nhẹ với thịt bò.',
@@ -49,7 +49,7 @@ export const INITIAL_PETS = [
     birthDate: '2024-11-05',
     weight: 1.6, // kg
     color: 'Trắng đốm nâu',
-    microchip: '',
+    microchip: 'VN-9820001905',
     isNeutered: false,
     avatar: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=600&q=80',
     notes: 'Rất háu ăn cỏ Timothy, cần chải lông tơ 2 ngày/lần.',
@@ -60,6 +60,144 @@ export const INITIAL_PETS = [
     ]
   }
 ];
+
+// Cơ sở dữ liệu Vắc-xin chuẩn y khoa theo từng cá thể & loài thú cưng
+export const petVaccineDatabase = {
+  mochi: {
+    id: 'mochi',
+    name: 'Mochi',
+    species: 'Golden Retriever',
+    microchip: '98200036412',
+    stats: { completed: 3, nextDue: '18/01/2027', dewormCount: 2 },
+    vaccines: [
+      { name: 'Nobivac DHPPi + L4 (7 Bệnh)', lot: 'NV-2026-8892', date: '10/05/2026', nextDue: '18/01/2027', remainingDays: 106, vet: 'BS. Nam - CCHN-0981' },
+      { name: 'Rabisin (Vắc-xin Dại Quốc Tế)', lot: 'RB-2026-4412', date: '15/04/2026', nextDue: '15/04/2027', remainingDays: 193, vet: 'BS. Trần Thị Mai - CCHN-1204' },
+      { name: 'Bordetella Bronchiseptica (Ho cũi chó)', lot: 'KC-2026-1102', date: '20/09/2026', nextDue: '20/09/2027', remainingDays: 351, vet: 'BS. Nam - CCHN-0981' }
+    ]
+  },
+  luna: {
+    id: 'luna',
+    name: 'Luna',
+    species: 'Mèo Anh Lông Ngắn (BSH)',
+    microchip: 'VN-9820008871',
+    stats: { completed: 2, nextDue: '12/03/2027', dewormCount: 3 },
+    vaccines: [
+      { name: 'Purevax RCPCh (Vắc-xin 4 Bệnh Mèo)', lot: 'PV-2026-3391', date: '12/03/2026', nextDue: '12/03/2027', remainingDays: 159, vet: 'BS. Trần Thị Mai - CCHN-1204' },
+      { name: 'Rabisin (Phòng Dại Cho Mèo)', lot: 'RB-2026-9021', date: '15/04/2026', nextDue: '15/04/2027', remainingDays: 193, vet: 'BS. Nam - CCHN-0981' }
+    ]
+  },
+  banhbao: {
+    id: 'banhbao',
+    name: 'Bánh Bao',
+    species: 'Thỏ Minilop',
+    microchip: 'VN-9820001905',
+    stats: { completed: 1, nextDue: '05/11/2026', dewormCount: 1 },
+    vaccines: [
+      { name: 'Filavac VHD K C+V (Bại huyết Thỏ RHDV1 & RHDV2)', lot: 'FL-2026-0418', date: '05/11/2025', nextDue: '05/11/2026', remainingDays: 32, vet: 'BS. Nam - CCHN-0981' }
+    ]
+  }
+};
+
+// Dữ liệu tẩy giun & ký sinh trùng chuẩn y khoa cho từng loài
+export const petDewormDatabase = {
+  mochi: [
+    {
+      id: 'deworm-m-1',
+      title: 'Drontal Plus Flavour',
+      diseaseDesc: 'Tẩy sán dây, giun tròn, giun móc, giun tóc đường ruột',
+      batchNumber: 'DT-2026-0988',
+      date: '01/08/2026',
+      nextDueDate: '01/11/2026',
+      doctor: 'BS. Lê Minh Hoàng (Khoa Dược)',
+      facility: 'Phòng khám PetCare Chi nhánh 1',
+      completed: true,
+      repeat: '3 tháng/lần',
+      notes: 'Uống sau ăn no, đường ruột sạch, thể trạng ổn định.'
+    },
+    {
+      id: 'deworm-m-2',
+      title: 'NexGard Spectra 15-30kg',
+      diseaseDesc: 'Dự phòng giun tim, tẩy giun phổi & phòng diệt ve rận, ghẻ demodex',
+      batchNumber: 'NX-2027-5501',
+      date: '01/09/2026',
+      nextDueDate: '01/10/2026',
+      doctor: 'Dược sĩ Thú y Khoa Dược',
+      facility: 'Hệ thống PetCare Hub',
+      completed: true,
+      repeat: '1 tháng/lần',
+      notes: 'Viên nhai vị bò thơm ngon, dự phòng ngoại ký sinh trùng tuyệt đối.'
+    }
+  ],
+  luna: [
+    {
+      id: 'deworm-l-1',
+      title: 'Broadline Spot-on (Cho mèo 2.5 - 7.5kg)',
+      diseaseDesc: 'Nhỏ gáy phòng trị ve rận, bọ chét, giun tim & sán dây cho mèo',
+      batchNumber: 'BL-2026-1190',
+      date: '15/08/2026',
+      nextDueDate: '15/09/2026',
+      doctor: 'BS. Trần Thị Mai - CCHN-1204',
+      facility: 'Bệnh Viện Thú Y PetCare Central',
+      completed: true,
+      repeat: '1 tháng/lần',
+      notes: 'Nhỏ gáy tại nhà, lông khô sạch, không kích ứng da.'
+    },
+    {
+      id: 'deworm-l-2',
+      title: 'Revolution Plus (Mèo 2.5 - 5kg)',
+      diseaseDesc: 'Phòng ngừa giun tim, ghẻ tai, diệt ve rận và bọ chét chuyên biệt mèo',
+      batchNumber: 'RP-2026-4421',
+      date: '15/07/2026',
+      nextDueDate: '15/08/2026',
+      doctor: 'BS. Lê Minh Hoàng (Khoa Dược)',
+      facility: 'Hệ thống PetCare Hub',
+      completed: true,
+      repeat: '1 tháng/lần',
+      notes: 'Bảo vệ ngoại ký sinh và giun chỉ toàn diện.'
+    },
+    {
+      id: 'deworm-l-3',
+      title: 'Milbemax Chewable Cat',
+      diseaseDesc: 'Viên nhai tẩy giun tròn, giun móc và sán dây nội tạng cho mèo',
+      batchNumber: 'MB-2026-0032',
+      date: '12/03/2026',
+      nextDueDate: '12/06/2026',
+      doctor: 'BS. Nam - CCHN-0981',
+      facility: 'Phòng khám PetCare Chi nhánh 1',
+      completed: true,
+      repeat: '3 tháng/lần',
+      notes: 'Tẩy giun nội tạng định kỳ, tiêu hóa ổn định.'
+    }
+  ],
+  banhbao: [
+    {
+      id: 'deworm-b-1',
+      title: 'Panacur Rabbit Oral Paste (Fenbendazole)',
+      diseaseDesc: 'Gel uống phòng ngừa ký sinh trùng nội tạng và vi bào tử trùng E. Cuniculi ở thỏ',
+      batchNumber: 'PC-2026-7819',
+      date: '05/08/2026',
+      nextDueDate: '05/02/2027',
+      doctor: 'BS. Nam - CCHN-0981',
+      facility: 'Bệnh Viện Thú Y PetCare Central',
+      completed: true,
+      repeat: '6 tháng/lần',
+      notes: 'Uống trực tiếp hoặc trộn cỏ Timothy, đường ruột khỏe mạnh.'
+    }
+  ]
+};
+
+// Helper nhận dạng khóa của thú cưng: mochi | luna | banhbao
+export const getPetKey = (pet) => {
+  if (!pet) return 'mochi';
+  const name = (pet.name || '').toLowerCase();
+  const id = (pet.id || '').toLowerCase();
+  if (name.includes('mochi') || id === 'mochi' || id === 'pet-1') return 'mochi';
+  if (name.includes('luna') || id === 'luna' || id === 'pet-2') return 'luna';
+  if (name.includes('bánh bao') || name.includes('banh bao') || id === 'banhbao' || id === 'pet-3') return 'banhbao';
+  if (pet.species === 'cat' || pet.species === 'mèo') return 'luna';
+  if (pet.species === 'rabbit' || pet.species === 'thỏ') return 'banhbao';
+  return 'mochi';
+};
 
 // Helper tính ngày linh động tương đối theo hôm nay
 const getOffsetDate = (days) => {
@@ -435,7 +573,9 @@ export const INITIAL_DAILY_HABITS = [
     id: 'habit-1',
     petId: 'pet-1',
     title: 'Cho Mochi ăn hạt bữa sáng (180g)',
-    timeOfDay: 'morning', // morning | afternoon | evening
+    timeSlot: 'morning',
+    timeOfDay: 'morning',
+    scheduledTime: '07:00',
     completed: true,
     completedBy: 'Nguyễn Văn Hải (Bố)',
     completedAt: '07:15',
@@ -444,38 +584,58 @@ export const INITIAL_DAILY_HABITS = [
   {
     id: 'habit-2',
     petId: 'pet-1',
-    title: 'Đi dạo công viên & ném bóng 30 phút',
-    timeOfDay: 'afternoon',
-    completed: false,
-    completedBy: null,
-    completedAt: null,
+    title: 'Đi dạo công viên & ném bóng 30p',
+    timeSlot: 'noon',
+    timeOfDay: 'noon',
+    scheduledTime: '08:30',
+    completed: true,
+    completedBy: 'Nguyễn Văn Hải (Bố)',
+    completedAt: '08:45',
     streak: 12
+  },
+  {
+    id: 'habit-4',
+    petId: 'pet-2',
+    title: 'Thay nước & cho Luna ăn Pate Ciao',
+    timeSlot: 'morning',
+    timeOfDay: 'morning',
+    scheduledTime: '08:45',
+    completed: true,
+    completedBy: 'Trần Thu Trang (Mẹ)',
+    completedAt: '09:00',
+    streak: 21
+  },
+  {
+    id: 'habit-6',
+    petId: 'pet-3',
+    title: 'Châm cỏ Timothy & làm sạch bình bi (Bánh Bao)',
+    timeSlot: 'morning',
+    timeOfDay: 'morning',
+    scheduledTime: '10:00',
+    completed: true,
+    completedBy: 'Bé Minh (Con trai)',
+    completedAt: '10:15',
+    streak: 15
   },
   {
     id: 'habit-3',
     petId: 'pet-1',
     title: 'Cho uống men tiêu hóa Biotic sau bữa tối',
+    timeSlot: 'evening',
     timeOfDay: 'evening',
+    scheduledTime: '20:00',
     completed: false,
     completedBy: null,
     completedAt: null,
     streak: 9
   },
   {
-    id: 'habit-4',
-    petId: 'pet-2',
-    title: 'Thay nước đài phun & cho Luna ăn 1 gói Pate Ciao',
-    timeOfDay: 'morning',
-    completed: true,
-    completedBy: 'Trần Thu Trang (Mẹ)',
-    completedAt: '08:00',
-    streak: 21
-  },
-  {
     id: 'habit-5',
     petId: 'pet-2',
     title: 'Dọn và sàng cát vệ sinh cho Luna',
+    timeSlot: 'evening',
     timeOfDay: 'evening',
+    scheduledTime: '20:30',
     completed: false,
     completedBy: null,
     completedAt: null,

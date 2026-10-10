@@ -16,14 +16,7 @@ export default function OmniChannelAlertModal({ isOpen, onClose, schedules = [],
   if (!isOpen) return null;
 
   // Lịch hẹn mẫu sắp tới để gửi test
-  const sampleSchedule = schedules[0] || {
-    id: 'test-1',
-    title: 'Uống thuốc NexGard trị ve rận định kỳ',
-    petName: 'Milo',
-    date: '2026-09-21',
-    time: '20:00',
-    type: 'treatment'
-  };
+  const sampleSchedule = schedules[0] || null;
 
   const handleDownloadICS = () => {
     sound.playSuccess();
@@ -262,12 +255,20 @@ export default function OmniChannelAlertModal({ isOpen, onClose, schedules = [],
                 <span>Vừa xong</span>
               </div>
               
-              <div className="font-bold text-white text-sm">
-                🚨 Đến giờ: {sampleSchedule.title}
-              </div>
-              <p className="text-slate-300 text-xs">
-                Bé <strong>{sampleSchedule.petName || 'Milo'}</strong> cần dùng thuốc/tiêm chủng đúng giờ theo phác đồ thú y.
-              </p>
+              {sampleSchedule ? (
+                <>
+                  <div className="font-bold text-white text-sm">
+                    🚨 Đến giờ: {sampleSchedule.title}
+                  </div>
+                  <p className="text-slate-300 text-xs">
+                    Bé <strong>{sampleSchedule.petName || 'Thú cưng'}</strong> cần dùng thuốc/tiêm chủng đúng giờ theo phác đồ thú y.
+                  </p>
+                </>
+              ) : (
+                <div className="font-bold text-slate-400 text-sm italic">
+                  Chưa có lịch trình nhắc nhở nào.
+                </div>
+              )}
 
               {/* Status after action */}
               {simulatedStatus === 'done' && (
@@ -277,7 +278,7 @@ export default function OmniChannelAlertModal({ isOpen, onClose, schedules = [],
                 </div>
               )}
 
-              {simulatedStatus === 'snoozed' && (
+              {simulatedStatus === 'snoozed' && sampleSchedule && (
                 <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 font-semibold text-center text-xs flex items-center justify-center gap-1.5 animate-in zoom-in-95">
                   <Clock className="w-4 h-4" />
                   Đã hoãn lại 1 tiếng! Hệ thống sẽ re-alert lúc {(parseInt(sampleSchedule.time || '09') + 1)}:00.

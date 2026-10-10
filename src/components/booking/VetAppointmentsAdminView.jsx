@@ -85,7 +85,7 @@ export const VetAppointmentsAdminView = ({
     onUpdateAppointment(appointment.id, {
       status: 'Đã duyệt',
       assignedVet: appointment.assignedVet === 'Đang xếp lịch' ? 'BS. Dr. Paw (AI)' : appointment.assignedVet,
-      adminNote: appointment.adminNote || 'Phòng khám đã xác nhận lịch hẹn.'
+      adminNote: appointment.adminNote || ''
     });
   };
 
@@ -94,7 +94,7 @@ export const VetAppointmentsAdminView = ({
     try { sound.playClick(); } catch (_) {}
     onUpdateAppointment(appointment.id, {
       status: 'Đang khám',
-      adminNote: 'Bé đang được Bác sĩ kiểm tra lâm sàng tại phòng khám.'
+      adminNote: appointment.adminNote || ''
     });
   };
 
@@ -103,7 +103,7 @@ export const VetAppointmentsAdminView = ({
     try { sound.playSuccess(); } catch (_) {}
     onUpdateAppointment(appointment.id, {
       status: 'Hoàn thành',
-      adminNote: 'Ca khám đã hoàn tất. Đã cấp y bạ và hướng dẫn điều trị.'
+      adminNote: appointment.adminNote || ''
     });
   };
 
@@ -128,7 +128,7 @@ export const VetAppointmentsAdminView = ({
   const handleOpenReschedule = (appointment) => {
     try { sound.playPop(); } catch (_) {}
     setRescheduleItem(appointment);
-    setRescheduleNote(appointment.adminNote || 'Slot giờ đã kín, đề xuất dời sang 15:30');
+    setRescheduleNote(appointment.adminNote || '');
     setNewTimeSlot(appointment.time || '15:30');
   };
 
@@ -138,7 +138,7 @@ export const VetAppointmentsAdminView = ({
     onUpdateAppointment(rescheduleItem.id, {
       status: isRejected ? 'Đã hủy' : 'Đã đổi giờ',
       time: isRejected ? rescheduleItem.time : (newTimeSlot || rescheduleItem.time),
-      adminNote: rescheduleNote.trim() || (isRejected ? 'Phòng khám xin phép hủy do lịch đã quá tải.' : 'Phòng khám đề xuất đổi khung giờ.')
+      adminNote: rescheduleNote.trim() || ''
     });
     setRescheduleItem(null);
   };

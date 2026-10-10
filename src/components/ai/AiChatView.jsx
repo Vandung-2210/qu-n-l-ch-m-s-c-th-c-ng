@@ -27,9 +27,7 @@ import {
 import { smartSimulatedAiConsultation } from '../../services/aiService';
 import { sound } from '../../services/soundService';
 
-// Cấu hình lấy API Key tự động từ file môi trường (.env)
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
-const isValidApiKey = (key) => Boolean(key && key.trim().length > 10 && key !== 'your_actual_gemini_api_key_here');
+// Bộ xử lý hội thoại Dr. Paw dựa trên Cơ sở tri thức y khoa cục bộ (Local Knowledge Base)
 
 // =========================================================================
 // GỢI Ý HỎI NHANH ĐỘNG THEO TỪNG LOÀI
@@ -173,7 +171,10 @@ const SUGGESTED_CARDS_DATABASE = {
 // Hàm tự động nhận diện thẻ gợi ý phù hợp với ngữ cảnh hội thoại
 const detectSuggestedCards = (text) => {
   const lower = (text || '').toLowerCase();
-  if (lower.includes('socola') || lower.includes('ngộ độc') || lower.includes('hành') || lower.includes('cấp cứu') || lower.includes('nguy hiểm') || lower.includes('khẩn cấp') || lower.includes('nuốt')) {
+  // Tránh nhận diện nhầm "hành vi" thành "hành" gây cảnh báo ngộ độc sai
+  const hasOnionToxicity = /(?:^|\s|[.,!?;])(hành|củ hành|hành tây|hành lá)(?:$|\s|[.,!?;])/i.test(lower) && !lower.includes('hành vi');
+
+  if (lower.includes('socola') || lower.includes('ngộ độc') || hasOnionToxicity || lower.includes('cấp cứu') || lower.includes('nguy hiểm') || lower.includes('khẩn cấp') || lower.includes('nuốt')) {
     return SUGGESTED_CARDS_DATABASE.emergency;
   }
   if (lower.includes('nôn') || lower.includes('tiêu chảy') || lower.includes('bỏ ăn') || lower.includes('dạ dày') || lower.includes('phân') || lower.includes('ruột') || lower.includes('bụng')) {
@@ -719,40 +720,19 @@ const getOutOfScopeResponse = (userMessage, selectedPet) => {
     if (topic9) return topic9.getResponse(selectedPet);
   }
 
-  const petName = selectedPet?.name || 'Mochi';
-  const petSpecies = selectedPet?.species === 'cat' 
-    ? 'mèo' 
-    : selectedPet?.species === 'rabbit' 
-    ? 'thỏ' 
-    : 'chó';
-  const petBreed = selectedPet?.breed || (
-    selectedPet?.species === 'cat' 
-      ? 'Anh Lông Ngắn' 
-      : selectedPet?.species === 'rabbit' 
-      ? 'Minilop' 
-      : 'Golden Retriever'
-  );
-  const petWeight = selectedPet?.weight ? `${selectedPet.weight} kg` : '24.5 kg';
-  const petNotes = selectedPet?.notes || 'Dị ứng nhẹ với thịt bò, hơi nhát tiếng sấm sét.';
+  const petName = selectedPet?.name || 'thú cưng';
 
-  return `### 🩺 BÁC SĨ DR. PAW AI • HƯỚNG DẪN THEO DÕI THỂ TRẠNG TẠI NHÀ
+  return `### ℹ️ THÔNG BÁO TỪ TRỢ LÝ TƯ VẤN DR. PAW
 
-Chào bạn! Mình là **Dr. Paw AI** - Bác sĩ Thú y thường trực của hệ thống **PetCare PRO AI**. Mình đã tiếp nhận câu hỏi của bạn và đồng bộ hồ sơ bệnh án của bé:
-- 🐾 **Bệnh nhân:** Bé **${petName}** (${petSpecies} giống **${petBreed}**, cân nặng **${petWeight}**)
-- ⚠️ **Tiền sử & Dị ứng:** *${petNotes}*
+Hệ thống tư vấn hiện tại chưa tìm thấy thông tin y khoa hoặc phác đồ điều trị khớp với câu hỏi: *"**${userMessage}**"* dành cho bé **${petName}**.
+
+> **Lưu ý:** Trợ lý Dr. Paw hoạt động dựa trên bộ cơ sở tri thức thú y cục bộ tra cứu theo từ khóa, không phải mô hình AI học sâu và không thay thế chẩn đoán lâm sàng trực tiếp của bác sĩ thú y.
 
 ---
 
-#### 1. 🔍 Nhận Định Thể Trạng Ban Đầu:
-Về câu hỏi: *"**${userMessage}**"*, đối với thể trạng của giống **${petBreed}** nặng **${petWeight}**, Dr. Paw hướng dẫn bạn các bước theo dõi sát sao tại nhà:
-- **Theo dõi biểu hiện hành vi:** Quan sát mức độ lanh lợi, mắt có trong sáng không, có biểu hiện né tránh ánh sáng hoặc ủ rũ nằm một chỗ không.
-- **Kiểm tra niêm mạc & thân nhiệt:** Vạch nhẹ nướu răng kiểm tra màu sắc (hồng hào tự nhiên là bình thường; nếu tái nhợt, đỏ bầm hoặc vàng mắt cần cảnh giác). Thân nhiệt chuẩn ở chó mèo từ **38.0°C - 39.2°C**.
-- **Chế độ ăn uống:** Cung cấp nước sạch từng ngụm nhỏ, không ép ăn khi bụng đang khó chịu. Lưu ý tuyệt đối không cho ăn thực phẩm chứa **thịt bò** hoặc gia vị lạ đối với cơ địa của ${petName}.
-- **Cảnh báo an toàn y tế:** Tuyệt đối không tự ý dùng các loại thuốc hạ sốt, giảm đau của người (*như Paracetamol, Aspirin, Ibuprofen*) vì gây suy gan thận cấp tính dẫn tới tử vong.
-
-#### 2. 📋 Đề Xuất Kế Hoạch Chăm Sóc:
-- Bạn hãy ghi chú lại diễn biến triệu chứng vào mục **Daily Log** của ứng dụng.
-- Nếu bé có bất kỳ dấu hiệu báo động đỏ như nôn mửa liên tục, bỏ ăn quá 24h, co giật hoặc thở dốc, hãy liên hệ ngay bác sĩ thú y hoặc Hotline cấp cứu **1900 6868** để được can thiệp kịp thời bạn nhé!`;
+#### 📋 Khuyến Nghị:
+1. Hãy mô tả chi tiết hơn hoặc thử các từ khóa triệu chứng cụ thể (ví dụ: *nôn mửa, tiêu chảy, bỏ ăn, ngộ độc socola, ve rận, lịch tiêm phòng...*).
+2. Nếu bé đang có các biểu hiện bất thường hoặc nguy cấp, vui lòng đưa bé đến cơ sở thú y gần nhất hoặc gọi Hotline cấp cứu **1900 6868** để được thăm khám kịp thời!`;
 };
 
 // =========================================================================
@@ -1157,84 +1137,13 @@ Bạn đang lo lắng triệu chứng gì về **${selectedPet ? selectedPet.nam
     return getOutOfScopeResponse(userMessage, selectedPet);
   };
 
-  // 3. CHUẨN HÓA HÀM GỌI API GEMINI (LẤY TỰ ĐỘNG TỪ .ENV)
-  const callGeminiChatApi = async (userMessage) => {
-    const key = isValidApiKey(API_KEY)
-      ? API_KEY.trim()
-      : ((typeof window !== 'undefined' ? (localStorage.getItem('petcare_gemini_api_key') || localStorage.getItem('gemini_api_key')) : '') || '');
-
-    if (!isValidApiKey(key)) {
-      // Dùng fallback nội bộ nếu chưa có key hợp lệ
-      return getLocalKnowledgeResponse(userMessage);
-    }
-
-    // Sử dụng model siêu tốc gemini-2.0-flash (kèm fallback gemini-1.5-flash)
-    const endpoints = [
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`
-    ];
-
-    const petName = selectedPet?.name ? `${selectedPet.name} (${selectedPet.species === 'cat' ? 'Mèo' : selectedPet.species === 'rabbit' ? 'Thỏ' : 'Chó'} ${selectedPet.breed || 'Golden Retriever'}, ${selectedPet.weight || '24.5'} kg)` : 'Mochi (Chó Golden Retriever, 24.5 kg)';
-    const petNotes = selectedPet?.notes || 'Rất thích bơi, hơi nhát sấm sét. Dị ứng nhẹ với thịt bò.';
-
-    const requestBody = JSON.stringify({
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: `Bạn là Dr. Paw - Bác sĩ Thú y AI chuyên nghiệp của hệ thống PetCare PRO AI.
-Hồ sơ bệnh nhân hiện tại:
-- Tên: ${petName}
-- Tiền sử & dị ứng: ${petNotes}
-Yêu cầu: Trả lời câu hỏi sau bằng tiếng Việt thật chi tiết, có phân mục emoji rõ ràng, đưa ra định lượng cụ thể, loại trừ thực phẩm dị ứng:
-"${userMessage}"`
-            }
-          ]
-        }
-      ]
-    });
-
-    let lastError = null;
-    for (const url of endpoints) {
-      try {
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: requestBody
-        });
-
-        if (!response.ok) {
-          let errData = {};
-          try { errData = await response.json(); } catch (_) {}
-          if (response.status === 404) {
-            continue; // Thử endpoint kế tiếp
-          }
-          throw new Error(errData.error?.message || `HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        const replyText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (replyText) return replyText;
-      } catch (err) {
-        lastError = err;
-        if (err.message?.includes('404')) continue;
-        throw err;
-      }
-    }
-
-    throw lastError || new Error('Không thể kết nối đến máy chủ Gemini.');
-  };
-
   const handleSendMessage = async (customText = null) => {
     const userMessage = (customText || inputMessage).trim();
     if (!userMessage || isLoading) return;
 
     try { sound.playPop(); } catch (_) {}
 
-    // Thêm ngay tin nhắn người dùng
+    // Thêm tin nhắn người dùng
     const userMsg = {
       id: `user-${Date.now()}`,
       sender: 'user',
@@ -1247,13 +1156,13 @@ Yêu cầu: Trả lời câu hỏi sau bằng tiếng Việt thật chi tiết, 
     setIsLoading(true);
 
     // =========================================================================
-    // BƯỚC 1: KIỂM TRA KHỚP TỪ KHÓA TRONG BỘ CƠ SỞ TRI THỨC NỘI BỘ (9 CHỦ ĐỀ CHUẨN)
+    // XỬ LÝ HOÀN TOÀN CỤC BỘ QUA BỘ CƠ SỞ TRI THỨC Y KHOA NỘI TẠI DR. PAW
     // =========================================================================
     const kbMatch = findKnowledgeBaseMatch(userMessage, selectedPet);
-    if (kbMatch) {
-      // Nếu tìm thấy chủ đề phù hợp: Trả về câu trả lời chi tiết có icon và in đậm markdown ngay tức thì
-      setTimeout(() => {
-        try { sound.playSuccess(); } catch (_) {}
+    setTimeout(() => {
+      try { sound.playSuccess(); } catch (_) {}
+
+      if (kbMatch) {
         setMessages(prev => [
           ...prev,
           {
@@ -1265,22 +1174,7 @@ Yêu cầu: Trả lời câu hỏi sau bằng tiếng Việt thật chi tiết, 
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
         ]);
-        setIsLoading(false);
-      }, 350);
-      return;
-    }
-
-    // =========================================================================
-    // BƯỚC 2: CÂU HỎI NGOÀI 9 CHỦ ĐỀ - KIỂM TRA API KEY GEMINI (.ENV)
-    // =========================================================================
-    const activeKey = isValidApiKey(API_KEY)
-      ? API_KEY.trim()
-      : ((typeof window !== 'undefined' ? (localStorage.getItem('petcare_gemini_api_key') || localStorage.getItem('gemini_api_key')) : '') || '');
-
-    // NẾU CHƯA CÓ API KEY HOẶC KEY MẪU: Phản hồi tự động bằng Bác sĩ Thú y AI nội tại (Smart Mock Vet Advisor)
-    if (!isValidApiKey(activeKey)) {
-      setTimeout(() => {
-        try { sound.playSuccess(); } catch (_) {}
+      } else {
         const outOfScopeText = getOutOfScopeResponse(userMessage, selectedPet);
         const matchingCards = detectSuggestedCards(userMessage);
 
@@ -1295,57 +1189,10 @@ Yêu cầu: Trả lời câu hỏi sau bằng tiếng Việt thật chi tiết, 
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           }
         ]);
-        setIsLoading(false);
-      }, 380);
-      return;
-    }
-
-    // NẾU CÓ API KEY: Gọi Gemini API xử lý câu hỏi
-    try {
-      const replyText = await callGeminiChatApi(userMessage);
-
-      if (!replyText) {
-        throw new Error('API không trả về nội dung');
       }
 
-      try { sound.playSuccess(); } catch (_) {}
-
-      const matchingCards = detectSuggestedCards(replyText + ' ' + userMessage);
-
-      setMessages(prev => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          sender: 'ai',
-          text: replyText,
-          severity: 'NORMAL',
-          suggestedCards: matchingCards,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
-
-    } catch (err) {
-      console.warn("Gemini API call failed or quota reached, automatically switching to Smart Mock Vet Advisor:", err);
-      try { sound.playSuccess(); } catch (_) {}
-
-      // Dự phòng cơ chế Smart Mock: Trả lời mượt mà, không bao giờ gián đoạn hay hiện lỗi kỹ thuật
-      const fallbackResponse = getOutOfScopeResponse(userMessage, selectedPet);
-      const matchingCards = detectSuggestedCards(fallbackResponse + ' ' + userMessage);
-
-      setMessages(prev => [
-        ...prev,
-        {
-          id: `ai-${Date.now()}`,
-          sender: 'ai',
-          text: fallbackResponse,
-          severity: 'NORMAL',
-          suggestedCards: matchingCards,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }
-      ]);
-    } finally {
       setIsLoading(false);
-    }
+    }, 350);
   };
 
   const handleKeyDown = (e) => {

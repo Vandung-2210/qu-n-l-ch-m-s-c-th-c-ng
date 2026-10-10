@@ -1,128 +1,106 @@
 import React, { useState } from 'react';
 import { 
-  X, Mail, Lock, User, Phone, CheckCircle, 
-  AlertCircle, Sparkles, ArrowRight, ShieldCheck, 
-  Eye, EyeOff, Stethoscope, HeartHandshake 
+  X, Mail, Lock, CheckCircle, 
+  AlertCircle, ArrowRight, ShieldCheck, 
+  Eye, EyeOff, HeartHandshake, Shield
 } from 'lucide-react';
-import { login, register, loginWithSocial } from '../../services/authService';
+import { login, forgotPassword } from '../../services/authService';
 import { sound } from '../../services/soundService';
 
 export function AuthModal({ isOpen, onClose, onAuthSuccess, onSuccess, initialMode = 'login' }) {
   const handleSuccess = onAuthSuccess || onSuccess;
-  const [mode, setMode] = useState(initialMode); // 'login' | 'register' | 'forgot'
+  const [mode, setMode] = useState(initialMode === 'forgot' ? 'forgot' : 'login');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(true);
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem('petcare_remembered_email'));
   
   // Login form state
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(() => localStorage.getItem('petcare_remembered_email') || '');
   const [password, setPassword] = useState('');
   const [showDevAccounts, setShowDevAccounts] = useState(false);
 
-  // Register form state
-  const [regName, setRegName] = useState('');
-  const [regEmail, setRegEmail] = useState('');
-  const [regPhone, setRegPhone] = useState('');
-  const [regPassword, setRegPassword] = useState('');
-  const [regRole, setRegRole] = useState('pet_owner'); // 'pet_owner' | 'vet_doctor'
-
   // Forgot password state
   const [forgotEmail, setForgotEmail] = useState('');
-  const [forgotSent, setForgotSent] = useState(false);
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
+  const [forgotSuccessMessage, setForgotSuccessMessage] = useState('');
+  const [forgotErrorMessage, setForgotErrorMessage] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   const [errorMessage, setErrorMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  // Bộ đếm thời gian chờ gửi lại liên kết khôi phục (Cooldown 60s)
+  React.useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => {
+      setResendCooldown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
   if (!isOpen) return null;
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setErrorMessage('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      try {
-        const user = login(email, password, rememberMe);
-        localStorage.setItem('petcare_current_user', JSON.stringify(user));
-        localStorage.setItem('petcare_is_authenticated', 'true');
-        setIsLoading(false);
-        if (handleSuccess) handleSuccess(user);
-        onClose();
-      } catch (err) {
-        setIsLoading(false);
-        sound.playAlert();
-        setErrorMessage(err.message || 'Đăng nhập không thành công');
-      }
-    }, 300);
-  };
-
-  const handleRegisterSubmit = (e) => {
-    e.preventDefault();
-    setErrorMessage('');
-
-    if (regPassword.length < 6) {
-      setErrorMessage('Mật khẩu phải chứa ít nhất 6 ký tự.');
-      return;
-    }
-
-    setIsLoading(true);
-    setTimeout(() => {
-      try {
-        const user = register({
-          name: regName,
-          email: regEmail,
-          password: regPassword,
-          phone: regPhone,
-          role: regRole
-        });
-        localStorage.setItem('petcare_current_user', JSON.stringify(user));
-        localStorage.setItem('petcare_is_authenticated', 'true');
-        setIsLoading(false);
-        if (handleSuccess) handleSuccess(user);
-        onClose();
-      } catch (err) {
-        setIsLoading(false);
-        sound.playAlert();
-        setErrorMessage(err.message || 'Đăng ký không thành công');
-      }
-    }, 350);
-  };
-
-  const handleSocialLogin = (provider) => {
-    sound.playClick();
-    setIsLoading(true);
-    setTimeout(() => {
-      const user = loginWithSocial(provider);
-      localStorage.setItem('petcare_current_user', JSON.stringify(user));
-      localStorage.setItem('petcare_is_authenticated', 'true');
+    try {
+      const user = await login(email, password, rememberMe);
       setIsLoading(false);
       if (handleSuccess) handleSuccess(user);
       onClose();
-    }, 300);
+    } catch (err) {
+      setIsLoading(false);
+      sound.playAlert();
+      setErrorMessage(err.message || 'Đăng nhập không thành công');
+    }
   };
 
   const handleQuickDemoLogin = () => {
     setEmail('demo@petcare.ai');
-    setPassword('123456');
-    setIsLoading(true);
-    setTimeout(() => {
-      const user = {
-        name: 'Đinh Xuân Mạnh',
-        email: 'demo@petcare.ai',
-        role: 'OWNER',
-        avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=150'
-      };
-      localStorage.setItem('petcare_current_user', JSON.stringify(user));
-      localStorage.setItem('petcare_is_authenticated', 'true');
-      setIsLoading(false);
-      if (handleSuccess) handleSuccess(user);
-      onClose();
-    }, 200);
+    setPassword('Owner@123');
+    sound?.playClick?.();
   };
 
-  const handleForgotSubmit = (e) => {
+  const handleForgotSubmit = async (e) => {
     e.preventDefault();
-    setForgotSent(true);
-    sound.playSuccess();
+    setForgotErrorMessage('');
+
+    const cleanEmail = (forgotEmail || '').trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!cleanEmail) {
+      setForgotErrorMessage('Vui lòng nhập địa chỉ email của bạn.');
+      sound?.playAlert?.();
+      return;
+    }
+
+    if (!emailRegex.test(cleanEmail)) {
+      setForgotErrorMessage('Địa chỉ email không đúng định dạng (ví dụ: name@example.com).');
+      sound?.playAlert?.();
+      return;
+    }
+
+    setIsForgotLoading(true);
+    try {
+      const res = await forgotPassword(cleanEmail);
+      setIsForgotLoading(false);
+      setForgotSuccessMessage(
+        res.message || 'Nếu email này đã được đăng ký, bạn sẽ nhận được liên kết đặt lại mật khẩu.'
+      );
+      setResendCooldown(60);
+      sound?.playSuccess?.();
+    } catch (err) {
+      setIsForgotLoading(false);
+      sound?.playAlert?.();
+      setForgotErrorMessage(err.message || 'Đã xảy ra lỗi khi gửi liên kết khôi phục. Vui lòng thử lại sau.');
+    }
   };
 
   return (
@@ -146,7 +124,9 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, onSuccess, initialMo
                   PRO AI
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">Hệ sinh thái thông minh cho thú cưng</p>
+              <p className="text-[11px] text-slate-400">
+                {mode === 'forgot' ? 'Khôi phục mật khẩu' : 'Đăng nhập hệ thống'}
+              </p>
             </div>
           </div>
 
@@ -158,67 +138,37 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, onSuccess, initialMo
           </button>
         </div>
 
-        {/* Tab Switcher (Login / Register) */}
-        {mode !== 'forgot' && (
-          <div className="p-2 mx-6 mt-5 bg-slate-900/90 rounded-2xl border border-slate-800 grid grid-cols-2 gap-1 relative z-10 text-xs font-bold">
-            <button
-              type="button"
-              onClick={() => { setMode('login'); setErrorMessage(''); }}
-              className={`py-2 rounded-xl transition-all ${
-                mode === 'login'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Đăng Nhập
-            </button>
-            <button
-              type="button"
-              onClick={() => { setMode('register'); setErrorMessage(''); }}
-              className={`py-2 rounded-xl transition-all ${
-                mode === 'register'
-                  ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Đăng Ký Tài Khoản
-            </button>
-          </div>
-        )}
-
-        {/* Error Alert Box */}
+        {/* Error notification */}
         {errorMessage && (
-          <div className="mx-6 mt-4 p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2 relative z-10 animate-in fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+          <div className="mx-6 mt-4 p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 shrink-0" />
             <span>{errorMessage}</span>
           </div>
         )}
 
-        {/* FORM BODY */}
-        <div className="p-6 relative z-10 space-y-4">
-          
-          {/* --- TAB 1: LOGIN --- */}
-          {mode === 'login' && (
+        {/* Form Body */}
+        <div className="p-6 relative z-10">
+          {mode === 'login' ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                  Email tài khoản:
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
+                  Email hoặc Tên đăng nhập:
                 </label>
                 <div className="relative">
                   <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   <input
-                    type="email"
+                    type="text"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="name@example.com hoặc số điện thoại"
-                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                    placeholder="name@petcare.ai"
+                    className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                <label className="block text-xs font-semibold text-slate-300 mb-1">
                   Mật khẩu:
                 </label>
                 <div className="relative">
@@ -227,8 +177,8 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, onSuccess, initialMo
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Nhập mật khẩu (tối thiểu 6 ký tự)"
-                    className="w-full pl-10 pr-10 py-2.5 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all"
+                    placeholder="••••••••"
+                    className="w-full pl-10 pr-10 py-2.5 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                     required
                   />
                   <button
@@ -241,20 +191,20 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, onSuccess, initialMo
                 </div>
               </div>
 
-              <div className="flex items-center justify-between text-xs">
-                <label className="flex items-center gap-2 cursor-pointer text-slate-400 hover:text-slate-300">
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <label className="flex items-center gap-1.5 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    className="rounded border-slate-700 bg-slate-900 text-emerald-500 focus:ring-emerald-500"
+                    className="rounded bg-slate-900 border-slate-800 text-emerald-500 focus:ring-0"
                   />
-                  <span>Ghi nhớ đăng nhập</span>
+                  <span>Ghi nhớ</span>
                 </label>
                 <button
                   type="button"
-                  onClick={() => { setMode('forgot'); setForgotSent(false); setErrorMessage(''); }}
-                  className="text-emerald-400 hover:text-emerald-300 font-semibold"
+                  onClick={() => { setMode('forgot'); setErrorMessage(''); }}
+                  className="text-emerald-400 hover:underline"
                 >
                   Quên mật khẩu?
                 </button>
@@ -263,237 +213,136 @@ export function AuthModal({ isOpen, onClose, onAuthSuccess, onSuccess, initialMo
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-60"
+                className="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-60 cursor-pointer"
               >
                 <span>{isLoading ? 'Đang xác thực...' : 'Đăng Nhập Ngay'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
+              {/* Hướng dẫn tài khoản do Quản trị viên cấp */}
+              <div className="text-center pt-3 border-t border-slate-800/80">
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  Tài khoản được quản trị viên cấp. Vui lòng liên hệ quản trị viên để được hỗ trợ.
+                </p>
+              </div>
+
               {/* Chế độ Demo (Dành cho kiểm thử) */}
-              <div className="text-center mt-3">
+              <div className="text-center mt-2">
                 <button
                   type="button"
                   onClick={() => setShowDevAccounts(!showDevAccounts)}
-                  className="text-xs text-emerald-800/40 hover:text-emerald-800/80 transition-colors cursor-pointer"
+                  className="text-[11px] text-slate-500 hover:text-slate-400 transition-colors cursor-pointer"
                 >
-                  ⚙️ Chế độ Demo (Dành cho kiểm thử)
+                  ⚙️ Điền thông tin tài khoản mẫu
                 </button>
                 {showDevAccounts && (
                   <div className="mt-2 p-2 rounded-xl bg-slate-900 border border-emerald-500/20 text-center animate-in fade-in">
                     <button
                       type="button"
                       onClick={handleQuickDemoLogin}
-                      className="text-xs font-bold text-emerald-400 hover:text-emerald-300"
+                      className="text-xs font-bold text-emerald-400 hover:text-emerald-300 cursor-pointer"
                     >
-                      🐶 Đăng nhập nhanh tài khoản Demo
+                      🐶 Điền nhanh tài khoản Chủ nuôi Demo
                     </button>
                   </div>
                 )}
               </div>
             </form>
-          )}
+          ) : (
+            /* SUB-MODE: FORGOT PASSWORD */
+            <div className="space-y-4">
+              {forgotSuccessMessage ? (
+                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs space-y-2 text-center animate-in fade-in">
+                  <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto" />
+                  <p className="font-bold text-white text-sm">Yêu Cầu Đã Được Tiếp Nhận</p>
+                  <p className="text-[11px] text-slate-300 leading-relaxed">
+                    {forgotSuccessMessage}
+                  </p>
+                  <p className="text-[10px] text-emerald-400/80">
+                    Liên kết có hiệu lực trong vòng 15 phút. Vui lòng kiểm tra cả thư mục Spam.
+                  </p>
 
-          {/* --- TAB 2: REGISTER --- */}
-          {mode === 'register' && (
-            <form onSubmit={handleRegisterSubmit} className="space-y-3">
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Họ và tên của bạn:
-                </label>
-                <div className="relative">
-                  <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="text"
-                    value={regName}
-                    onChange={(e) => setRegName(e.target.value)}
-                    placeholder="Nguyễn Văn A"
-                    className="w-full pl-10 pr-4 py-2 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                    required
-                  />
-                </div>
-              </div>
+                  {forgotErrorMessage && (
+                    <div className="p-2 rounded-lg bg-rose-500/20 border border-rose-500/40 text-rose-300 text-[11px] text-left">
+                      {forgotErrorMessage}
+                    </div>
+                  )}
 
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Địa chỉ Email:
-                </label>
-                <div className="relative">
-                  <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="email"
-                    value={regEmail}
-                    onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="name@gmail.com"
-                    className="w-full pl-10 pr-4 py-2 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                    required
-                  />
-                </div>
-              </div>
+                  <div className="pt-2 flex flex-col gap-2">
+                    <button
+                      type="button"
+                      disabled={resendCooldown > 0 || isForgotLoading}
+                      onClick={handleForgotSubmit}
+                      className="w-full py-2 rounded-xl bg-white/10 hover:bg-white/15 disabled:opacity-50 text-white text-xs font-bold transition-all border border-emerald-400/30 cursor-pointer"
+                    >
+                      {resendCooldown > 0 ? `Gửi lại sau (${resendCooldown}s)` : 'Gửi lại liên kết'}
+                    </button>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Số điện thoại:
-                  </label>
-                  <div className="relative">
-                    <Phone className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                    <input
-                      type="tel"
-                      value={regPhone}
-                      onChange={(e) => setRegPhone(e.target.value)}
-                      placeholder="09..."
-                      className="w-full pl-9 pr-3 py-2 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none"
-                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForgotSuccessMessage('');
+                        setForgotErrorMessage('');
+                        setMode('login');
+                      }}
+                      className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                      ← Quay lại Đăng nhập
+                    </button>
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">
-                    Bạn là:
-                  </label>
-                  <select
-                    value={regRole}
-                    onChange={(e) => setRegRole(e.target.value)}
-                    className="w-full px-2 py-2 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white focus:outline-none"
-                  >
-                    <option value="pet_owner">🐾 Chủ nuôi</option>
-                    <option value="vet_doctor">🩺 Bác sĩ thú y</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">
-                  Tạo Mật khẩu (tối thiểu 6 ký tự):
-                </label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={regPassword}
-                    onChange={(e) => setRegPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full pl-10 pr-10 py-2 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.98] disabled:opacity-60"
-              >
-                <span>{isLoading ? 'Đang tạo tài khoản...' : 'Tạo Tài Khoản Mới'}</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </form>
-          )}
-
-          {/* --- TAB 3: FORGOT PASSWORD --- */}
-          {mode === 'forgot' && (
-            <div className="space-y-4">
-              <div className="text-xs text-slate-400">
-                Nhập email đã đăng ký. Hệ thống sẽ gửi mã xác thực khôi phục mật khẩu trong 30 giây.
-              </div>
-
-              {forgotSent ? (
-                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs space-y-2 text-center">
-                  <CheckCircle className="w-8 h-8 text-emerald-400 mx-auto" />
-                  <p className="font-bold">Đã gửi hướng dẫn khôi phục!</p>
-                  <p className="text-[11px] text-slate-400">Vui lòng kiểm tra hộp thư đến của <strong>{forgotEmail}</strong>.</p>
-                  <button
-                    type="button"
-                    onClick={() => setMode('login')}
-                    className="mt-2 text-emerald-400 font-bold underline"
-                  >
-                    Quay lại Đăng nhập
-                  </button>
-                </div>
               ) : (
-                <form onSubmit={handleForgotSubmit} className="space-y-3">
-                  <div>
+                <form onSubmit={handleForgotSubmit} className="space-y-4">
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    Nhập email đăng ký để nhận liên kết khôi phục mật khẩu an toàn.
+                  </p>
+
+                  <div className="relative">
+                    <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
                       type="email"
                       value={forgotEmail}
                       onChange={(e) => setForgotEmail(e.target.value)}
-                      placeholder="Email cần khôi phục..."
-                      className="w-full px-3.5 py-2.5 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
+                      placeholder="name@example.com"
+                      className="w-full pl-10 pr-4 py-2.5 bg-slate-900/90 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500"
                       required
                     />
                   </div>
-                  <div className="flex gap-2">
+
+                  {forgotErrorMessage && (
+                    <div className="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs">
+                      {forgotErrorMessage}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isForgotLoading}
+                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-bold text-xs shadow-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <span>{isForgotLoading ? 'Đang gửi...' : 'Gửi Liên Kết Khôi Phục'}</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+
+                  <div className="text-center pt-1">
                     <button
                       type="button"
                       onClick={() => setMode('login')}
-                      className="flex-1 py-2 rounded-xl bg-slate-900 text-slate-400 text-xs font-semibold"
+                      className="text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
                     >
-                      Hủy
-                    </button>
-                    <button
-                      type="submit"
-                      className="flex-1 py-2 rounded-xl bg-emerald-500 text-slate-950 font-bold text-xs shadow-md"
-                    >
-                      Gửi mã khôi phục
+                      ← Quay lại Đăng nhập
                     </button>
                   </div>
                 </form>
               )}
             </div>
           )}
-
-          {/* Social Logins Divider */}
-          {mode !== 'forgot' && (
-            <div className="pt-2">
-              <div className="relative flex py-2 items-center">
-                <div className="flex-grow border-t border-slate-800"></div>
-                <span className="flex-shrink mx-3 text-[11px] text-slate-500 font-medium">Hoặc đăng nhập nhanh bằng</span>
-                <div className="flex-grow border-t border-slate-800"></div>
-              </div>
-
-              {/* Social Buttons */}
-              <div className="grid grid-cols-2 gap-2 mt-2">
-                <button
-                  type="button"
-                  onClick={() => handleSocialLogin('google')}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-200 transition-all hover:border-slate-700"
-                >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24">
-                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
-                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
-                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
-                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
-                  </svg>
-                  <span>Google</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => handleSocialLogin('apple')}
-                  className="flex items-center justify-center gap-2 py-2 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800 border border-slate-800 text-xs font-semibold text-slate-200 transition-all hover:border-slate-700"
-                >
-                  <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                    <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.84c.65-.8 1.1-1.92.98-3.04-1 .04-2.17.67-2.85 1.47-.6.69-1.12 1.81-.98 2.91 1.12.09 2.22-.56 2.85-1.34z" />
-                  </svg>
-                  <span>Apple ID</span>
-                </button>
-              </div>
-            </div>
-          )}
-
         </div>
 
-        {/* Modal Footer Security Notice */}
-        <div className="p-3.5 bg-slate-950/80 border-t border-slate-800/60 flex items-center justify-center gap-1.5 text-[11px] text-slate-500">
+        {/* Footer info */}
+        <div className="p-4 bg-slate-900/60 border-t border-slate-800/60 text-center text-[10px] text-slate-500 flex items-center justify-center gap-1.5">
           <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Bảo mật 2 lớp SSL 256-bit • Dữ liệu mã hóa cục bộ</span>
+          <span>Hệ sinh thái PetCare PRO AI • Cơ chế cấp quyền tập trung</span>
         </div>
 
       </div>

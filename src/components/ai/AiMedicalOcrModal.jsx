@@ -19,44 +19,40 @@ export default function AiMedicalOcrModal({
   const [ocrResult, setOcrResult] = useState(null);
   const [isApplied, setIsApplied] = useState(false);
 
+  const [editableResult, setEditableResult] = useState(null);
+
   if (isModal && !isOpen) return null;
 
   const mockVaccineResult = {
-    detectedType: 'Sổ tiêm chủng thú cưng (Vaccination Record)',
-    confidence: 98.4,
-    vaccineName: 'Vanguard Plus 5/CV-L (Vắc-xin 7 bệnh cho Chó)',
-    manufacturer: 'Zoetis USA',
-    batchNumber: 'ZTS-88492-B',
-    injectedDate: '2026-09-20',
-    nextDueDate: '2027-09-20',
-    vetClinic: 'Bệnh viện Thú Y 24/7 PetCare',
-    vetDoctor: 'BS. Nguyễn Văn Hùng',
-    cost: 350000,
-    extractedItems: [
-      { type: 'vaccine', name: 'Mũi 7 bệnh nhắc lại hàng năm', dueDate: '2027-09-20' },
-      { type: 'expense', name: 'Tiêm phòng Vanguard 7 bệnh', amount: 350000, category: 'medical' },
-      { type: 'medical_record', diagnosis: 'Tiêm chủng định kỳ năm 2026', notes: 'Bé khỏe mạnh, thân nhiệt 38.5C bình thường' }
-    ]
+    detectedType: 'Sổ tiêm chủng thú cưng (Nhập thủ công)',
+    confidence: 100,
+    vaccineName: '',
+    manufacturer: '',
+    batchNumber: '',
+    injectedDate: new Date().toISOString().split('T')[0],
+    nextDueDate: '',
+    nextVisitDate: '',
+    vetClinic: '',
+    vetDoctor: '',
+    cost: '',
+    totalAmount: '',
+    medicines: []
   };
 
   const mockPrescriptionResult = {
-    detectedType: 'Đơn thuốc & Hóa đơn khám chữa bệnh (Prescription & Invoice)',
-    confidence: 96.8,
-    vetClinic: 'Phòng khám Thú y Alpha Pet',
-    vetDoctor: 'ThS. Trần Thị Mai',
-    treatmentDate: '2026-09-20',
-    diagnosis: 'Viêm tai ngoài do nấm Malassezia',
-    followUpDate: '2026-09-27',
-    cost: 480000,
-    medicines: [
-      { name: 'Otomax Ear Drops', dosage: 'Nhỏ tai 4 giọt/lần x 2 lần/ngày trong 7 ngày' },
-      { name: 'Ketoconazole 200mg', dosage: 'Uống 1/2 viên sau ăn sáng x 5 ngày' }
-    ],
-    extractedItems: [
-      { type: 'schedule', name: 'Tái khám kiểm tra tai sau 7 ngày', date: '2026-09-27', time: '10:00' },
-      { type: 'expense', name: 'Khám tai & thuốc Otomax điều trị', amount: 480000, category: 'medical' },
-      { type: 'medical_record', diagnosis: 'Viêm tai ngoài do nấm', doctor: 'ThS. Trần Thị Mai' }
-    ]
+    detectedType: 'Đơn thuốc & Hóa đơn khám (Nhập thủ công)',
+    confidence: 100,
+    vetClinic: '',
+    vetDoctor: '',
+    treatmentDate: new Date().toISOString().split('T')[0],
+    issueDate: new Date().toISOString().split('T')[0],
+    diagnosis: '',
+    followUpDate: '',
+    nextVisitDate: '',
+    nextDueDate: '',
+    cost: '',
+    totalAmount: '',
+    medicines: []
   };
 
   const handleFileUpload = (e) => {
@@ -75,27 +71,39 @@ export default function AiMedicalOcrModal({
   const triggerOcrScan = () => {
     setIsProcessing(true);
     setOcrResult(null);
+    setEditableResult(null);
     setIsApplied(false);
 
-    // Simulate AI Vision analysis latency
+    // Simulate AI Vision analysis latency with mock dataset
     setTimeout(() => {
       setIsProcessing(false);
       sound.playSuccess();
-      if (ocrType === 'vaccine_book') {
-        setOcrResult(mockVaccineResult);
-      } else {
-        setOcrResult(mockPrescriptionResult);
-      }
-    }, 1800);
+      const res = ocrType === 'vaccine_book' ? { ...mockVaccineResult } : { ...mockPrescriptionResult };
+      setOcrResult(res);
+      setEditableResult(res);
+    }, 1200);
   };
 
   const handleApplyTo3Pipelines = () => {
-    if (!ocrResult) return;
-    sound.playSuccess();
-    setIsApplied(true);
+    if (!editableResult || isApplied || isProcessing) return;
+    
+    // Normalization
+    const payload = {
+      ...editableResult,
+      cost: Number(editableResult.cost || editableResult.totalAmount || 0),
+      totalAmount: Number(editableResult.totalAmount || editableResult.cost || 0),
+      nextVisitDate: editableResult.nextVisitDate || editableResult.nextDueDate || editableResult.followUpDate,
+      nextDueDate: editableResult.nextDueDate || editableResult.nextVisitDate || editableResult.followUpDate
+    };
 
-    if (onOcrComplete) {
-      onOcrComplete(ocrResult, selectedPetId);
+    try {
+      if (onOcrComplete) {
+        onOcrComplete(payload, selectedPetId);
+      }
+      setIsApplied(true);
+      sound.playSuccess();
+    } catch {
+      alert('Không thể lưu kết quả OCR.');
     }
   };
 
@@ -113,14 +121,14 @@ export default function AiMedicalOcrModal({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-base font-bold text-slate-900 dark:text-white">
-                Medical Vision OCR Scanner
+                Trợ lý OCR Y Tế
               </h3>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                AI 3-in-1 Pipeline
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 uppercase tracking-wider">
+                Mô phỏng
               </span>
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Quét ảnh sổ tiêm / hóa đơn thuốc ➔ Tự động lưu Lịch hẹn + Sổ Y bạ + Chi tiêu
+              Quét sổ tiêm & đơn thuốc ➔ Tự động phân loại Lịch hẹn, Y bạ và Chi phí
             </p>
           </div>
         </div>
@@ -132,6 +140,13 @@ export default function AiMedicalOcrModal({
             <X className="w-5 h-5" />
           </button>
         )}
+      </div>
+
+      <div className="mx-6 mt-4 p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2.5">
+        <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-amber-500" />
+        <div className="leading-relaxed">
+          <span className="font-bold">[Nhập Thủ Công]:</span> Tính năng quét ảnh y tế đang được nâng cấp. Vui lòng tải ảnh lên hoặc nhập thủ công thông tin sổ tiêm, đơn thuốc vào các trường bên dưới.
+        </div>
       </div>
 
       {/* Body */}
@@ -194,7 +209,7 @@ export default function AiMedicalOcrModal({
                 {isProcessing && (
                   <div className="absolute inset-0 bg-indigo-950/70 backdrop-blur-xs flex flex-col items-center justify-center text-white p-3">
                     <RefreshCw className="w-8 h-8 animate-spin text-indigo-400 mb-2" />
-                    <span className="text-xs font-semibold">Gemini Flash Medical OCR đang trích xuất dữ liệu...</span>
+                    <span className="text-xs font-semibold">Bộ xử lý OCR mô phỏng đang trích xuất dữ liệu...</span>
                     <span className="text-[10px] text-slate-300 mt-1">Nhận diện thuốc, vắc-xin, ngày tái khám, chi phí</span>
                   </div>
                 )}
@@ -231,7 +246,7 @@ export default function AiMedicalOcrModal({
                   }}
                   className="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold transition-all border border-slate-200 dark:border-slate-700 shadow-sm"
                 >
-                  ⚡ Thử mẫu sổ tiêm chủng
+                  ⚡ Mở form nhập dữ liệu
                 </button>
               </div>
             </div>
@@ -253,6 +268,103 @@ export default function AiMedicalOcrModal({
               </span>
             </div>
 
+            {/* Editable Fields Review */}
+            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 space-y-3">
+              <div className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                <span>Xem lại và chỉnh sửa thông tin trước khi lưu:</span>
+                <span className="text-[11px] text-slate-400 font-normal">Chạm vào ô để sửa</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                {/* Title / Diagnosis / Vaccine */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    {ocrType === 'vaccine_book' ? 'Tên vắc-xin' : 'Chẩn đoán / Bệnh'}
+                  </label>
+                  <input
+                    type="text"
+                    disabled={isApplied}
+                    value={ocrType === 'vaccine_book' ? (editableResult?.vaccineName || '') : (editableResult?.diagnosis || '')}
+                    onChange={(e) => {
+                      if (ocrType === 'vaccine_book') {
+                        setEditableResult({ ...editableResult, vaccineName: e.target.value });
+                      } else {
+                        setEditableResult({ ...editableResult, diagnosis: e.target.value });
+                      }
+                    }}
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none"
+                  />
+                </div>
+
+                {/* Next Date */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    Ngày tái khám / Hạn tiêm nhắc lại
+                  </label>
+                  <input
+                    type="date"
+                    disabled={isApplied}
+                    value={editableResult?.nextDueDate || editableResult?.nextVisitDate || editableResult?.followUpDate || ''}
+                    onChange={(e) => {
+                      setEditableResult({
+                        ...editableResult,
+                        nextDueDate: e.target.value,
+                        nextVisitDate: e.target.value,
+                        followUpDate: e.target.value
+                      });
+                    }}
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none"
+                  />
+                </div>
+
+                {/* Clinic */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    Cơ sở thú y / Phòng khám
+                  </label>
+                  <input
+                    type="text"
+                    disabled={isApplied}
+                    value={editableResult?.vetClinic || ''}
+                    onChange={(e) => setEditableResult({ ...editableResult, vetClinic: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none"
+                  />
+                </div>
+
+                {/* Doctor */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    Bác sĩ phụ trách
+                  </label>
+                  <input
+                    type="text"
+                    disabled={isApplied}
+                    value={editableResult?.vetDoctor || ''}
+                    onChange={(e) => setEditableResult({ ...editableResult, vetDoctor: e.target.value })}
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none"
+                  />
+                </div>
+
+                {/* Amount / Cost */}
+                <div>
+                  <label className="block text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1">
+                    Chi phí (VNĐ)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    disabled={isApplied}
+                    value={editableResult?.cost ?? editableResult?.totalAmount ?? ''}
+                    onChange={(e) => {
+                      const val = Number(e.target.value);
+                      setEditableResult({ ...editableResult, cost: val, totalAmount: val });
+                    }}
+                    className="w-full px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
             {/* 3 Pipeline Cards Showcase */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* 1. Schedule */}
@@ -262,10 +374,10 @@ export default function AiMedicalOcrModal({
                   <span>1. Lịch hẹn tự sinh</span>
                 </div>
                 <div className="text-xs font-bold text-slate-800 dark:text-slate-200">
-                  {ocrResult.vaccineName || ocrResult.diagnosis}
+                  {editableResult?.vaccineName || editableResult?.diagnosis || 'Lịch theo dõi'}
                 </div>
                 <div className="text-[11px] text-indigo-600 dark:text-indigo-400 mt-1 font-semibold">
-                  Hạn: {ocrResult.nextDueDate || ocrResult.followUpDate}
+                  Hạn: {editableResult?.nextDueDate || editableResult?.nextVisitDate || 'Chưa đặt'}
                 </div>
               </div>
 
@@ -276,10 +388,10 @@ export default function AiMedicalOcrModal({
                   <span>2. Sổ Y bạ / Thuốc</span>
                 </div>
                 <div className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
-                  {ocrResult.vetClinic}
+                  {editableResult?.vetClinic || 'Phòng khám thú y'}
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                  Bác sĩ: {ocrResult.vetDoctor}
+                  Bác sĩ: {editableResult?.vetDoctor || 'Chưa cập nhật'}
                 </div>
               </div>
 
@@ -290,7 +402,7 @@ export default function AiMedicalOcrModal({
                   <span>3. Chi phí khám</span>
                 </div>
                 <div className="text-xs font-bold text-amber-700 dark:text-amber-300">
-                  {Number(ocrResult.cost).toLocaleString('vi-VN')} đ
+                  {Number(editableResult?.cost || editableResult?.totalAmount || 0).toLocaleString('vi-VN')} đ
                 </div>
                 <div className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
                   Danh mục: Y tế / Thuốc
@@ -306,14 +418,15 @@ export default function AiMedicalOcrModal({
                   Đã đẩy dữ liệu thành công vào: Lịch hẹn, Sổ y bạ và Chi phí!
                 </span>
                 {isModal && onClose && (
-                  <button onClick={onClose} className="underline text-[11px]">Đóng modal</button>
+                  <button onClick={onClose} className="underline text-[11px] cursor-pointer">Đóng modal</button>
                 )}
               </div>
             ) : (
               <button
                 type="button"
+                disabled={isProcessing}
                 onClick={handleApplyTo3Pipelines}
-                className="w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+                className="w-full py-3 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99] cursor-pointer disabled:opacity-60"
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 <span>Xác nhận & Tự động lưu 3-trong-1 (Lịch + Y bạ + Chi tiêu)</span>

@@ -27,9 +27,19 @@ export const PetFormModal = ({ isOpen, onClose, onSave, petToEdit = null }) => {
     notes: ''
   });
 
-  const [autoGenerateSchedule, setAutoGenerateSchedule] = useState(true);
+  const [autoGenerateSchedule, setAutoGenerateSchedule] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const todayStr = (() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })();
 
   useEffect(() => {
+    setErrorMsg('');
     if (petToEdit) {
       setFormData({
         ...petToEdit,
@@ -50,7 +60,7 @@ export const PetFormModal = ({ isOpen, onClose, onSave, petToEdit = null }) => {
         avatar: SAMPLE_AVATARS[0].url,
         notes: ''
       });
-      setAutoGenerateSchedule(true);
+      setAutoGenerateSchedule(false);
     }
   }, [petToEdit, isOpen]);
 
@@ -58,13 +68,29 @@ export const PetFormModal = ({ isOpen, onClose, onSave, petToEdit = null }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setErrorMsg('');
+
     if (!formData.name.trim()) {
-      alert('Vui lòng nhập tên thú cưng!');
+      setErrorMsg('Vui lòng nhập tên thú cưng!');
+      return;
+    }
+
+    if (formData.weight !== '') {
+      const parsedWeight = parseFloat(formData.weight);
+      if (isNaN(parsedWeight) || parsedWeight <= 0) {
+        setErrorMsg('Cân nặng phải là một số dương hợp lệ (lớn hơn 0 kg)!');
+        return;
+      }
+    }
+
+    if (formData.birthDate && formData.birthDate > todayStr) {
+      setErrorMsg('Ngày sinh không được nằm trong tương lai!');
       return;
     }
 
     onSave({
       ...formData,
+      name: formData.name.trim(),
       weight: formData.weight ? parseFloat(formData.weight) : 0
     }, autoGenerateSchedule);
     onClose();
@@ -94,6 +120,13 @@ export const PetFormModal = ({ isOpen, onClose, onSave, petToEdit = null }) => {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {errorMsg && (
+          <div className="mb-4 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+            <span>⚠️</span>
+            <span>{errorMsg}</span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-5">
           
@@ -189,6 +222,7 @@ export const PetFormModal = ({ isOpen, onClose, onSave, petToEdit = null }) => {
               </label>
               <input
                 type="date"
+                max={todayStr}
                 value={formData.birthDate}
                 onChange={(e) => setFormData({ ...formData, birthDate: e.target.value })}
                 className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-xl text-slate-800 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 focus:bg-white focus:outline-none text-xs transition-all"

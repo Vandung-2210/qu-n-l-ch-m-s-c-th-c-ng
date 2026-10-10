@@ -32,10 +32,18 @@ export default function DailyStreakChecklist({
   const completedCount = filteredHabits.filter(h => h.completed).length;
   const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
 
-  // Max streak among habits
-  const maxStreak = habits.reduce((max, h) => Math.max(max, h.streak || 0), 0);
+  // ==========================================================
+  // LOGIC TÍNH TOÁN STATE STREAK (TÍNH TỪ LỊCH SỬ THỰC TẾ)
+  // ==========================================================
+  // Chuỗi streak thực tế lấy từ dữ liệu các thói quen:
+  const currentActiveStreak = habits.length > 0 
+    ? Math.max(...habits.map(h => Number(h.streak) || 0))
+    : 0;
 
-  const handleToggle = (id) => {
+  // Kiểm tra xem hôm nay đã hoàn thành 100% chưa:
+  const isAllCompletedToday = totalCount > 0 && completedCount === totalCount;
+
+  const handleToggle = async (id) => {
     const habit = habits.find(h => h.id === id);
     if (!habit?.completed) {
       sound.playSuccess();
@@ -66,30 +74,39 @@ export default function DailyStreakChecklist({
   };
 
   return (
-    <div className="bg-[#1E293B] border border-white/[0.08] rounded-3xl p-6 shadow-xl text-slate-100 transition-all duration-300">
+    <div className="bg-white dark:bg-[#1E293B] border border-slate-200/80 dark:border-white/[0.08] rounded-3xl p-6 shadow-xl text-slate-800 dark:text-slate-100 transition-all duration-300">
       {/* Header with Streak Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/10">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-200/80 dark:border-white/10">
         <div>
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-2xl bg-amber-500/10 text-amber-400">
+            <span className="p-2 rounded-2xl bg-amber-500/10 text-amber-500 dark:text-amber-400">
               <Flame className="w-5 h-5 animate-pulse" />
             </span>
-            <h2 className="text-xl font-bold bg-gradient-to-r from-white via-amber-200 to-amber-400 bg-clip-text text-transparent">
+            <h2 className="text-xl font-black text-slate-900 dark:text-white tracking-tight">
               Daily Checklist & Habit Tracker
             </h2>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
             Theo dõi chuỗi ngày chăm sóc thú cưng liên tục cùng gia đình
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           {/* Streak Flame Pill */}
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-gradient-to-r from-amber-500/15 to-orange-500/15 border border-amber-500/30 text-amber-300 shadow-sm">
+          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl bg-amber-50 dark:bg-gradient-to-r dark:from-amber-500/15 dark:to-orange-500/15 border border-amber-200 dark:border-amber-500/30 text-amber-700 dark:text-amber-300 shadow-sm">
             <Flame className="w-5 h-5 fill-amber-500 text-amber-500 animate-bounce" />
             <div className="text-left">
-              <div className="text-[10px] font-medium uppercase tracking-wider text-amber-400/80">Kỷ lục chuỗi</div>
-              <div className="text-sm font-black">{maxStreak} ngày liên tục 🔥</div>
+              <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400/80">
+                {isAllCompletedToday ? 'Chuỗi hôm nay' : 'Chuỗi đang giữ'}
+              </div>
+              <div className="text-sm font-black flex items-center gap-1">
+                <span>{currentActiveStreak} ngày liên tục 🔥</span>
+                {isAllCompletedToday && (
+                  <span className="text-[10px] bg-emerald-600 text-white px-1.5 py-0.2 rounded-full font-bold">
+                    +1 🎉
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -105,26 +122,26 @@ export default function DailyStreakChecklist({
 
       {/* Progress Bar with big, clear % text to the right of the gradient bar */}
       <div className="py-4 space-y-2">
-        <div className="flex items-center justify-between text-xs font-bold text-slate-300">
-          <span className="flex items-center gap-1.5 text-sm font-semibold text-slate-200">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
+        <div className="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+          <span className="flex items-center gap-1.5 text-sm font-bold text-slate-900 dark:text-white">
+            <Sparkles className="w-4 h-4 text-cyan-500 dark:text-cyan-400" />
             Tiến độ hôm nay
           </span>
-          <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-mono font-semibold text-xs shadow-xs">
+          <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/40 font-mono font-bold text-xs shadow-xs">
             {completedCount}/{totalCount} hoàn thành
           </span>
         </div>
 
         {/* Thanh tiến độ dải gradient + text phần trăm (%) to và rõ ràng hơn ở bên phải thanh */}
         <div className="flex items-center gap-4">
-          <div className="flex-1 h-3.5 bg-slate-950/80 rounded-full overflow-hidden p-0.5 border border-white/10 shadow-inner">
+          <div className="flex-1 h-3.5 bg-slate-100 dark:bg-slate-950/80 rounded-full overflow-hidden p-0.5 border border-slate-200 dark:border-white/10 shadow-inner">
             <div 
               className="h-full bg-gradient-to-r from-emerald-500 via-teal-400 to-cyan-400 rounded-full transition-all duration-500 shadow-[0_0_14px_rgba(16,185,129,0.6)]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
           <div className="shrink-0 flex items-center justify-end min-w-[4rem]">
-            <span className="text-2xl sm:text-3xl font-black text-emerald-400 font-mono tracking-tight drop-shadow-[0_0_12px_rgba(52,211,153,0.5)]">
+            <span className="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono tracking-tight drop-shadow-[0_0_12px_rgba(52,211,153,0.3)]">
               {progressPercent}%
             </span>
           </div>
@@ -253,41 +270,42 @@ export default function DailyStreakChecklist({
                 key={habit.id}
                 className={`group flex items-center justify-between p-3.5 rounded-2xl border transition-all duration-200 ${
                   habit.completed
-                    ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200/60 dark:border-emerald-900/40'
-                    : 'bg-white dark:bg-slate-800/60 border-slate-200/70 dark:border-slate-800 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm'
+                    ? 'bg-slate-50/80 dark:bg-emerald-950/20 border-slate-200/80 dark:border-emerald-500/20'
+                    : 'bg-white dark:bg-slate-800/80 border-slate-200/80 dark:border-white/10 hover:border-cyan-400/50 dark:hover:border-cyan-400/40 hover:shadow-sm'
                 }`}
               >
                 {/* Left: Checkbox & Info */}
                 <div className="flex items-center gap-3.5 flex-1 min-w-0">
                   <button
                     onClick={() => handleToggle(habit.id)}
-                    className="flex-shrink-0 transition-transform active:scale-90"
+                    className="flex-shrink-0 transition-transform active:scale-90 cursor-pointer"
+                    title={habit.completed ? 'Đánh dấu chưa làm' : 'Đánh dấu đã hoàn thành'}
                   >
                     {habit.completed ? (
-                      <CheckCircle2 className="w-6 h-6 text-emerald-500 fill-emerald-100 dark:fill-emerald-950/60 transition-all" />
+                      <CheckCircle2 className="w-6 h-6 text-emerald-500 fill-emerald-100 dark:fill-emerald-950/80 transition-all shrink-0" />
                     ) : (
-                      <Circle className="w-6 h-6 text-slate-300 dark:text-slate-600 hover:text-indigo-500 transition-colors" />
+                      <Circle className="w-6 h-6 text-slate-300 dark:text-slate-500 hover:text-emerald-500 transition-colors shrink-0" />
                     )}
                   </button>
 
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className={`text-sm font-semibold tracking-tight transition-all truncate ${
+                      <span className={`text-sm tracking-tight transition-all truncate ${
                         habit.completed 
-                          ? 'line-through text-slate-400 dark:text-slate-500' 
-                          : 'text-slate-800 dark:text-slate-100'
+                          ? 'line-through text-slate-400 dark:text-slate-400 font-medium' 
+                          : 'text-slate-900 dark:text-white font-bold'
                       }`}>
                         {habit.title}
                       </span>
 
                       {pet && (
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800/50">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-cyan-50 dark:bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-200 dark:border-cyan-500/30">
                           {pet.name}
                         </span>
                       )}
 
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 flex items-center gap-0.5">
-                        <Clock className="w-3 h-3" />
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-mono flex items-center gap-0.5">
+                        <Clock className="w-3 h-3 text-cyan-600 dark:text-cyan-400" />
                         {habit.scheduledTime}
                       </span>
                     </div>
@@ -295,12 +313,12 @@ export default function DailyStreakChecklist({
                     {/* Completion audit / Streak info */}
                     <div className="flex items-center gap-3 mt-1 text-[11px]">
                       {habit.completed ? (
-                        <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                          <UserCheck className="w-3 h-3" />
-                          Đã làm bởi: <strong className="font-semibold">{getMemberName(habit.completedBy)}</strong> ({habit.completedAt || 'Vừa xong'})
+                        <span className="text-emerald-700 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                          <UserCheck className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                          Đã làm bởi: <strong className="font-bold text-slate-800 dark:text-slate-200">{getMemberName(habit.completedBy)}</strong> ({habit.completedAt || 'Vừa xong'})
                         </span>
                       ) : (
-                        <span className="text-slate-400 dark:text-slate-500">Chưa hoàn thành hôm nay</span>
+                        <span className="text-slate-500 dark:text-slate-400 font-medium">Chưa hoàn thành hôm nay</span>
                       )}
                     </div>
                   </div>

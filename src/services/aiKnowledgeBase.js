@@ -75,7 +75,7 @@ Socola chứa hợp chất **Theobromine và Caffeine**, chó mèo không có en
   {
     id: 'emg_onion_garlic',
     species: ['dog', 'cat', 'all'],
-    keywords: ['hanh', 'toi', 'hanh tay', 'hanh la', 'he', 'an hanh', 'an toi'],
+    keywords: ['hành tây', 'hành lá', 'củ hành', 'an hanh', 'an toi', 'toi', 'he', 'tỏi tây'],
     severity: 'CRITICAL',
     generate: (pet, query) => {
       const w = getWeight(pet, 10);
@@ -529,24 +529,37 @@ export const matchSmartSimulatedConsultation = (userQuery, petContext = null) =>
       score -= 25; // Trừ điểm nặng nếu sai loài (vd thỏ hỏi mèo)
     }
 
-    // 2. So khớp từ khóa (Keywords scoring)
+    // 2. So khớp từ khóa với ranh giới từ (Word Boundary Scoring), loại bỏ va chạm chuỗi con
+    const hasBehaviorIntent = rawQuery.includes('hành vi') || cleanQuery.includes('hanh vi');
+
     for (const kw of entry.keywords) {
       const cleanKw = removeVietnameseTones(kw);
-      if (rawQuery.includes(kw)) {
-        score += 40; // Khớp nguyên văn có dấu
-      } else if (cleanQuery.includes(cleanKw)) {
-        score += 25; // Khớp từ không dấu
+
+      // Loại bỏ hoàn toàn va chạm giữa "hành" (thực phẩm ngộ độc) và "hành vi" (tâm lý/thói quen)
+      if (entry.id === 'emg_onion_garlic' && hasBehaviorIntent && (kw.includes('hành') || cleanKw.includes('hanh'))) {
+        continue;
+      }
+
+      // Khớp nguyên văn có dấu với ranh giới từ
+      const rawRegex = new RegExp(`(^|\\s|[.,!?;])${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|\\s|[.,!?;])`, 'i');
+      const cleanRegex = new RegExp(`(^|\\s|[.,!?;])${cleanKw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|\\s|[.,!?;])`, 'i');
+
+      if (rawRegex.test(rawQuery)) {
+        score += 45; // Khớp từ/cụm từ chuẩn xác có dấu
+      } else if (cleanRegex.test(cleanQuery)) {
+        score += 30; // Khớp từ/cụm từ không dấu
       } else {
-        // So khớp từng từ đơn trong cụm từ khóa
-        const kwWords = cleanKw.split(' ');
-        let matchedWordCount = 0;
+        // So khớp từ ghép >= 4 ký tự
+        const kwWords = cleanKw.split(' ').filter(w => w.length >= 4);
+        let matchedCount = 0;
         for (const w of kwWords) {
-          if (w.length > 2 && cleanQuery.includes(w)) {
-            matchedWordCount++;
+          const singleWordRegex = new RegExp(`(^|\\s|[.,!?;])${w}($|\\s|[.,!?;])`, 'i');
+          if (singleWordRegex.test(cleanQuery)) {
+            matchedCount++;
           }
         }
-        if (matchedWordCount > 0) {
-          score += matchedWordCount * 8;
+        if (matchedCount > 0) {
+          score += matchedCount * 8;
         }
       }
     }
@@ -557,29 +570,24 @@ export const matchSmartSimulatedConsultation = (userQuery, petContext = null) =>
     }
   }
 
-  // Nếu tìm thấy ca bệnh tương đồng cao (ngưỡng score >= 20)
-  if (bestEntry && highestScore >= 20) {
+  // Nếu tìm thấy ca bệnh tương đồng cao (ngưỡng score >= 25)
+  if (bestEntry && highestScore >= 25) {
     return bestEntry.generate(petContext, userQuery);
   }
 
-  // FALLBACK TỔNG QUÁT NÂNG CAO NẾU LÀ CÂU HỎI TỰ DO KHÁC
-  const w = getWeight(petContext, petSpecies === 'cat' ? 4 : 15);
+  // FALLBACK KHI KHÔNG TÌM ĐƯỢC NỘI DUNG PHÙ HỢP: Thông báo trung thực chưa có đủ dữ liệu
   return {
-    title: `🩺 TƯ VẤN Y KHOA TỔNG QUÁT TỪ DR. PAW DÀNH CHO ${petName.toUpperCase()}`,
+    title: `ℹ️ THÔNG BÁO TỪ BÁC SĨ TƯ VẤN (DR. PAW)`,
     severity: 'NORMAL',
-    tags: ['Tư vấn tổng quát', 'Cá nhân hóa theo loài', 'Dr. Paw 24/7'],
-    suggestedAction: 'Theo dõi thể trạng và áp dụng chế độ chăm sóc khoa học',
-    message: `### 🩺 1. Đánh giá sơ bộ & Phân tích câu hỏi
-Bác sĩ Dr. Paw đã tiếp nhận thắc mắc của bạn về **${petName}** (Loài: **${petSpecies === 'dog' ? 'Chó' : petSpecies === 'cat' ? 'Mèo' : petSpecies === 'rabbit' ? 'Thỏ' : 'Thú cưng'}**, Thể trạng: **${w} kg**).
-Đối với nội dung câu hỏi *" ${userQuery} "*:
-- Thể trạng hiện tại của bé đòi hỏi sự kết hợp cân bằng giữa chế độ dinh dưỡng, vận động thích hợp và theo dõi sát sao các biến đổi hành vi thường nhật.
+    tags: ['Chưa đủ dữ liệu', 'Khuyến nghị chuyên môn'],
+    suggestedAction: 'Liên hệ cơ sở thú y trực tiếp',
+    message: `### ℹ️ Chưa có đủ dữ liệu phù hợp
+Hệ thống tư vấn hiện tại chưa tìm thấy thông tin y khoa hoặc phác đồ điều trị khớp với câu hỏi: *" ${userQuery} "* dành cho bé **${petName}**.
 
-### 🩹 2. Hướng dẫn chăm sóc & Khuyến nghị y khoa an toàn
-1. **Dinh dưỡng & Nước uống:** Đảm bảo lượng nước sạch nạp vào tối thiểu khoảng **${Math.round(w * 55)} ml/ngày**. Khẩu phần ăn cần giàu protein chất lượng cao, hạn chế muối và gia vị của người.` + checkAllergyWarning(petContext) + `
-2. **Môi trường sống:** Giữ chuồng trại/nơi ngủ khô ráo, tránh gió lùa và nhiệt độ thay đổi đột ngột.
-3. **Phòng bệnh chủ động:** Duy trì lịch nhỏ gáy trị ve rận định kỳ mỗi tháng 1 lần và tiêm ngừa vắc-xin nhắc lại hàng năm theo khuyến cáo của Hiệp hội Thú y Thế giới (WSAVA).
+> **Lưu ý:** Bộ xử lý Dr. Paw hiện hoạt động theo cơ chế tra cứu cơ sở tri thức cục bộ dựa trên từ khóa, không phải mô hình AI học sâu hay công cụ chẩn đoán hình ảnh thực tế thay thế bác sĩ thú y.
 
-### 🚨 3. Dấu hiệu cảnh báo nguy hiểm
-Nếu bé xuất hiện bất kỳ dấu hiệu nào sau đây: *Bỏ ăn liên tục trên 24 giờ, nôn mửa dịch màu bất thường, tiêu chảy phân lỏng, thở dốc há hốc miệng hoặc lừ đừ không phản xạ*, hãy đưa bé đến bệnh viện thú y gần nhất hoặc liên hệ Hotline cấp cứu **1900 6868** ngay!`
+**Khuyến nghị:**
+1. Hãy mô tả chi tiết hơn các triệu chứng cụ thể của bé (ví dụ: *nôn mửa, tiêu chảy, bỏ ăn, ngộ độc socola, ve rận, lịch tiêm phòng...*).
+2. Nếu bé đang có các biểu hiện bất thường hoặc nguy cấp, vui lòng đưa bé đến cơ sở thú y gần nhất hoặc gọi Hotline cấp cứu **1900 6868** để được can thiệp y tế kịp thời!`
   };
 };

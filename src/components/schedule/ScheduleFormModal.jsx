@@ -35,11 +35,19 @@ export const ScheduleFormModal = ({
     return aliasMatch ? aliasMatch.id : (petsList[0]?.id || '');
   };
 
+  const getTodayDate = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [formData, setFormData] = useState({
     petId: resolveTargetPetId(initialPetId, pets),
     title: initialTitle || '',
     type: initialType || 'vaccine',
-    date: initialDate || new Date().toISOString().split('T')[0],
+    date: initialDate || getTodayDate(),
     time: '09:00',
     location: '',
     repeat: 'none',
@@ -57,7 +65,7 @@ export const ScheduleFormModal = ({
         petId: resolveTargetPetId(initialPetId, pets),
         title: initialTitle || '',
         type: initialType || 'vaccine',
-        date: initialDate || new Date().toISOString().split('T')[0],
+        date: initialDate || getTodayDate(),
         time: '09:00',
         location: '',
         repeat: 'none',
@@ -78,10 +86,17 @@ export const ScheduleFormModal = ({
       alert('Vui lòng chọn thú cưng!');
       return;
     }
+    if (!formData.date) {
+      alert('Vui lòng chọn ngày thực hiện!');
+      return;
+    }
+    if (!formData.time) {
+      alert('Vui lòng chọn giờ thực hiện!');
+      return;
+    }
 
     const matchedPet = pets.find(p => p.id === formData.petId);
-    const resolvedPetName = matchedPet?.name || 
-      (formData.petId === 'pet-1' ? 'Mochi' : formData.petId === 'pet-2' ? 'Luna' : 'Bánh Bao');
+    const resolvedPetName = matchedPet?.name || 'Thú cưng';
 
     // Đính kèm cả petName và petId để đồng bộ dữ liệu chuẩn xác
     onSave({

@@ -80,12 +80,13 @@ export const Navbar = ({
   const quickTabs = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'schedule', label: 'Lịch Trình' },
+    { id: 'bonding', label: 'Gắn Kết' },
     { id: 'medical', label: 'Y Tế & Sổ Tiêm' },
     { id: 'expenses', label: 'Chi Tiêu' }
   ];
 
   return (
-    <header className="shrink-0 z-30 w-full pt-3 px-3 sm:px-6 pb-2">
+    <header className="shrink-0 z-40 relative w-full pt-3 px-3 sm:px-6 pb-2">
       {/* Obsidian Spatial Canvas Pill-shaped Floating Navigation Bar */}
       <div className="w-full max-w-7xl mx-auto rounded-full bg-white/85 dark:bg-[#151622]/90 backdrop-blur-2xl border border-slate-200/80 dark:border-white/[0.08] shadow-lg dark:shadow-2xl px-3 sm:px-5 py-2 flex items-center justify-between gap-3 relative hover:border-indigo-400 dark:hover:border-indigo-500/40 transition-all duration-300">
         
@@ -220,13 +221,17 @@ export const Navbar = ({
 
           {/* Cụm thông tin tài khoản chủ nuôi & Avatar & Đăng xuất */}
           <div className="flex items-center gap-2 sm:gap-3 relative">
-            {/* Thông tin tài khoản chủ nuôi */}
+            {/* Thông tin tài khoản */}
             <div className="flex flex-col text-right hidden lg:flex">
               <span className="text-xs font-semibold text-slate-800 dark:text-white leading-tight">
-                {currentUser?.name || "Mạnh Đinh"}
+                {currentUser?.name || "Người dùng"}
               </span>
-              <span className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
-                🐾 Chủ nuôi
+              <span className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400">
+                {currentUser?.role === 'system_admin'
+                  ? '🛡️ Quản trị viên'
+                  : (currentUser?.role === 'vet_doctor' || currentUser?.role === 'CLINIC_ADMIN')
+                  ? '🩺 Bác sĩ thú y'
+                  : '🐾 Chủ nuôi'}
               </span>
             </div>
 
@@ -259,7 +264,10 @@ export const Navbar = ({
                   {/* Tên & Email */}
                   <div className="px-3 py-2">
                     <p className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
-                      {currentUser?.name || "Mạnh Đinh"} <span className="text-xs font-normal text-indigo-600 dark:text-indigo-400">(Chủ nuôi)</span>
+                      {currentUser?.name || "Người dùng"}{' '}
+                      <span className="text-xs font-normal text-indigo-600 dark:text-indigo-400">
+                        ({currentUser?.role === 'system_admin' ? 'Quản trị viên' : (currentUser?.role === 'vet_doctor' || currentUser?.role === 'CLINIC_ADMIN') ? 'Bác sĩ' : 'Chủ nuôi'})
+                      </span>
                     </p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5 font-mono">
                       {currentUser?.email || "demo@petcare.ai"}
@@ -267,25 +275,57 @@ export const Navbar = ({
                   </div>
 
                   {/* Vạch ngăn cách */}
-                  <div className="h-px bg-white/10 my-1.5" />
+                  <div className="h-px bg-slate-200 dark:bg-white/10 my-1.5" />
 
-                  {/* Nút chuyển cổng Bác Sĩ (Demo) */}
+                  {/* Hồ sơ cá nhân */}
                   <button
                     onClick={() => {
                       setIsUserMenuOpen(false);
-                      try { sound?.playClick?.(); } catch {}
-                      if (typeof onSwitchPortal === 'function') {
-                        onSwitchPortal('CLINIC');
-                      } else if (typeof setCurrentPortal === 'function') {
-                        setCurrentPortal('CLINIC');
-                      }
+                      if (onOpenProfileModal) onOpenProfileModal('profile');
                     }}
-                    className="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all flex items-center gap-2 cursor-pointer group active:scale-[0.98]"
-                    title="Chế độ Demo dành cho Giảng viên"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/10 transition-colors flex items-center gap-2 cursor-pointer mb-1"
                   >
-                    <span className="text-base group-hover:rotate-12 transition-transform">🧪</span>
-                    <span className="truncate">Chuyển sang Cổng Bác Sĩ (Demo)</span>
+                    <User className="w-4 h-4 text-indigo-400" />
+                    <span>Hồ sơ cá nhân</span>
                   </button>
+
+                  {/* Nút quay lại Cổng Admin (Chỉ hiển thị cho system_admin) */}
+                  {currentUser?.role === 'system_admin' && (
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        try { sound?.playClick?.(); } catch {}
+                        if (typeof onSwitchPortal === 'function') {
+                          onSwitchPortal('ADMIN');
+                        } else if (typeof setCurrentPortal === 'function') {
+                          setCurrentPortal('ADMIN');
+                        }
+                      }}
+                      className="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-purple-300 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 transition-all flex items-center gap-2 cursor-pointer group active:scale-[0.98] mb-1"
+                    >
+                      <span className="text-base group-hover:rotate-12 transition-transform">🛡️</span>
+                      <span className="truncate">Cổng Quản Trị Hệ Thống</span>
+                    </button>
+                  )}
+
+                  {/* Nút chuyển cổng Bác Sĩ (Chỉ cho bác sĩ đã duyệt hoặc clinic admin) */}
+                  {(currentUser?.role === 'CLINIC_ADMIN' || (currentUser?.role === 'vet_doctor' && currentUser?.vetStatus === 'approved')) && (
+                    <button
+                      onClick={() => {
+                        setIsUserMenuOpen(false);
+                        try { sound?.playClick?.(); } catch {}
+                        if (typeof onSwitchPortal === 'function') {
+                          onSwitchPortal('CLINIC');
+                        } else if (typeof setCurrentPortal === 'function') {
+                          setCurrentPortal('CLINIC');
+                        }
+                      }}
+                      className="w-full text-left px-3 py-2.5 rounded-xl text-xs font-bold text-teal-300 bg-teal-500/10 hover:bg-teal-500/20 border border-teal-500/30 transition-all flex items-center gap-2 cursor-pointer group active:scale-[0.98] mb-1"
+                    >
+                      <span className="text-base group-hover:rotate-12 transition-transform">🩺</span>
+                      <span className="truncate">Cổng Bệnh Viện Thú Y</span>
+                    </button>
+                  )}
 
                   {/* Vạch ngăn cách */}
                   <div className="h-px bg-white/10 my-1.5" />

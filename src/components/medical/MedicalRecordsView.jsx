@@ -27,10 +27,41 @@ import {
 import { SpeciesBadge } from '../common/Badges';
 import { sound } from '../../services/soundService';
 
+// Mô tả chi tiết y khoa & phòng bệnh WSAVA cho từng vắc-xin
+const VACCINE_DESCRIPTIONS = {
+  'Nobivac DHPPi + L4 (7 Bệnh)': {
+    diseaseDesc: 'Phòng 7 bệnh truyền nhiễm chó: Care, Parvovirus, Viêm gan, Ho cũi, Leptospira 4 chủng',
+    facility: 'Bệnh Viện Thú Y PetCare Central (CN Cầu Giấy)'
+  },
+  'Rabisin (Vắc-xin Dại Quốc Tế)': {
+    diseaseDesc: 'Phòng ngừa virus Dại (Rabies) • Cấp chứng thư xuất cảnh IATA / EU Pet Passport',
+    facility: 'Bệnh Viện Thú Y PetCare Central (CN Cầu Giấy)'
+  },
+  'Bordetella Bronchiseptica (Ho cũi chó)': {
+    diseaseDesc: 'Dự phòng viêm phế quản truyền nhiễm (Kennel Cough) đường hô hấp cấp tính',
+    facility: 'Bệnh Viện Thú Y PetCare Central'
+  },
+  'Purevax RCPCh (Vắc-xin 4 Bệnh Mèo)': {
+    diseaseDesc: 'Phòng 4 bệnh cốt lõi mèo: Giảm bạch cầu (FPV), Viêm mũi khí quản (FHV-1), Calicivirus (FCV) và Chlamydia',
+    facility: 'Bệnh Viện Thú Y PetCare Central (CN Cầu Giấy)'
+  },
+  'Rabisin (Phòng Dại Cho Mèo)': {
+    diseaseDesc: 'Vắc-xin phòng bệnh Dại (Rabies) đạt chuẩn Hướng dẫn WSAVA & Xuất cảnh quốc tế',
+    facility: 'Bệnh Viện Thú Y PetCare Central (CN Cầu Giấy)'
+  },
+  'Filavac VHD K C+V (Bại huyết Thỏ RHDV1 & RHDV2)': {
+    diseaseDesc: 'Phòng xuất huyết truyền nhiễm bại huyết Thỏ chủng cổ điển RHDV-1 & biến chủng mới RHDV-2',
+    facility: 'Bệnh Viện Thú Y PetCare Central (CN Cầu Giấy)'
+  }
+};
+
 // Format helper chuẩn DD/MM/YYYY
 const formatDateVi = (dateStr) => {
   if (!dateStr) return '';
   try {
+    if (String(dateStr).includes('/')) {
+      return String(dateStr);
+    }
     const parts = String(dateStr).split('T')[0].split('-');
     if (parts.length === 3) {
       return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -40,12 +71,27 @@ const formatDateVi = (dateStr) => {
 };
 
 // Tính số ngày còn lại đến hạn
-const getRemainingDaysInfo = (dueDateStr) => {
+const getRemainingDaysInfo = (dueDateStr, remainingDaysVal) => {
+  if (remainingDaysVal !== undefined && remainingDaysVal !== null) {
+    const days = Number(remainingDaysVal);
+    if (days < 0) {
+      return { text: `Quá hạn ${Math.abs(days)} ngày`, isOverdue: true, isSoon: false, days };
+    } else if (days === 0) {
+      return { text: 'Đến hạn hôm nay', isOverdue: false, isSoon: true, days: 0 };
+    } else {
+      return { text: `Còn ${days} ngày`, isOverdue: false, isSoon: days <= 45, days };
+    }
+  }
   if (!dueDateStr) return { text: '', isOverdue: false, isSoon: false, days: 0 };
   try {
-    const due = new Date(dueDateStr);
+    let due;
+    if (String(dueDateStr).includes('/')) {
+      const parts = String(dueDateStr).split('/');
+      due = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+    } else {
+      due = new Date(dueDateStr);
+    }
     const now = new Date();
-    // Reset time components for accurate date difference
     due.setHours(0, 0, 0, 0);
     now.setHours(0, 0, 0, 0);
     const diffTime = due.getTime() - now.getTime();
@@ -56,7 +102,7 @@ const getRemainingDaysInfo = (dueDateStr) => {
     } else if (diffDays === 0) {
       return { text: 'Đến hạn hôm nay', isOverdue: false, isSoon: true, days: 0 };
     } else {
-      return { text: `Còn ${diffDays} ngày`, isOverdue: false, isSoon: diffDays <= 30, days: diffDays };
+      return { text: `Còn ${diffDays} ngày`, isOverdue: false, isSoon: diffDays <= 45, days: diffDays };
     }
   } catch {
     return { text: '', isOverdue: false, isSoon: false, days: 0 };
@@ -68,17 +114,7 @@ export const MedicalRecordsView = ({
   schedules = []
 }) => {
   const [selectedPetId, setSelectedPetId] = useState(pets[0]?.id || 'pet-1');
-  const selectedPet = pets.find(p => p.id === selectedPetId) || pets[0] || {
-    id: 'pet-1',
-    name: 'Mochi',
-    breed: 'Golden Retriever',
-    species: 'dog',
-    gender: 'male',
-    weight: 24.5,
-    microchip: '98200036412',
-    isNeutered: true,
-    avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=600&q=80'
-  };
+  const selectedPet = pets.find(p => p.id === selectedPetId) || pets[0] || null;
 
   const [isExporting, setIsExporting] = useState(false);
   const [vaccineFilter, setVaccineFilter] = useState('all'); // 'all' | 'valid' | 'due'
@@ -93,159 +129,89 @@ export const MedicalRecordsView = ({
     }, 3500);
   };
 
-  // Filter schedules for the selected pet
+  // Filter schedules for the selected pet (nếu có lịch riêng thực tế)
   const petSchedules = selectedPet ? schedules.filter(s => s.petId === selectedPet.id) : [];
 
-  // Core Mock Clinical Vaccines đạt chuẩn Hộ Chiếu WSAVA Quốc Tế
-  const defaultVaccines = useMemo(() => [
-    {
-      id: 'vax-core-1',
-      title: 'Nobivac DHPPi + L4',
-      diseaseDesc: 'Phòng 7 bệnh truyền nhiễm chó: Care, Parvovirus, Viêm gan, Ho cũi, Leptospira 4 chủng',
-      batchNumber: 'NV-2026-8892',
-      date: '2026-05-10',
-      nextDueDate: '2027-01-18', // Khớp chuẩn 18/01/2027
-      doctor: 'BS. Nam - CCHN-0981',
-      facility: 'Bệnh Viện Thú Y PetCare Central (CN Cầu Giấy)',
-      completed: true,
-      notes: 'Khám lâm sàng thể trạng A+, không phản ứng sau tiêm, miễn dịch đạt chuẩn bảo hộ quốc tế.'
-    },
-    {
-      id: 'vax-core-2',
-      title: 'Rabisin (Vắc-xin Dại Quốc Tế)',
-      diseaseDesc: 'Phòng ngừa virus Dại (Rabies) • Cấp chứng thư xuất cảnh IATA / EU Pet Passport',
-      batchNumber: 'RB-2026-4412',
-      date: '2026-04-15',
-      nextDueDate: '2027-04-15',
-      doctor: 'BS. Trần Thị Mai - CCHN-1204',
-      facility: 'Bệnh Viện Thú Y PetCare Central (CN Cầu Giấy)',
-      completed: true,
-      notes: 'Được cấp chứng thư xuất cảnh IATA / Pet Passport quốc tế, gắn mã QR điện tử.'
-    },
-    {
-      id: 'vax-core-3',
-      title: 'Bordetella Bronchiseptica (Ho cũi chó)',
-      diseaseDesc: 'Dự phòng viêm phế quản truyền nhiễm (Kennel Cough) đường hô hấp cấp tính',
-      batchNumber: 'KC-2026-1102',
-      date: '2026-09-20',
-      nextDueDate: '2027-09-20',
-      doctor: 'BS. Nam - CCHN-0981',
-      facility: 'Bệnh Viện Thú Y PetCare Central',
-      completed: true,
-      notes: 'Đã hoàn thành mũi tiêm chủng đạt chuẩn quốc tế, hẹn tiêm nhắc lại sau 12 tháng.'
+  // Vắc-xin chuẩn y khoa theo từng cá thể
+  const rawVaccines = useMemo(() => {
+    // Nếu có lịch vắc-xin thực tế từ hệ thống schedules
+    const realPetVaccines = petSchedules.filter(s => s.type === 'vaccine');
+    if (realPetVaccines.length > 0) {
+      return realPetVaccines.map((s, idx) => ({
+        id: s.id,
+        name: s.title,
+        title: s.title,
+        lot: s.batchNumber || '',
+        batchNumber: s.batchNumber || '',
+        date: s.date || '',
+        nextDue: s.nextDueDate || '',
+        nextDueDate: s.nextDueDate || '',
+        remainingDays: s.nextDueDate ? getRemainingDaysInfo(s.nextDueDate).days : null,
+        vet: s.doctor || '',
+        doctor: s.doctor || '',
+        diseaseDesc: s.notes || '',
+        facility: s.location || '',
+        completed: Boolean(s.completed)
+      }));
     }
-  ], []);
+    return [];
+  }, [petSchedules]);
 
-  // Danh mục Tẩy giun & Ký sinh trùng định kỳ
-  const defaultDeworms = useMemo(() => [
-    {
-      id: 'deworm-1',
-      title: 'Drontal Plus Flavour',
-      diseaseDesc: 'Tẩy sán dây, giun tròn, giun móc, giun tóc đường ruột',
-      batchNumber: 'DT-2026-0988',
-      date: '2026-08-01',
-      nextDueDate: '2026-11-01',
-      doctor: 'BS. Lê Minh Hoàng (Khoa Dược)',
-      facility: 'Phòng khám PetCare Chi nhánh 1',
-      completed: true,
-      repeat: '3 tháng/lần',
-      notes: 'Uống sau ăn no, đường ruột sạch, thể trạng ổn định.'
-    },
-    {
-      id: 'deworm-2',
-      title: 'NexGard Spectra 15-30kg',
-      diseaseDesc: 'Dự phòng giun tim, tẩy giun phổi & phòng diệt ve rận, ghẻ demodex',
-      batchNumber: 'NX-2027-5501',
-      date: '2026-09-01',
-      nextDueDate: '2026-10-01',
-      doctor: 'Dược sĩ Thú y Khoa Dược',
-      facility: 'Hệ thống PetCare Hub',
-      completed: true,
-      repeat: '1 tháng/lần',
-      notes: 'Viên nhai vị bò thơm ngon, dự phòng ngoại ký sinh trùng tuyệt đối.'
+  // Danh mục tẩy giun chuẩn y khoa theo từng loài
+  const displayedDeworms = useMemo(() => {
+    const realPetDeworms = petSchedules.filter(s => s.type === 'deworm');
+    if (realPetDeworms.length > 0) {
+      return realPetDeworms.map((s, idx) => ({
+        id: s.id,
+        title: s.title,
+        diseaseDesc: s.notes || '',
+        batchNumber: s.batchNumber || '',
+        date: s.date || '',
+        nextDueDate: s.nextDueDate || '',
+        doctor: s.doctor || '',
+        facility: s.location || '',
+        completed: Boolean(s.completed),
+        repeat: s.repeat || '',
+        notes: s.notes || ''
+      }));
     }
-  ], []);
-
-  // Parse schedules nếu có thực tế từ app
-  const actualVaccines = petSchedules.filter(s => s.type === 'vaccine').map((s, idx) => {
-    let nextDueDate = s.nextDueDate;
-    if (!nextDueDate || nextDueDate <= s.date) {
-      try {
-        const d = new Date(s.date || '2026-09-20');
-        d.setFullYear(d.getFullYear() + 1);
-        nextDueDate = d.toISOString().split('T')[0];
-      } catch {
-        nextDueDate = '2027-09-20';
-      }
-    }
-
-    return {
-      id: s.id,
-      title: s.title,
-      diseaseDesc: s.notes || 'Phòng ngừa bệnh truyền nhiễm theo phác đồ thú y quốc tế',
-      batchNumber: s.batchNumber || `NV-2026-88${idx + 10}`,
-      date: s.date || '2026-05-10',
-      nextDueDate: nextDueDate,
-      doctor: s.doctor || 'BS. Nam - CCHN-0981',
-      facility: s.location || 'Bệnh Viện Thú Y PetCare Central',
-      completed: Boolean(s.completed),
-      notes: s.notes || 'Khám lâm sàng đạt chuẩn WSAVA'
-    };
-  });
-
-  const actualDeworms = petSchedules.filter(s => s.type === 'deworm').map((s, idx) => ({
-    id: s.id,
-    title: s.title,
-    diseaseDesc: s.notes || 'Kiểm soát ký sinh trùng định kỳ',
-    batchNumber: s.batchNumber || `DT-2026-09${idx + 20}`,
-    date: s.date || '2026-08-01',
-    nextDueDate: s.nextDueDate || '2026-11-01',
-    doctor: s.doctor || 'BS. Lê Minh Hoàng (Khoa Dược)',
-    facility: s.location || 'PetCare Clinic',
-    completed: Boolean(s.completed),
-    repeat: s.repeat || (s.title?.includes('NexGard') ? '1 tháng/lần' : '3 tháng/lần'),
-    notes: s.notes || 'Đã kiểm tra thể trạng & dung nạp tốt'
-  }));
-
-  const rawVaccines = actualVaccines.length > 0 ? actualVaccines : defaultVaccines;
-  const displayedDeworms = actualDeworms.length > 0 ? actualDeworms : defaultDeworms;
+    return [];
+  }, [petSchedules]);
 
   // Lọc bảng vắc-xin theo filter [Tất cả] [Còn hạn] [Cần tiêm nhắc]
   const displayedVaccines = useMemo(() => {
     if (vaccineFilter === 'valid') {
       return rawVaccines.filter(v => {
-        const info = getRemainingDaysInfo(v.nextDueDate);
-        return v.completed && !info.isOverdue;
+        const remaining = v.remainingDays !== undefined ? v.remainingDays : getRemainingDaysInfo(v.nextDue).days;
+        return v.completed && remaining >= 0;
       });
     }
     if (vaccineFilter === 'due') {
       return rawVaccines.filter(v => {
-        const info = getRemainingDaysInfo(v.nextDueDate);
-        return !v.completed || info.isOverdue || info.isSoon;
+        const remaining = v.remainingDays !== undefined ? v.remainingDays : getRemainingDaysInfo(v.nextDue).days;
+        return !v.completed || remaining < 0 || remaining <= 45;
       });
     }
     return rawVaccines;
   }, [rawVaccines, vaccineFilter]);
 
-  // Chỉ số KPI chuẩn Hộ chiếu WSAVA
+  // Chỉ số KPI chuẩn Hộ chiếu WSAVA lấy từ stats của cá thể
   const completedVaccinesCount = rawVaccines.filter(v => v.completed).length;
-  const nearestDueDate = '18/01/2027'; // Chuẩn theo yêu cầu
+  const nearestDueDate = rawVaccines.length > 0 && rawVaccines[0]?.nextDue ? rawVaccines[0].nextDue : 'Chưa có';
   const dewormsCount = displayedDeworms.length;
 
-  // Microchip chuẩn Mochi theo yêu cầu
-  const petMicrochip = selectedPet.id === 'pet-1' || selectedPet.name?.toLowerCase().includes('mochi')
-    ? '98200036412'
-    : (selectedPet.microchip || '98200036412');
+  // Microchip chuẩn cá thể duy nhất
+  const petMicrochip = selectedPet.microchip || 'Chưa cập nhật';
 
   const petGenderLabel = selectedPet.gender === 'male' || selectedPet.gender === 'Đực' ? 'Đực' : 'Cái';
-  const petWeightLabel = `${selectedPet.weight || 24.5} kg`;
-  const petBreedLabel = selectedPet.breed || 'Golden Retriever';
-  const petNeuteredLabel = selectedPet.isNeutered !== false ? 'Đã triệt sản' : 'Chưa triệt sản';
+  const petWeightLabel = selectedPet.weight ? `${selectedPet.weight} kg` : 'Chưa có dữ liệu';
+  const petBreedLabel = selectedPet.breed || 'Chưa cập nhật';
+  const petNeuteredLabel = selectedPet.isNeutered ? 'Đã triệt sản' : 'Chưa triệt sản';
 
   // In / Xuất PDF chuẩn Hộ Chiếu WSAVA
   const handleExportPdf = () => {
     try { sound?.playSuccess?.(); } catch {}
-    window.dispatchEvent(new CustomEvent('petcare_export_wsava_pdf'));
+    window.dispatchEvent(new CustomEvent('petcare_export_wsava_pdf', { detail: { petId: selectedPet.id } }));
   };
 
   // Hành động Nhắc Lịch Uống
@@ -254,12 +220,12 @@ export const MedicalRecordsView = ({
   };
 
   return (
-    <div className="space-y-6 pb-20 select-none text-white relative">
+    <div className="space-y-6 pb-20 select-none text-slate-900 dark:text-white relative">
       
       {/* Toast thông báo tương tác nhanh */}
       {toastMessage && (
-        <div className="fixed bottom-8 right-8 z-50 px-5 py-3.5 rounded-2xl bg-slate-900/90 border border-emerald-400/40 text-emerald-300 font-bold text-xs shadow-2xl backdrop-blur-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5">
-          <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+        <div className="fixed bottom-8 right-8 z-50 px-5 py-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/90 border border-emerald-400/40 text-emerald-700 dark:text-emerald-300 font-bold text-xs shadow-2xl backdrop-blur-2xl flex items-center gap-3 animate-in fade-in slide-in-from-bottom-5">
+          <div className="w-6 h-6 rounded-lg bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
             <Bell className="w-3.5 h-3.5" />
           </div>
           <span>{toastMessage}</span>
@@ -267,22 +233,22 @@ export const MedicalRecordsView = ({
       )}
 
       {/* ---------------------------------------------------------------------- */}
-      {/* 1. THANH TIÊU ĐỀ TRÊN CÙNG: ĐỒNG BỘ DARK GLASS & DUY NHẤT 1 NÚT XUẤT PDF */}
+      {/* 1. THANH TIÊU ĐỀ TRÊN CÙNG: MEDICAL MINIMALIST PORCELAIN */}
       {/* ---------------------------------------------------------------------- */}
-      <div className="p-5 rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-5 rounded-3xl bg-white dark:bg-[#12192A] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] dark:shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3.5">
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 border border-emerald-400/30 text-emerald-400 flex items-center justify-center font-black shadow-lg shadow-emerald-500/20 shrink-0">
+          <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center font-black shadow-md shadow-emerald-500/15 shrink-0">
             <FileHeart className="w-6 h-6 stroke-[2.5]" />
           </div>
           <div>
-            <h1 className="text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2.5 flex-wrap">
+            <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5 flex-wrap">
               <span>Sổ Y Bạ & Tiêm Chủng Điện Tử</span>
-              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 flex items-center gap-1">
-                <Globe className="w-3 h-3 text-emerald-400" />
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-400/30 flex items-center gap-1">
+                <Globe className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 <span>WSAVA PASSPORT</span>
               </span>
             </h1>
-            <p className="text-slate-400 text-xs mt-0.5">
+            <p className="text-slate-600 dark:text-slate-400 text-xs mt-0.5">
               Hộ chiếu sức khỏe thú cưng chuẩn WSAVA Quốc Tế • Chứng thực số lô, hạn miễn dịch & phòng ngừa ký sinh trùng
             </p>
           </div>
@@ -290,18 +256,18 @@ export const MedicalRecordsView = ({
 
         <div className="flex items-center gap-3 flex-wrap self-end sm:self-auto">
           {/* Bộ chọn thú cưng */}
-          <div className="flex items-center gap-2 bg-white/[0.05] border border-white/10 px-3.5 py-2 rounded-2xl shadow-inner text-xs">
-            <PawPrint className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+          <div className="flex items-center gap-2 bg-slate-50 dark:bg-white/[0.05] border border-slate-200 dark:border-white/10 px-3.5 py-2 rounded-2xl shadow-xs text-xs">
+            <PawPrint className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
             <select
               value={selectedPetId}
               onChange={(e) => {
                 try { sound?.playClick?.(); } catch {}
                 setSelectedPetId(e.target.value);
               }}
-              className="bg-transparent border-0 text-xs font-bold text-white outline-none cursor-pointer pr-1"
+              className="bg-transparent border-0 text-xs font-bold text-slate-800 dark:text-white outline-none cursor-pointer pr-1"
             >
               {pets.map(p => (
-                <option key={p.id} value={p.id} className="bg-slate-900 text-white font-medium">
+                <option key={p.id} value={p.id} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-white font-medium">
                   {p.name} ({p.breed} - {p.weight}kg)
                 </option>
               ))}
@@ -324,10 +290,10 @@ export const MedicalRecordsView = ({
       {/* ---------------------------------------------------------------------- */}
       {/* 2. THẺ HỘ CHIẾU WSAVA (PET PASSPORT HEADER CARD) */}
       {/* ---------------------------------------------------------------------- */}
-      <div className="p-6 rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl relative overflow-hidden">
+      <div className="p-6 rounded-3xl bg-white dark:bg-[#12192A] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] dark:shadow-2xl relative overflow-hidden">
         {/* Glow hiệu ứng nền */}
-        <div className="absolute top-0 right-1/4 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-0 right-1/4 w-80 h-80 bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-cyan-500/5 dark:bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center relative z-10">
           
@@ -335,7 +301,7 @@ export const MedicalRecordsView = ({
           <div className="lg:col-span-5 flex items-center gap-4">
             {/* Avatar Mochi có khung viền vàng kim bảo chứng */}
             <div className="relative shrink-0">
-              <div className="w-20 h-20 rounded-2xl p-0.5 bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 shadow-[0_0_20px_rgba(251,191,36,0.35)]">
+              <div className="w-20 h-20 rounded-2xl p-0.5 bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 shadow-[0_0_20px_rgba(251,191,36,0.25)]">
                 <img
                   src={selectedPet.avatar || 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=600&q=80'}
                   alt={selectedPet.name}
@@ -351,30 +317,30 @@ export const MedicalRecordsView = ({
             {/* Thông tin Mochi */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xl font-black text-white tracking-tight">{selectedPet.name}</h2>
-                {/* Huy hiệu chuẩn hóa WSAVA 2026 màu xanh ngọc */}
-                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 flex items-center gap-1 shadow-xs">
-                  <Globe className="w-3 h-3 text-emerald-400" />
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{selectedPet.name}</h2>
+                {/* Huy hiệu chuẩn hóa WSAVA 2026 */}
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-400/40 flex items-center gap-1 shadow-xs">
+                  <Globe className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                   <span>Tiêu chuẩn WSAVA 2026</span>
                 </span>
               </div>
 
-              {/* Nhãn chi tiết: Golden Retriever • Đực • 24.5 kg • Đã triệt sản */}
-              <p className="text-xs text-slate-300 font-medium">
+              {/* Nhãn chi tiết */}
+              <p className="text-xs text-slate-600 dark:text-slate-300 font-medium">
                 {petBreedLabel} • {petGenderLabel} • {petWeightLabel} • {petNeuteredLabel}
               </p>
 
-              {/* Chip nhận diện: Microchip: 98200036412 */}
-              <div className="flex items-center gap-2 text-xs font-mono text-amber-300/90 pt-0.5">
-                <Award className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                <span>Microchip: <strong className="text-amber-200 tracking-wider">{petMicrochip}</strong></span>
+              {/* Chip nhận diện Microchip */}
+              <div className="flex items-center gap-2 text-xs font-mono text-amber-700 dark:text-amber-300/90 pt-0.5">
+                <Award className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                <span>Microchip: <strong className="text-amber-800 dark:text-amber-200 tracking-wider">{petMicrochip}</strong></span>
               </div>
             </div>
           </div>
 
-          {/* GIỮA (3 Cột): Mã QR Code xác thực nhanh cho Hải quan / Bệnh viện */}
-          <div className="lg:col-span-3 flex flex-col items-center justify-center p-3 rounded-2xl bg-white/[0.03] border border-white/10 hover:border-emerald-500/30 transition-all text-center">
-            <div className="relative p-2 bg-white rounded-xl shadow-md group">
+          {/* GIỮA (3 Cột): Mã QR Code xác thực nhanh */}
+          <div className="lg:col-span-3 flex flex-col items-center justify-center p-3 rounded-2xl bg-slate-50/80 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 hover:border-emerald-500/40 transition-all text-center">
+            <div className="relative p-2 bg-white rounded-xl shadow-md border border-slate-200/60 group">
               {/* Mã QR Vector tương tác */}
               <svg viewBox="0 0 100 100" className="w-18 h-18 text-slate-950" fill="currentColor">
                 {/* Corner Finder 1 */}
@@ -405,10 +371,10 @@ export const MedicalRecordsView = ({
               </svg>
             </div>
             <div className="mt-1.5 space-y-0.5">
-              <span className="text-[11px] font-bold text-emerald-400 block tracking-wider uppercase">
+              <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 block tracking-wider uppercase">
                 MÃ QR XÁC THỰC
               </span>
-              <span className="text-[10px] text-slate-400 block">
+              <span className="text-[10px] text-slate-500 dark:text-slate-400 block">
                 Hải quan & Bệnh viện quét đọc
               </span>
             </div>
@@ -416,32 +382,32 @@ export const MedicalRecordsView = ({
 
           {/* CỘT PHẢI (4 Cột): 3 THẺ CHỈ SỐ KÍNH MỜ TINH TẾ */}
           <div className="lg:col-span-4 grid grid-cols-3 gap-2.5">
-            {/* Thẻ 1: 3 - MŨI HOÀN THÀNH (Viền xanh ngọc) */}
-            <div className="p-3 bg-emerald-500/10 rounded-2xl border border-emerald-500/30 text-center hover:border-emerald-400/50 transition-all flex flex-col justify-center">
-              <div className="text-2xl font-black text-emerald-300 font-mono tracking-tight">
+            {/* Thẻ 1: 3 - MŨI HOÀN THÀNH */}
+            <div className="p-3 bg-emerald-50/80 dark:bg-emerald-500/10 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 text-center hover:border-emerald-400/50 transition-all flex flex-col justify-center">
+              <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300 font-mono tracking-tight">
                 {completedVaccinesCount}
               </div>
-              <div className="text-[10px] font-bold uppercase text-emerald-300/80 mt-1 leading-tight">
+              <div className="text-[10px] font-bold uppercase text-emerald-800/80 dark:text-emerald-300/80 mt-1 leading-tight">
                 Mũi hoàn thành
               </div>
             </div>
 
-            {/* Thẻ 2: 18/01/2027 - HẠN MŨI NHẮC GẦN NHẤT (Viền vàng cảnh báo) */}
-            <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/30 text-center hover:border-amber-400/50 transition-all flex flex-col justify-center">
-              <div className="text-xs sm:text-[13px] font-black text-amber-300 font-mono tracking-tight leading-snug">
+            {/* Thẻ 2: 18/01/2027 - HẠN MŨI NHẮC GẦN NHẤT */}
+            <div className="p-3 bg-amber-50/80 dark:bg-amber-500/10 rounded-2xl border border-amber-200 dark:border-amber-500/30 text-center hover:border-amber-400/50 transition-all flex flex-col justify-center">
+              <div className="text-xs sm:text-[13px] font-black text-amber-700 dark:text-amber-300 font-mono tracking-tight leading-snug">
                 {nearestDueDate}
               </div>
-              <div className="text-[10px] font-bold uppercase text-amber-300/80 mt-1 leading-tight">
+              <div className="text-[10px] font-bold uppercase text-amber-800/80 dark:text-amber-300/80 mt-1 leading-tight">
                 Hạn mũi nhắc gần nhất
               </div>
             </div>
 
-            {/* Thẻ 3: 2 LẦN - TẨY GIUN ĐỊNH KỲ (Viền xanh dương) */}
-            <div className="p-3 bg-sky-500/10 rounded-2xl border border-sky-500/30 text-center hover:border-sky-400/50 transition-all flex flex-col justify-center">
-              <div className="text-2xl font-black text-sky-300 font-mono tracking-tight">
+            {/* Thẻ 3: 2 LẦN - TẨY GIUN ĐỊNH KỲ */}
+            <div className="p-3 bg-sky-50/80 dark:bg-sky-500/10 rounded-2xl border border-sky-200 dark:border-sky-500/30 text-center hover:border-sky-400/50 transition-all flex flex-col justify-center">
+              <div className="text-2xl font-black text-sky-700 dark:text-sky-300 font-mono tracking-tight">
                 {dewormsCount} LẦN
               </div>
-              <div className="text-[10px] font-bold uppercase text-sky-300/80 mt-1 leading-tight">
+              <div className="text-[10px] font-bold uppercase text-sky-800/80 dark:text-sky-300/80 mt-1 leading-tight">
                 Tẩy giun định kỳ
               </div>
             </div>
@@ -453,34 +419,34 @@ export const MedicalRecordsView = ({
       {/* ---------------------------------------------------------------------- */}
       {/* 3. BẢNG VẮC-XIN THEO DẠNG "TEM NIÊM PHONG" (VACCINE STAMPS) */}
       {/* ---------------------------------------------------------------------- */}
-      <div className="p-6 rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl space-y-4">
+      <div className="p-6 rounded-3xl bg-white dark:bg-[#12192A] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] dark:shadow-2xl space-y-4">
         
         {/* Header: Sổ Tiêm Chủng Vắc-xin & Phòng Bệnh kèm bộ lọc */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/10">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-300 flex items-center justify-center border border-emerald-400/30">
+            <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-300 flex items-center justify-center border border-emerald-500/30">
               <Syringe className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white uppercase tracking-wider flex items-center gap-2">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                 <span>Sổ Tiêm Chủng Vắc-xin & Phòng Bệnh</span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 font-bold normal-case">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-400/30 font-bold normal-case">
                   Vaccine Stamps
                 </span>
               </h3>
-              <p className="text-[11px] text-slate-400">Niêm phong số lô, bảo hộ miễn dịch quốc tế và bác sĩ chứng thực</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Niêm phong số lô, bảo hộ miễn dịch quốc tế và bác sĩ chứng thực</p>
             </div>
           </div>
 
           {/* Bộ lọc: [ Tất cả ] [ Còn hạn ] [ Cần tiêm nhắc ] */}
-          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-white/[0.04] border border-white/10 self-start sm:self-auto">
+          <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100/80 dark:bg-white/[0.04] border border-slate-200 dark:border-white/10 self-start sm:self-auto">
             <button
               type="button"
               onClick={() => setVaccineFilter('all')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 vaccineFilter === 'all'
-                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 shadow-md shadow-emerald-600/20'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Tất cả
@@ -490,8 +456,8 @@ export const MedicalRecordsView = ({
               onClick={() => setVaccineFilter('valid')}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 vaccineFilter === 'valid'
-                  ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-emerald-600 dark:bg-emerald-500 text-white dark:text-slate-950 shadow-md shadow-emerald-600/20'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Còn hạn
@@ -502,7 +468,7 @@ export const MedicalRecordsView = ({
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                 vaccineFilter === 'due'
                   ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'text-slate-400 hover:text-white'
+                  : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
               Cần tiêm nhắc
@@ -510,10 +476,10 @@ export const MedicalRecordsView = ({
           </div>
         </div>
 
-        {/* Danh sách tem niêm phong vắc-xin */}
-        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]">
+        {/* Danh sách tem niêm phong vắc-xin (Table chuẩn hóa Light Mode) */}
+        <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/[0.02]">
           <table className="w-full text-xs text-left border-collapse min-w-[760px]">
-            <thead className="bg-white/[0.05] text-slate-300 font-bold uppercase tracking-wider text-[11px] border-b border-white/10">
+            <thead className="bg-slate-100/80 text-slate-700 text-xs font-semibold uppercase border-b border-slate-200 dark:bg-white/[0.05] dark:text-slate-300 dark:border-white/10">
               <tr>
                 <th className="py-3.5 px-4 w-[30%]">Tên Vắc-xin & Phòng Bệnh</th>
                 <th className="py-3.5 px-4 w-[16%]">Số Lô (Lot/Batch)</th>
@@ -522,77 +488,85 @@ export const MedicalRecordsView = ({
                 <th className="py-3.5 px-4 text-center w-[14%]">Trạng Thái</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
-              {displayedVaccines.map((item) => {
-                const dueInfo = getRemainingDaysInfo(item.nextDueDate);
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              {displayedVaccines.length > 0 ? displayedVaccines.map((item) => {
+                const dueInfo = getRemainingDaysInfo(item.nextDueDate || item.nextDue, item.remainingDays);
                 return (
                   <tr 
                     key={item.id} 
-                    className="hover:bg-white/[0.04] transition-all group"
+                    className="border-b border-slate-100 hover:bg-slate-50/60 text-slate-800 dark:border-white/5 dark:hover:bg-white/[0.04] dark:text-slate-200 transition-all group"
                   >
-                    {/* Cột 1: Tên Vắc-xin nổi bật kèm mô tả bệnh phòng ngừa màu xám nhạt */}
+                    {/* Cột 1: Tên Vắc-xin nổi bật kèm mô tả bệnh phòng ngừa */}
                     <td className="py-4 px-4 align-top">
                       <div className="space-y-1">
-                        <div className="font-extrabold text-white text-sm tracking-tight flex items-center gap-1.5">
-                          <span>{item.title}</span>
+                        <div className="font-bold text-slate-900 dark:text-white text-sm tracking-tight flex items-center gap-1.5">
+                          <span>{item.title || item.name}</span>
                         </div>
-                        <p className="text-[11px] text-slate-400 leading-relaxed font-normal">
+                        <p className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed font-normal">
                           {item.diseaseDesc}
                         </p>
                       </div>
                     </td>
 
-                    {/* Cột 2: Số Lô (Lot/Batch) trong thẻ chip bảo mật xám */}
+                    {/* Cột 2: Số Lô (Lot/Batch) trong badge chuẩn */}
                     <td className="py-4 px-4 align-top">
-                      <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/[0.06] border border-white/15 text-slate-200 font-mono text-xs font-bold shadow-inner">
-                        <span className="text-slate-400">#</span>
-                        <span>{item.batchNumber.replace('#', '')}</span>
-                      </div>
+                      <span className="bg-slate-100 text-slate-700 font-mono px-2 py-0.5 rounded text-xs dark:bg-white/[0.06] dark:border dark:border-white/15 dark:text-slate-200 inline-flex items-center gap-1">
+                        <span className="text-slate-400 dark:text-slate-500">#</span>
+                        <span>{(item.batchNumber || item.lot || '').replace('#', '')}</span>
+                      </span>
                     </td>
 
-                    {/* Cột 3: Ngày tiêm & Ngày hẹn nhắc: Format DD/MM/YYYY + Nhãn ngày */}
+                    {/* Cột 3: Ngày tiêm & Ngày hẹn nhắc */}
                     <td className="py-4 px-4 align-top">
                       <div className="space-y-1">
-                        <div className="font-mono text-xs font-semibold text-slate-200 flex items-center gap-1.5">
+                        <div className="font-mono text-xs font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-1.5">
                           <span>{formatDateVi(item.date)}</span>
-                          <span className="text-slate-500">→</span>
-                          <strong className="text-emerald-300 font-bold">{formatDateVi(item.nextDueDate)}</strong>
+                          <span className="text-slate-400 dark:text-slate-500">→</span>
+                          <strong className="text-emerald-700 dark:text-emerald-300 font-bold">{formatDateVi(item.nextDueDate || item.nextDue)}</strong>
                         </div>
                         <div>
                           <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
                             dueInfo.isOverdue 
-                              ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                              : 'bg-emerald-500/15 text-emerald-300 border border-emerald-400/25'
+                              ? 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/20 dark:text-rose-300 dark:border-rose-500/30'
+                              : dueInfo.isSoon
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-400/30'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-400/25'
                           }`}>
-                            {dueInfo.text || 'Còn 112 ngày'}
+                            {dueInfo.text || `Còn ${item.remainingDays || 112} ngày`}
                           </span>
                         </div>
                       </div>
                     </td>
 
-                    {/* Cột 4: Bác sĩ thực hiện & Bệnh viện kèm icon chứng chỉ xanh */}
+                    {/* Cột 4: Bác sĩ thực hiện & Bệnh viện */}
                     <td className="py-4 px-4 align-top">
                       <div className="space-y-0.5">
-                        <div className="font-bold text-white flex items-center gap-1.5 text-xs">
-                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <div className="font-bold text-slate-800 dark:text-white flex items-center gap-1.5 text-xs">
+                          <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                           <span>{item.doctor}</span>
                         </div>
-                        <p className="text-[11px] text-slate-400 leading-tight">
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-tight">
                           {item.facility}
                         </p>
                       </div>
                     </td>
 
-                    {/* Cột 5: Dấu mộc số [ ✓ HỢP LỆ (VALID) ] màu ngọc bích phát sáng nhẹ */}
+                    {/* Cột 5: Badge "✓ HỢP LỆ" chuẩn hóa */}
                     <td className="py-4 px-4 align-top text-center">
-                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-400/40 shadow-[0_0_12px_rgba(16,185,129,0.25)]">
-                        <Check className="w-3.5 h-3.5 stroke-[3]" />
-                        <span>HỢP LỆ (VALID)</span>
-                      </div>
+                      <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium px-2.5 py-1 rounded-full text-xs dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-400/40 inline-flex items-center gap-1.5 shadow-xs">
+                        <Check className="w-3.5 h-3.5 stroke-[2.5]" />
+                        <span>✓ HỢP LỆ</span>
+                      </span>
                     </td>
                   </tr>
                 );
-              })}
+              }) : (
+                <tr>
+                  <td colSpan="5" className="py-8 text-center text-slate-500 dark:text-slate-400">
+                    Chưa có dữ liệu vắc-xin
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -601,31 +575,31 @@ export const MedicalRecordsView = ({
       {/* ---------------------------------------------------------------------- */}
       {/* 4. BẢNG TẨY GIUN & KÝ SINH TRÙNG (PARASITE CONTROL) */}
       {/* ---------------------------------------------------------------------- */}
-      <div className="p-6 rounded-3xl bg-slate-900/60 backdrop-blur-xl border border-white/10 shadow-2xl space-y-4">
+      <div className="p-6 rounded-3xl bg-white dark:bg-[#12192A] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] dark:shadow-2xl space-y-4">
         
-        {/* Header: Sổ Theo Dõi Tẩy Giun & Ngoại Ký Sinh Trùng Định Kỳ */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-white/10">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/10">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-300 flex items-center justify-center border border-amber-400/30">
+            <div className="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-600 dark:text-amber-300 flex items-center justify-center border border-amber-500/30">
               <Pill className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-base font-black text-white uppercase tracking-wider">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">
                 Sổ Theo Dõi Tẩy Giun & Ngoại Ký Sinh Trùng Định Kỳ
               </h3>
-              <p className="text-[11px] text-slate-400">Kiểm soát giun tim, ve rận, bọ chét và giun đường tiêu hóa theo phác đồ thú y</p>
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">Kiểm soát giun tim, ve rận, bọ chét và giun đường tiêu hóa theo phác đồ thú y</p>
             </div>
           </div>
 
-          <span className="text-xs font-mono font-bold text-slate-400 self-start sm:self-auto">
-            Tổng cộng: <strong className="text-amber-300">{displayedDeworms.length}</strong> lần điều trị
+          <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400 self-start sm:self-auto">
+            Tổng cộng: <strong className="text-amber-600 dark:text-amber-300">{displayedDeworms.length}</strong> lần điều trị
           </span>
         </div>
 
         {/* Bảng Ký sinh trùng */}
-        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/[0.02]">
+        <div className="overflow-x-auto rounded-2xl border border-slate-200/80 dark:border-white/10 bg-white dark:bg-white/[0.02]">
           <table className="w-full text-xs text-left border-collapse min-w-[760px]">
-            <thead className="bg-white/[0.05] text-slate-300 font-bold uppercase tracking-wider text-[11px] border-b border-white/10">
+            <thead className="bg-slate-100/80 text-slate-700 text-xs font-semibold uppercase border-b border-slate-200 dark:bg-white/[0.05] dark:text-slate-300 dark:border-white/10">
               <tr>
                 <th className="py-3.5 px-4 w-[28%]">Tên Thuốc / Chế Phẩm</th>
                 <th className="py-3.5 px-4 w-[16%]">Số Lô (Lot #)</th>
@@ -635,19 +609,19 @@ export const MedicalRecordsView = ({
                 <th className="py-3.5 px-4 text-center w-[12%]">Hành Động</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
-              {displayedDeworms.map((item) => (
+            <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+              {displayedDeworms.length > 0 ? displayedDeworms.map((item) => (
                 <tr 
                   key={item.id} 
-                  className="hover:bg-white/[0.04] transition-all group"
+                  className="border-b border-slate-100 hover:bg-slate-50/60 text-slate-800 dark:border-white/5 dark:hover:bg-white/[0.04] dark:text-slate-200 transition-all group"
                 >
                   {/* Tên thuốc & công dụng */}
                   <td className="py-4 px-4 align-top">
                     <div className="space-y-1">
-                      <div className="font-bold text-white text-sm">
+                      <div className="font-bold text-slate-900 dark:text-white text-sm">
                         {item.title}
                       </div>
-                      <p className="text-[11px] text-slate-400 font-normal">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400 font-normal">
                         {item.diseaseDesc}
                       </p>
                     </div>
@@ -655,42 +629,48 @@ export const MedicalRecordsView = ({
 
                   {/* Số lô */}
                   <td className="py-4 px-4 align-top">
-                    <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-white/[0.06] border border-white/15 text-slate-200 font-mono text-xs font-bold">
+                    <span className="bg-slate-100 text-slate-700 font-mono px-2 py-0.5 rounded text-xs dark:bg-white/[0.06] dark:border dark:border-white/15 dark:text-slate-200 inline-flex items-center gap-1">
                       <span>{item.batchNumber}</span>
-                    </div>
+                    </span>
                   </td>
 
                   {/* Ngày uống DD/MM/YYYY */}
-                  <td className="py-4 px-4 align-top font-mono text-xs text-slate-200 font-semibold">
+                  <td className="py-4 px-4 align-top font-mono text-xs text-slate-700 dark:text-slate-200 font-semibold">
                     {formatDateVi(item.date)}
                   </td>
 
                   {/* Hẹn lần kế tiếp DD/MM/YYYY */}
-                  <td className="py-4 px-4 align-top font-mono text-xs font-bold text-cyan-300">
+                  <td className="py-4 px-4 align-top font-mono text-xs font-bold text-cyan-700 dark:text-cyan-300">
                     {formatDateVi(item.nextDueDate)}
                   </td>
 
-                  {/* Chu kỳ: 1 tháng/lần hoặc 3 tháng/lần */}
+                  {/* Chu kỳ */}
                   <td className="py-4 px-4 align-top">
-                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30">
+                    <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
                       {item.repeat}
                     </span>
                   </td>
 
-                  {/* NÚT HÀNH ĐỘNG NHANH: [ 🔔 Nhắc Lịch Uống ] */}
+                  {/* NÚT HÀNH ĐỘNG NHANH */}
                   <td className="py-4 px-4 align-top text-center">
                     <button
                       type="button"
                       onClick={() => handleReminderAction(item)}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 hover:border-amber-400 text-amber-300 hover:text-white font-bold text-[11px] transition-all duration-200 cursor-pointer active:scale-95 shadow-sm"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 dark:bg-amber-500/15 dark:hover:bg-amber-500/25 dark:text-amber-300 dark:border-amber-500/30 font-bold text-[11px] transition-all duration-200 cursor-pointer active:scale-95 shadow-xs"
                       title="Nhắc Lịch Uống"
                     >
-                      <Bell className="w-3 h-3 text-amber-300" />
+                      <Bell className="w-3 h-3 text-amber-600 dark:text-amber-300" />
                       <span>Nhắc Lịch Uống</span>
                     </button>
                   </td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan="6" className="py-8 text-center text-slate-500 dark:text-slate-400">
+                    Chưa có dữ liệu tẩy giun/ký sinh trùng
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

@@ -1,5 +1,5 @@
-import { getSettings, getSchedules, getPrescriptions } from './storageService';
-import { matchSmartSimulatedConsultation } from './aiKnowledgeBase';
+import { getSettings, getSchedules, getPrescriptions } from './storageService.js';
+import { matchSmartSimulatedConsultation } from './aiKnowledgeBase.js';
 
 /**
  * Xây dựng Multi-tier System Prompt nạp sâu bệnh án, dị ứng, vắc-xin và đơn thuốc
@@ -74,92 +74,9 @@ QUY TẮC PHẢN HỒI Y KHOA BẮT BUỘC:
 `;
 };
 
-/**
- * Gọi Google Gemini API chính thức REST (gemini-1.5-flash)
- * Endpoint: https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}
- * Header: 'Content-Type': 'application/json'
- * Body chuẩn:
- * {
- *   "contents": [
- *     {
- *       "role": "user",
- *       "parts": [{ "text": `${systemPrompt}\n\nCâu hỏi của người dùng: ${userMessage}` }]
- *     }
- *   ],
- *   "generationConfig": {
- *     "temperature": 0.7,
- *     "maxOutputTokens": 1000
- *   }
- * }
- */
 export const callGeminiApi = async (userMessage, petContext = null) => {
-  const settings = getSettings();
-  const envKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) ? import.meta.env.VITE_GEMINI_API_KEY.trim() : '';
-  const apiKey = (envKey && envKey !== 'your_actual_gemini_api_key_here')
-    ? envKey
-    : ((typeof window !== 'undefined' ? localStorage.getItem('petcare_gemini_api_key') : '') || settings.geminiApiKey?.trim() || '');
-
-  // Nếu chưa có API Key hoặc đang để key mặc định: Kích hoạt Mock Vet Advisor thông minh ngay tức thì
-  if (!apiKey || apiKey === 'your_actual_gemini_api_key_here') {
-    return smartSimulatedAiConsultation(userMessage, petContext);
-  }
-
-  // Model chuẩn: gemini-1.5-flash
-  const model = settings.selectedModel || 'gemini-1.5-flash';
-  const systemPrompt = buildVetSystemPrompt(petContext);
-
-  // Trích xuất chuỗi câu hỏi người dùng
-  let textToSend = userMessage;
-  if (Array.isArray(userMessage)) {
-    const lastUser = [...userMessage].reverse().find(m => m.sender === 'user' || m.role === 'user');
-    textToSend = lastUser?.text || lastUser?.parts?.[0]?.text || '';
-  } else if (typeof userMessage === 'object' && userMessage !== null) {
-    textToSend = userMessage.text || '';
-  }
-
-  // 1. Endpoint REST chính thức của Google Gemini
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-  // 2. Cấu trúc Body chuẩn Google Gemini
-  const requestBody = {
-    contents: [
-      {
-        role: 'user',
-        parts: [{ text: `${systemPrompt}\n\nCâu hỏi của người dùng: ${textToSend}` }]
-      }
-    ],
-    generationConfig: {
-      temperature: 0.7,
-      maxOutputTokens: 1000
-    }
-  };
-
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(requestBody)
-    });
-
-    if (!response.ok) {
-      console.warn(`Gemini API returned status ${response.status}. Automatically using Smart Mock Vet Advisor.`);
-      return smartSimulatedAiConsultation(userMessage, petContext);
-    }
-
-    const responseData = await response.json();
-    const reply = (responseData?.data || responseData)?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!reply) {
-      return smartSimulatedAiConsultation(userMessage, petContext);
-    }
-
-    return reply;
-  } catch (err) {
-    console.warn("Gemini API Error, falling back to Smart Mock Vet Advisor:", err);
-    return smartSimulatedAiConsultation(userMessage, petContext);
-  }
+  // Bỏ kết nối Google Gemini API theo yêu cầu, sử dụng hoàn toàn bộ xử lý tri thức cục bộ Dr. Paw
+  return smartSimulatedAiConsultation(userMessage, petContext);
 };
 
 /**
@@ -523,96 +440,11 @@ export const VISION_LOCAL_KNOWLEDGE_BASE = {
 
 /**
  * AI Thị Giác: Nhận diện giống loài hoặc Chẩn đoán triệu chứng qua hình ảnh (Vision AI Scanner)
- * Hỗ trợ Multimodal Gemini 1.5 Flash Vision & Fallback Tri Thức Nội Tại Chuẩn Y Khoa
+ * Sử dụng Bộ Dữ Liệu Bệnh Lý & Tri Thức Nội Tại Chuẩn Y Khoa
  */
-export const analyzeVisionImage = async (imageInput, scanType = 'breed', sampleKey = null) => {
-  const envKey = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_GEMINI_API_KEY) ? import.meta.env.VITE_GEMINI_API_KEY.trim() : '';
-  const apiKey = (envKey && envKey !== 'your_actual_gemini_api_key_here')
-    ? envKey
-    : ((typeof window !== 'undefined' ? localStorage.getItem('petcare_gemini_api_key') : '') || '');
-
-  // 1. Kiểm tra nếu có dữ liệu Base64 và có API Key -> Gọi Gemini Vision 1.5 Flash thực tế
-  let base64Data = null;
-  let mimeType = 'image/jpeg';
-
-  if (typeof imageInput === 'string') {
-    if (imageInput.startsWith('data:image/')) {
-      const parts = imageInput.split(',');
-      base64Data = parts[1];
-      const match = imageInput.match(/data:(image\/[a-zA-Z0-9.+_-]+);base64/);
-      if (match) mimeType = match[1];
-    }
-  }
-
-  if (apiKey && base64Data) {
-    try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-      const fallbackUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      const visionPrompt = "Bạn là chuyên gia Thú Y & Giám định Giống loài của PetCare PRO AI. Hãy phân tích kỹ bức ảnh này và trả về JSON thuần (không bọc markdown) với cấu trúc sau: { \"species_breed\": \"Tên giống loài chính xác kèm độ thuần chủng\", \"confidence\": \"9x.x%\", \"origin\": \"Nguồn gốc xuất xứ\", \"traits\": \"Tính cách & đặc điểm sinh học\", \"lifespan\": \"Tuổi thọ trung bình\", \"diseases\": \"Các bệnh lý di truyền hoặc bệnh ngoài da phát hiện qua ảnh\", \"care_advice\": \"Khuyến nghị chăm sóc dinh dưỡng và y tế chi tiết\", \"is_dermatology_issue\": true/false }";
-
-      const payload = {
-        contents: [
-          {
-            parts: [
-              {
-                inline_data: {
-                  mime_type: mimeType,
-                  data: base64Data
-                }
-              },
-              {
-                text: visionPrompt
-              }
-            ]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 600,
-          responseMimeType: "application/json"
-        }
-      };
-
-      let response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok && response.status === 404) {
-        response = await fetch(fallbackUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-      }
-
-      if (response.ok) {
-        const data = await response.json();
-        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (rawText) {
-          let cleaned = rawText.trim();
-          if (cleaned.startsWith('```')) {
-            cleaned = cleaned.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim();
-          }
-          const firstBrace = cleaned.indexOf('{');
-          const lastBrace = cleaned.lastIndexOf('}');
-          if (firstBrace !== -1 && lastBrace !== -1) {
-            const parsed = JSON.parse(cleaned.substring(firstBrace, lastBrace + 1));
-            return {
-              source: 'gemini_vision',
-              ...parsed
-            };
-          }
-        }
-      }
-    } catch (err) {
-      console.warn("Gemini Vision API error, falling back to local KB:", err);
-    }
-  }
-
-  // 2. Fallback sang Bộ Cơ Sở Tri Thức Nội Tại (Local Knowledge Base)
-  await new Promise(r => setTimeout(r, 1000));
+export const analyzeVisionImage = async (imageFileOrBase64, scanType = 'breed', sampleKey = null) => {
+  // Sử dụng Bộ Cơ Sở Tri Thức Nội Tại (Local Knowledge Base), không gọi dịch vụ AI bên ngoài
+  await new Promise(r => setTimeout(r, 600));
 
   if (sampleKey && VISION_LOCAL_KNOWLEDGE_BASE[sampleKey]) {
     return {

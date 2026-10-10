@@ -26,12 +26,20 @@ export const ExpenseView = ({
 }) => {
   const [selectedPetId, setSelectedPetId] = useState('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const getTodayDate = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const [newExpense, setNewExpense] = useState({
     petId: pets[0]?.id || '',
     category: 'food',
     title: '',
     amount: '',
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayDate(),
     notes: ''
   });
 
@@ -48,19 +56,24 @@ export const ExpenseView = ({
 
   const handleCreate = (e) => {
     e.preventDefault();
-    if (!newExpense.title.trim() || !newExpense.amount) return;
+    if (!newExpense.title.trim()) {
+      alert('Vui lòng nhập tên khoản chi tiêu!');
+      return;
+    }
+
+    const numAmount = parseFloat(newExpense.amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      alert('Số tiền chi tiêu phải là một số hợp lệ lớn hơn 0!');
+      return;
+    }
 
     const petObj = pets.find(p => p.id === newExpense.petId);
-    const assignedPetName = (newExpense.petId === 'all' || !newExpense.petId)
-      ? 'Tất cả'
-      : (petObj?.name || (
-          newExpense.petId === 'pet-1' ? 'Mochi' :
-          newExpense.petId === 'pet-2' ? 'Luna' :
-          newExpense.petId === 'pet-3' ? 'Bánh Bao' : 'Tất cả'
-        ));
+    const assignedPetName = petObj ? petObj.name : 'Chung';
 
     onAddExpense({
       ...newExpense,
+      amount: numAmount,
+      date: newExpense.date || getTodayDate(),
       petName: assignedPetName
     });
 
@@ -69,7 +82,7 @@ export const ExpenseView = ({
       category: 'food',
       title: '',
       amount: '',
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayDate(),
       notes: ''
     });
     setIsAddModalOpen(false);

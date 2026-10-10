@@ -45,7 +45,7 @@ export function UserProfileModal({ isOpen, onClose, user, currentUser, onUserUpd
     }
   };
 
-  const handleChangePassword = (e) => {
+  const handleChangePassword = async (e) => {
     e.preventDefault();
     setMessage({ text: '', type: '' });
 
@@ -60,7 +60,7 @@ export function UserProfileModal({ isOpen, onClose, user, currentUser, onUserUpd
     }
 
     try {
-      changePassword(oldPassword, newPassword);
+      await changePassword(oldPassword, newPassword);
       setMessage({ text: 'Đổi mật khẩu thành công!', type: 'success' });
       setOldPassword('');
       setNewPassword('');

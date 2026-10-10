@@ -103,157 +103,60 @@ export const WsavaPassportModal = ({
 
   // Thông tin bé cưng đang kích hoạt
   const activePet = useMemo(() => {
-    const found = pets.find(p => p.id === activePetId);
-    if (found) {
-      const isMochi = found.name?.toLowerCase().includes('mochi');
-      return {
-        ...found,
-        name: found.name || 'Mochi',
-        breed: found.breed || 'Golden Retriever',
-        species: found.species || 'dog',
-        gender: found.gender === 'male' || found.gender === 'Đực' ? 'Đực (Male)' : 'Cái (Female)',
-        weight: found.weight || 24.5,
-        microchip: isMochi ? '98200036412' : (found.microchip || '98200036412'),
-        birthDate: found.birthDate || '2023-08-15',
-        isNeutered: found.isNeutered !== false,
-        color: found.color || 'Vàng kem (Cream Golden)',
-        avatar: found.avatar || 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=600&q=80',
-        ownerName: 'Mạnh Đinh',
-        ownerPhone: '0912.345.678',
-        ownerAddress: 'Cầu Giấy, Hà Nội, Việt Nam'
-      };
-    }
-    // Fallback chuẩn Mochi theo yêu cầu
+    const found = pets.find(p => p.id === activePetId) || pets[0] || {};
+    
     return {
-      id: 'pet-1',
-      name: 'Mochi',
-      breed: 'Golden Retriever',
-      species: 'dog',
-      gender: 'Đực (Male)',
-      weight: 24.5,
-      microchip: '98200036412',
-      birthDate: '2023-08-15',
-      isNeutered: true,
-      color: 'Vàng kem (Cream Golden)',
-      avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=600&q=80',
-      ownerName: 'Mạnh Đinh',
-      ownerPhone: '0912.345.678',
-      ownerAddress: 'Cầu Giấy, Hà Nội, Việt Nam'
+      ...found,
+      name: found.name || 'Thú cưng',
+      breed: found.breed || 'Chưa rõ',
+      species: found.species || 'dog',
+      gender: found.gender === 'male' || found.gender === 'Đực' ? 'Đực (Male)' : 'Cái (Female)',
+      weight: found.weight || 0,
+      microchip: found.microchip || 'Chưa cập nhật',
+      birthDate: found.birthDate || '',
+      isNeutered: found.isNeutered !== false,
+      color: found.color || 'Chưa rõ',
+      avatar: found.avatar || 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=600&q=80',
+      ownerName: 'Người nuôi',
+      ownerPhone: 'Chưa cập nhật',
+      ownerAddress: 'Chưa cập nhật'
     };
   }, [pets, activePetId]);
 
-  // Phác đồ vắc-xin chuẩn WSAVA Quốc tế
-  const defaultVaccines = useMemo(() => [
-    {
-      id: 'vax-1',
-      title: 'Nobivac DHPPi + L4 (7 bệnh)',
-      diseaseDesc: 'Carre, Parvovirus, Viêm gan truyền nhiễm, Ho cũi chó, Leptospira 4 chủng',
-      batchNumber: 'NV-2026-8892',
-      date: '2026-05-10',
-      nextDueDate: '2027-01-18',
-      doctor: 'BS. Nguyễn Hải Nam',
-      license: 'CCHN: 00981/TY-HN',
-      facility: 'BV Thú Y PetCare Central',
-      status: 'HỢP LỆ (VALID)'
-    },
-    {
-      id: 'vax-2',
-      title: 'Rabisin (Phòng Bệnh Dại Quốc Tế)',
-      diseaseDesc: 'Phòng ngừa virus Dại (Rabies) • Đạt chuẩn cấp hộ chiếu xuất cảnh IATA / EU',
-      batchNumber: 'RB-2026-4412',
-      date: '2026-04-15',
-      nextDueDate: '2027-04-15',
-      doctor: 'BS. Trần Thị Mai',
-      license: 'CCHN: 01204/TY-HN',
-      facility: 'BV Thú Y PetCare Central',
-      status: 'HỢP LỆ (VALID)'
-    },
-    {
-      id: 'vax-3',
-      title: 'Bordetella Bronchiseptica (Ho cũi chó)',
-      diseaseDesc: 'Dự phòng viêm phế quản truyền nhiễm Kennel Cough đường hô hấp cấp',
-      batchNumber: 'KC-2026-1102',
-      date: '2026-09-20',
-      nextDueDate: '2027-09-20',
-      doctor: 'BS. Nguyễn Hải Nam',
-      license: 'CCHN: 00981/TY-HN',
-      facility: 'BV Thú Y PetCare Central',
-      status: 'HỢP LỆ (VALID)'
-    }
-  ], []);
+  const activePetKey = activePet.id;
 
-  // Phác đồ phòng ngừa nội ngoại ký sinh trùng chuẩn
-  const defaultDeworms = useMemo(() => [
-    {
-      id: 'deworm-1',
-      title: 'Drontal Plus Flavour',
-      diseaseDesc: 'Tẩy sán dây, giun tròn, giun móc, giun tóc đường tiêu hóa',
-      batchNumber: 'DT-2026-0988',
-      date: '2026-08-01',
-      nextDueDate: '2026-11-01',
-      repeat: '3 tháng/lần',
-      doctor: 'BS. Lê Minh Hoàng (Khoa Dược)',
-      facility: 'Hệ thống PetCare Hub'
-    },
-    {
-      id: 'deworm-2',
-      title: 'NexGard Spectra 15-30kg',
-      diseaseDesc: 'Phòng ngừa giun tim, ghẻ demodex, diệt ve rận & bọ chét tác dụng 30 ngày',
-      batchNumber: 'NX-2027-5501',
-      date: '2026-09-01',
-      nextDueDate: '2026-10-01',
-      repeat: '1 tháng/lần',
-      doctor: 'BS. Lê Minh Hoàng (Khoa Dược)',
-      facility: 'Hệ thống PetCare Hub'
-    },
-    {
-      id: 'deworm-3',
-      title: 'Bravecto Chewable (Viên nhai / Nhỏ gáy)',
-      diseaseDesc: 'Phòng trị ve rận, bọ chét kéo dài 12 tuần liên tục',
-      batchNumber: 'BV-2026-7720',
-      date: '2026-07-15',
-      nextDueDate: '2026-10-15',
-      repeat: '3 tháng/lần',
-      doctor: 'BS. Trần Thị Mai',
-      facility: 'BV Thú Y PetCare Central'
-    }
-  ], []);
-
-  // Tổng hợp dữ liệu thực tế nếu có từ schedules
-  const petSchedules = useMemo(() => {
-    return schedules.filter(s => s.petId === activePet.id);
-  }, [schedules, activePet.id]);
-
+  // Phác đồ vắc-xin từ lịch trình thực tế
   const vaccines = useMemo(() => {
-    const realVax = petSchedules.filter(s => s.type === 'vaccine').map((s, idx) => ({
-      id: s.id,
-      title: s.title,
-      diseaseDesc: s.notes || 'Phòng ngừa bệnh truyền nhiễm theo khuyến cáo WSAVA',
-      batchNumber: s.batchNumber || `NV-2026-88${idx + 10}`,
-      date: s.date || '2026-05-10',
-      nextDueDate: s.nextDueDate || '2027-01-18',
-      doctor: s.doctor || 'BS. Nguyễn Hải Nam',
+    const vaxData = schedules.filter(s => s.petId === activePetId && s.type === 'vaccine');
+    return vaxData.map((v, idx) => ({
+      id: v.id,
+      title: v.title,
+      diseaseDesc: v.notes || 'Phòng bệnh truyền nhiễm',
+      batchNumber: v.batchNumber || `NV-2026-${idx}`,
+      date: v.date,
+      nextDueDate: v.nextDueDate || v.date,
+      doctor: v.doctor || 'Bác sĩ thú y',
       license: 'CCHN: 00981/TY-HN',
-      facility: s.location || 'BV Thú Y PetCare Central',
-      status: 'HỢP LỆ (VALID)'
+      facility: v.location || 'Phòng khám',
+      status: v.completed ? 'HỢP LỆ (VALID)' : 'CHƯA HOÀN THÀNH'
     }));
-    return realVax.length > 0 ? realVax : defaultVaccines;
-  }, [petSchedules, defaultVaccines]);
+  }, [schedules, activePetId]);
 
+  // Phác đồ phòng ngừa nội ngoại ký sinh trùng từ lịch trình thực tế
   const deworms = useMemo(() => {
-    const realDeworms = petSchedules.filter(s => s.type === 'deworm').map((s, idx) => ({
-      id: s.id,
-      title: s.title,
-      diseaseDesc: s.notes || 'Kiểm soát ký sinh trùng định kỳ',
-      batchNumber: s.batchNumber || `DT-2026-09${idx + 20}`,
-      date: s.date || '2026-08-01',
-      nextDueDate: s.nextDueDate || '2026-11-01',
-      repeat: s.repeat || '3 tháng/lần',
-      doctor: s.doctor || 'BS. Lê Minh Hoàng (Khoa Dược)',
-      facility: s.location || 'PetCare Hub'
+    const dewormData = schedules.filter(s => s.petId === activePetId && s.type === 'deworm');
+    return dewormData.map(d => ({
+      id: d.id,
+      title: d.title,
+      diseaseDesc: d.notes || 'Nội ngoại ký sinh trùng',
+      batchNumber: d.batchNumber || `DT-2026-${d.id}`,
+      date: d.date,
+      nextDueDate: d.nextDueDate || d.date,
+      repeat: d.repeat || 'Định kỳ',
+      doctor: d.doctor || 'Bác sĩ thú y',
+      facility: d.location || 'Phòng khám'
     }));
-    return realDeworms.length > 0 ? realDeworms : defaultDeworms;
-  }, [petSchedules, defaultDeworms]);
+  }, [schedules, activePetId]);
 
   // Phím Esc đóng modal và quản lý class in ấn trên body
   useEffect(() => {
@@ -296,23 +199,23 @@ export const WsavaPassportModal = ({
       <div className="relative min-h-screen flex flex-col items-center justify-start p-2 sm:p-6 no-print-wrapper">
         
         {/* ============================================================ */}
-        {/* THANH ĐIỀU KHIỂN OBSIDIAN HUD TRÊN CÙNG (ẨN KHI IN)          */}
+        {/* THANH ĐIỀU KHIỂN HUD TRÊN CÙNG (ẨN KHI IN)                   */}
         {/* ============================================================ */}
-        <div className="sticky top-2 sm:top-4 z-20 w-full max-w-4xl mb-4 p-3 rounded-2xl bg-slate-900/90 backdrop-blur-xl border border-white/10 shadow-2xl flex flex-wrap items-center justify-between gap-3 no-print">
+        <div className="sticky top-2 sm:top-4 z-20 w-full max-w-4xl mb-4 p-3 rounded-2xl bg-white/95 dark:bg-slate-900/90 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.08)] dark:shadow-2xl flex flex-wrap items-center justify-between gap-3 no-print">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-400/30 flex items-center justify-center font-black shadow-lg shadow-emerald-500/20 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-black shadow-md shadow-emerald-500/15 shrink-0">
               <Globe className="w-5 h-5" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-black text-white uppercase tracking-tight">
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">
                   Hộ Chiếu & Sổ Tiêm Quốc Tế WSAVA
                 </h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-400/30">
                   Global Standard 2026
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-600 dark:text-slate-400">
                 Xuất file PDF chuẩn A4, chứng nhận xuất cảnh IATA & kiểm soát dịch tễ
               </p>
             </div>
@@ -328,10 +231,10 @@ export const WsavaPassportModal = ({
                     try { sound?.playClick?.(); } catch {}
                     setActivePetId(e.target.value);
                   }}
-                  className="appearance-none bg-slate-800 text-white text-xs font-semibold px-3 py-2 pr-8 rounded-xl border border-white/15 focus:outline-none focus:border-emerald-400 cursor-pointer"
+                  className="appearance-none bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-white text-xs font-semibold px-3 py-2 pr-8 rounded-xl border border-slate-200 dark:border-white/15 focus:outline-none focus:border-emerald-400 cursor-pointer"
                 >
                   {pets.map(p => (
-                    <option key={p.id} value={p.id} className="bg-slate-900 text-white">
+                    <option key={p.id} value={p.id} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-white">
                       🐾 {p.name} ({p.breed || 'Thú cưng'})
                     </option>
                   ))}
@@ -353,7 +256,7 @@ export const WsavaPassportModal = ({
             {/* Nút Đóng */}
             <button
               onClick={onClose}
-              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors cursor-pointer"
               title="Đóng cửa sổ"
             >
               <X className="w-4 h-4" />
@@ -558,7 +461,7 @@ export const WsavaPassportModal = ({
                 </tr>
               </thead>
               <tbody>
-                {vaccines.map((vax) => (
+                {vaccines.length > 0 ? vaccines.map((vax) => (
                   <tr key={vax.id} className="border-b border-slate-300">
                     {/* Tên vắc-xin */}
                     <td className="p-2 border border-slate-400 align-top">
@@ -585,11 +488,15 @@ export const WsavaPassportModal = ({
                     {/* Trạng thái hợp lệ */}
                     <td className="p-2 border border-slate-400 align-top text-center font-bold text-emerald-800">
                       <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-600 text-[9px] font-black">
-                        ✓ HỢP LỆ
+                        {vax.status === 'HỢP LỆ (VALID)' ? '✓ HỢP LỆ' : '⚠ CHƯA ĐẠT'}
                       </span>
                     </td>
                   </tr>
-                ))}
+                )) : (
+                  <tr>
+                    <td colSpan="6" className="p-2 border border-slate-400 text-center text-slate-500">Chưa có dữ liệu</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -619,7 +526,7 @@ export const WsavaPassportModal = ({
                 </tr>
               </thead>
               <tbody>
-                {deworms.map((dew) => (
+                {deworms.length > 0 ? deworms.map((dew) => (
                   <tr key={dew.id} className="border-b border-slate-300">
                     {/* Tên thuốc */}
                     <td className="p-2 border border-slate-400 align-top">
@@ -647,7 +554,11 @@ export const WsavaPassportModal = ({
                       {dew.doctor}
                     </td>
                   </tr>
-                ))}
+                )) : (
+                  <tr>
+                    <td colSpan="6" className="p-2 border border-slate-400 text-center text-slate-500">Chưa có dữ liệu</td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -726,7 +637,7 @@ export const WsavaPassportModal = ({
                     Giám đốc Chuyên môn • Bệnh Viện Thú Y PetCare Central
                   </div>
                   <div className="text-[8px] font-mono text-emerald-800 mt-0.5">
-                    Mã xác thực số: SHA256: 98200036412-WSAVA-VALIDATED
+                    Mã xác thực số: SHA256: {activePet.microchip}-WSAVA-VALIDATED
                   </div>
                 </div>
 

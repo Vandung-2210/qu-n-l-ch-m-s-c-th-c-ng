@@ -365,9 +365,8 @@ export const ClinicOsView = ({
 
     const matchedPet = (pets && pets.length > 0)
       ? (pets.find(p => p.id === app.petId || p.name?.toLowerCase() === app.petName?.toLowerCase())
-         || pets.find(p => p.name?.toLowerCase() === 'mochi')
          || pets[0])
-      : { id: 'pet-1', name: 'Mochi', breed: 'Chó Golden Retriever', weight: 24.5 };
+      : null;
     
     if (matchedPet) {
       setSelectedPetForExam(matchedPet.id);
@@ -379,7 +378,7 @@ export const ClinicOsView = ({
     // Bước 4: Tự động nạp sẵn triệu chứng ban đầu vào phần S (Subjective) của form SOAP để bác sĩ bắt đầu ghi chép
     const initialSymptom = app.note 
       ? `Chủ nuôi báo: ${app.note}` 
-      : 'Chủ nuôi báo: Có vết rụng lông hình tròn ở cổ (từ kết quả AI Thị Giác)';
+      : '';
 
     setIsAllergyAcknowledged(false); // Chưa xác nhận -> hiển thị banner cảnh báo đỏ
     setIsSignOffLocked(false);
@@ -392,7 +391,7 @@ export const ClinicOsView = ({
         : 'Chưa ghi nhận tiền sử dị ứng thuốc nghiêm trọng',
       vitals: {
         ...prev.vitals,
-        weight: matchedPet?.weight ? `${matchedPet.weight} kg` : '24.5 kg'
+        weight: matchedPet?.weight ? `${matchedPet.weight} kg` : ''
       }
     }));
 

@@ -14,6 +14,7 @@ import { AiVisionScannerView } from './components/ai/AiVisionScannerView';
 import { ExpenseView } from './components/expenses/ExpenseView';
 import { DailyActivityView } from './components/daily/DailyActivityView';
 import DailyStreakChecklist from './components/daily/DailyStreakChecklist';
+import PetBondingView from './components/bonding/PetBondingView';
 import FamilyManagementView from './components/family/FamilyManagementView';
 import PetSitterModeModal from './components/family/PetSitterModeModal';
 import PublicPetQrModal from './components/pets/PublicPetQrModal';
@@ -28,15 +29,18 @@ import { PetServicesView } from './components/services/PetServicesView';
 import { VetBookingModal } from './components/booking/VetBookingModal';
 import { VetAppointmentsAdminView } from './components/booking/VetAppointmentsAdminView';
 import { ClinicWorkspaceView, ClinicOsView } from './components/clinic/ClinicWorkspaceView';
+import { AdminPortal } from './components/admin/AdminPortal';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { FamilyGroupSettingsModal } from './components/family/FamilyGroupSettingsModal';
 import { GlobalSearchModal } from './components/layout/GlobalSearchModal';
 import { LoginPage } from './components/auth/LoginPage';
+import { ResetPasswordPage } from './components/auth/ResetPasswordPage';
 import { UserProfileModal } from './components/auth/UserProfileModal';
+import { FirstLoginPasswordModal } from './components/auth/FirstLoginPasswordModal';
 import { GlobalErrorBoundary } from './components/common/GlobalErrorBoundary';
 import { AuraBackground } from './components/common/AuraBackground';
 import { useTheme } from './context/ThemeContext';
-import { getCurrentUser, logout as authLogout } from './services/authService';
+import { ROLES, getCurrentUser, getUsers, syncUsersWithBackend, logout as authLogout } from './services/authService';
 import { sound } from './services/soundService';
 import { Sparkles, Bot, Stethoscope, ShieldAlert, HeartPulse, Calendar, ArrowRight, PhoneCall, Sun, Moon } from 'lucide-react';
 
@@ -77,6 +81,25 @@ import {
 } from './services/storageService';
 
 export default function App() {
+  // 1. Authentication State with RBAC (Role-Based Access Control)
+  // Xác minh phiên làm việc ngay khi khởi tạo; nếu phiên không hợp lệ hoặc tài khoản bị xóa, tự động thu hồi
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      return getCurrentUser();
+    } catch { 
+      return null; 
+    }
+  });
+
+  const [isAuthenticated, setIsAuthenticated] = useState(() => {
+    try {
+      return Boolean(getCurrentUser());
+    } catch {
+      return false;
+    }
+  });
+
+  // 2. Data States
   const [pets, setPets] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [expenses, setExpenses] = useState([]);
@@ -89,33 +112,23 @@ export default function App() {
   const [isVetBookingModalOpen, setIsVetBookingModalOpen] = useState(false);
   const [vetBookingInitialData, setVetBookingInitialData] = useState({});
 
-  // Authentication State with RBAC (Role-Based Access Control)
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('petcare_active_user') || localStorage.getItem('petcare_current_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch { 
-      return null; 
-    }
-  });
-
-  const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    try {
-      const saved = localStorage.getItem('petcare_active_user') || localStorage.getItem('petcare_current_user');
-      return Boolean(saved && localStorage.getItem('petcare_is_authenticated') === 'true');
-    } catch {
-      return false;
-    }
-  });
+  // Danh sách tài khoản hệ thống tập trung (đồng bộ với Backend & Local)
+  const [systemUsers, setSystemUsers] = useState(() => getUsers());
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [profileModalTab, setProfileModalTab] = useState('profile');
 
-  // Route state supporting standalone /login page with strict Auth Guard
+  // Route state supporting standalone /login page and /reset-password with strict Auth Guard
   const getInitialTab = () => {
-    const isAuth = localStorage.getItem('petcare_is_authenticated') === 'true';
-    const activeUser = localStorage.getItem('petcare_active_user') || localStorage.getItem('petcare_current_user');
-    if (!isAuth || !activeUser) {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      const params = new URLSearchParams(window.location.search);
+      if (path === '/reset-password' || params.has('token')) {
+        return 'reset-password';
+      }
+    }
+    const verifiedUser = getCurrentUser();
+    if (!verifiedUser) {
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
         window.history.replaceState(null, '', '/login');
       }
@@ -131,32 +144,25 @@ export default function App() {
   };
 
   const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [loginInitialMode, setLoginInitialMode] = useState('login');
 
   // 1. QUẢN LÝ TRẠNG THÁI PHÂN HỆ TOÀN CỤC (GLOBAL PORTAL ROUTER):
   const [currentPortal, setCurrentPortal] = useState(() => {
     try {
-      const savedUser = localStorage.getItem('petcare_active_user') || localStorage.getItem('petcare_current_user');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        if (parsed.role === 'CLINIC_ADMIN' || parsed.role === 'vet_doctor') {
-          return 'CLINIC';
+      const liveUser = getCurrentUser();
+      if (liveUser) {
+        if (liveUser.role === ROLES.SYSTEM_ADMIN || liveUser.role === 'system_admin') {
+          return localStorage.getItem('petcare_current_portal') || 'ADMIN';
+        }
+        if (liveUser.role === 'CLINIC_ADMIN' || (liveUser.role === ROLES.VET_DOCTOR && liveUser.vetStatus === 'approved')) {
+          return localStorage.getItem('petcare_current_portal') || 'CLINIC';
         }
       }
-      return localStorage.getItem('petcare_current_portal') || 'OWNER';
+      return 'OWNER';
     } catch {
       return 'OWNER';
     }
   });
-
-  const handleSwitchPortal = (portal) => {
-    try { sound?.playClick?.(); } catch {}
-    setCurrentPortal(portal);
-    try {
-      localStorage.setItem('petcare_current_portal', portal);
-    } catch (e) {
-      // storage safe
-    }
-  };
 
   const [selectedPetId, setSelectedPetId] = useState('all');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -183,10 +189,119 @@ export default function App() {
   const [aiInitialPrompt, setAiInitialPrompt] = useState(null);
   const [isAiDrawerOpen, setIsAiDrawerOpen] = useState(false);
 
+  // 5 New Pillars Modals state
+  const [isOmniAlertModalOpen, setIsOmniAlertModalOpen] = useState(false);
+  const [isOcrModalOpen, setIsOcrModalOpen] = useState(false);
+  const [isPetSitterModalOpen, setIsPetSitterModalOpen] = useState(false);
+  const [publicQrPet, setPublicQrPet] = useState(null);
+  const [lostModePet, setLostModePet] = useState(null);
+  const [posterPet, setPosterPet] = useState(null);
+
+  // 3. Core Handlers & Data Loaders
+  const handleLogout = () => {
+    try { sound?.playClick?.(); } catch {}
+    setIsAuthenticated(false);
+    setCurrentUser(null);
+    setCurrentPortal('OWNER');
+    localStorage.removeItem('petcare_active_user');
+    localStorage.removeItem('petcare_current_user');
+    localStorage.removeItem('petcare_is_authenticated');
+    localStorage.removeItem('petcare_current_portal');
+    try { authLogout(); } catch {}
+    if (typeof window !== 'undefined') {
+      window.history.replaceState(null, '', '/login');
+    }
+    setActiveTab('login');
+  };
+
+  const loadData = (userId = currentUser?.id, userRole = currentUser?.role) => {
+    try {
+      setPets(getPets(userId, userRole));
+      setSchedules(getSchedules(userId, userRole));
+      setExpenses(getExpenses(userId));
+      setDailyLogs(getDailyLogs(userId));
+      setPrescriptions(getPrescriptions(userId));
+      setFamilyMembers(getFamilyMembers(userId));
+      setDailyHabits(getDailyHabits(userId));
+      setAppointments(getAppointments(userId, userRole));
+      const currentTheme = getTheme();
+      if (setContextTheme) {
+        setContextTheme(currentTheme);
+      }
+      setTheme(currentTheme);
+    } catch (err) {
+      console.warn('Error loading data:', err);
+    }
+  };
+
+  const reloadSystemUsers = async () => {
+    try {
+      const updated = await syncUsersWithBackend();
+      setSystemUsers(updated);
+      const { syncAllDataToCache, runMigrationIfNeeded } = await import('./services/apiService.js');
+      await runMigrationIfNeeded();
+      await syncAllDataToCache();
+    } catch (err) {
+      // Nếu backend offline, dùng snapshot local để không crash UI
+      console.warn('[PetCare] Không thể đồng bộ từ backend, dùng dữ liệu local:', err.message);
+      setSystemUsers(getUsers());
+    }
+    loadData(currentUser?.id, currentUser?.role);
+  };
+
+  const handleSwitchPortal = (portal) => {
+    try { sound?.playClick?.(); } catch {}
+    // Kiểm tra phân quyền khi chuyển cổng:
+    if (portal === 'ADMIN' && currentUser?.role !== ROLES.SYSTEM_ADMIN && currentUser?.role !== 'system_admin') {
+      console.warn('Unauthorized attempt to switch to ADMIN portal');
+      return;
+    }
+    if (portal === 'CLINIC') {
+      const isApprovedVet = (
+        currentUser?.role === ROLES.SYSTEM_ADMIN ||
+        currentUser?.role === 'system_admin' ||
+        currentUser?.role === 'CLINIC_ADMIN' ||
+        (currentUser?.role === ROLES.VET_DOCTOR && currentUser?.vetStatus === 'approved')
+      );
+      if (!isApprovedVet) {
+        alert('Tài khoản của bạn chưa được cấp quyền Bác sĩ!');
+        return;
+      }
+    }
+    setCurrentPortal(portal);
+    try {
+      localStorage.setItem('petcare_current_portal', portal);
+    } catch (e) {
+      // storage safe
+    }
+  };
+
+  // 4. Effects
+  // Lắng nghe sự kiện toàn cục dọn dẹp dữ liệu để cập nhật thống kê ngay lập tức
+  useEffect(() => {
+    const handleDataCleaned = () => {
+      loadData(currentUser?.id, currentUser?.role);
+      reloadSystemUsers();
+    };
+    window.addEventListener('petcare_data_cleaned', handleDataCleaned);
+    window.addEventListener('petcare_data_synced', handleDataCleaned);
+    return () => {
+      window.removeEventListener('petcare_data_cleaned', handleDataCleaned);
+      window.removeEventListener('petcare_data_synced', handleDataCleaned);
+    };
+  }, [currentUser?.id, currentUser?.role]);
+
+  useEffect(() => {
+    reloadSystemUsers();
+  }, [currentUser?.id]);
+
   // Lắng nghe sự kiện xuất Hộ Chiếu WSAVA toàn cục từ Header hoặc bất kỳ đâu
   useEffect(() => {
-    const handleGlobalExportWsava = () => {
+    const handleGlobalExportWsava = (event) => {
       try { sound?.playSuccess?.(); } catch {}
+      if (event?.detail?.petId) {
+        setSelectedPetId(event.detail.petId);
+      }
       setIsWsavaPdfModalOpen(true);
     };
     window.addEventListener('petcare_export_wsava_pdf', handleGlobalExportWsava);
@@ -205,12 +320,18 @@ export default function App() {
       setActiveTab('dashboard');
       handleSwitchPortal('CLINIC');
     }
-  }, [activeTab]);
+    if (activeTab === 'admin-portal-switch') {
+      setActiveTab('dashboard');
+      if (currentUser?.role === 'system_admin' || currentUser?.role === ROLES.SYSTEM_ADMIN) {
+        handleSwitchPortal('ADMIN');
+      }
+    }
+  }, [activeTab, currentUser]);
 
   // Đồng bộ lịch khám hai chiều theo thời gian thực
   useEffect(() => {
     const handleAppointmentsUpdated = () => {
-      setAppointments(getAppointments());
+      setAppointments(getAppointments(currentUser?.id, currentUser?.role));
     };
     window.addEventListener('petcare_appointments_updated', handleAppointmentsUpdated);
     window.addEventListener('storage', handleAppointmentsUpdated);
@@ -218,38 +339,11 @@ export default function App() {
       window.removeEventListener('petcare_appointments_updated', handleAppointmentsUpdated);
       window.removeEventListener('storage', handleAppointmentsUpdated);
     };
-  }, []);
-
-  // 5 New Pillars Modals state
-  const [isOmniAlertModalOpen, setIsOmniAlertModalOpen] = useState(false);
-  const [isOcrModalOpen, setIsOcrModalOpen] = useState(false);
-  const [isPetSitterModalOpen, setIsPetSitterModalOpen] = useState(false);
-  const [publicQrPet, setPublicQrPet] = useState(null);
-  const [lostModePet, setLostModePet] = useState(null);
-  const [posterPet, setPosterPet] = useState(null);
-
-  // Load all data scoped by userId
-  const loadData = (userId = currentUser?.id) => {
-    try {
-      setPets(getPets(userId));
-      setSchedules(getSchedules(userId));
-      setExpenses(getExpenses());
-      setDailyLogs(getDailyLogs());
-      setPrescriptions(getPrescriptions());
-      setFamilyMembers(getFamilyMembers());
-      setDailyHabits(getDailyHabits());
-      setAppointments(getAppointments());
-      const currentTheme = getTheme();
-      if (setContextTheme) {
-        setContextTheme(currentTheme);
-      }
-      setTheme(currentTheme);
-    } catch (err) {
-      console.warn('Error loading data:', err);
-    }
-  };
+  }, [currentUser?.id, currentUser?.role]);
 
   // Auth Guard Effect: automatically redirect to /login if unauthenticated
+  // Kiểm tra tài khoản bị khóa trong phiên: tự động đăng xuất nếu bị khóa
+  // Nếu phiên không còn hợp lệ, xóa riêng phiên đó và chuyển về đăng nhập
   useEffect(() => {
     if (!isAuthenticated || !currentUser) {
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {
@@ -257,7 +351,19 @@ export default function App() {
       }
       setActiveTab('login');
     } else {
-      loadData(currentUser?.id);
+      // Xác minh phiên làm việc từ authService
+      const verifiedUser = getCurrentUser();
+      if (!verifiedUser) {
+        handleLogout();
+        return;
+      }
+      if (verifiedUser.isLocked) {
+        alert('Tài khoản của bạn đã bị khóa bởi Quản trị viên!');
+        handleLogout();
+        return;
+      }
+
+      loadData(currentUser?.id, currentUser?.role);
       if (activeTab === 'login') {
         if (typeof window !== 'undefined' && window.location.pathname === '/login') {
           window.history.replaceState(null, '', '/');
@@ -265,7 +371,14 @@ export default function App() {
         setActiveTab('dashboard');
       }
     }
-  }, [isAuthenticated, currentUser]);
+  }, [isAuthenticated, currentUser?.id]);
+
+  // Bảo vệ phân hệ: chặn người dùng thường truy cập trái phép cổng ADMIN
+  useEffect(() => {
+    if (currentPortal === 'ADMIN' && currentUser?.role !== ROLES.SYSTEM_ADMIN && currentUser?.role !== 'system_admin') {
+      setCurrentPortal('OWNER');
+    }
+  }, [currentPortal, currentUser?.role]);
 
   useEffect(() => {
     loadData();
@@ -281,13 +394,17 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+
   // Sync with browser URL popstate (Back/Forward buttons)
   useEffect(() => {
     const handlePopState = () => {
       const path = window.location.pathname;
-      if (!isAuthenticated || !currentUser || path === '/login' || window.location.hash === '#/login') {
+      const params = new URLSearchParams(window.location.search);
+      if (path === '/reset-password' || params.has('token')) {
+        setActiveTab('reset-password');
+      } else if (!isAuthenticated || !currentUser || path === '/login' || window.location.hash === '#/login') {
         setActiveTab('login');
-      } else if (activeTab === 'login') {
+      } else if (activeTab === 'login' || activeTab === 'reset-password') {
         setActiveTab('dashboard');
       }
     };
@@ -328,180 +445,264 @@ export default function App() {
     return true;
   };
 
-  const handleLogout = () => {
-    try { sound?.playClick?.(); } catch {}
-    setIsAuthenticated(false);
-    setCurrentUser(null);
-    setCurrentPortal('OWNER');
-    localStorage.removeItem('petcare_active_user');
-    localStorage.removeItem('petcare_current_user');
-    localStorage.removeItem('petcare_is_authenticated');
-    localStorage.removeItem('petcare_current_portal');
-    try { authLogout(); } catch {}
-    if (typeof window !== 'undefined') {
-      window.history.replaceState(null, '', '/login');
-    }
-    setActiveTab('login');
-  };
-
   // Pets Handlers
-  const handleSavePet = (petData) => {
-    sound.playSuccess();
-    if (petToEdit) {
-      updatePet({ ...petToEdit, ...petData });
-    } else {
-      addPet(petData, true, currentUser?.id);
+  const handleSavePet = (petData, autoSchedule = false) => {
+    try {
+      if (petToEdit) {
+        await updatePet({ ...petToEdit, ...petData }, currentUser?.id, currentUser?.role);
+      } else {
+        await addPet(petData, autoSchedule, currentUser?.id);
+      }
+      loadData(currentUser?.id, currentUser?.role);
+      setPetToEdit(null);
+      sound.playSuccess();
+    } catch (err) {
+      alert(err.message || 'Lỗi lưu thú cưng');
     }
-    loadData(currentUser?.id);
-    setPetToEdit(null);
   };
 
   const handleDeletePet = (petId) => {
     const pet = pets.find(p => p.id === petId);
-    if (window.confirm(`Bạn có chắc chắn muốn xóa bé ${pet ? pet.name : 'này'} và toàn bộ dữ liệu liên quan?`)) {
-      sound.playTrash();
-      deletePet(petId);
-      loadData();
-      if (viewingPetDetail?.id === petId) {
-        setViewingPetDetail(null);
+    const petName = pet ? pet.name : 'thú cưng';
+    if (window.confirm(`CẢNH BÁO XÓA THÚ CƯNG:\nBạn có chắc chắn muốn xóa bé "${petName}"?\n\nToàn bộ dữ liệu liên quan gồm Lịch chăm sóc, Chi tiêu, Nhật ký, Đơn thuốc, Thói quen và Thông tin thất lạc của bé sẽ bị dọn sạch vĩnh viễn và không thể khôi phục.`)) {
+      try {
+        await deletePet(petId, currentUser?.id, currentUser?.role);
+        loadData(currentUser?.id, currentUser?.role);
+        if (selectedPetId === petId) {
+          setSelectedPetId('all');
+        }
+        if (viewingPetDetail?.id === petId) {
+          setViewingPetDetail(null);
+        }
+        sound.playTrash();
+      } catch (err) {
+        alert(err.message || 'Lỗi xóa thú cưng');
       }
     }
   };
 
   const handleUpdatePetWeight = (petId, newWeight, newHistory) => {
-    sound.playSuccess();
     const pet = pets.find(p => p.id === petId);
     if (pet) {
-      const updated = updatePet({
-        ...pet,
-        weight: newWeight,
-        weightHistory: newHistory
-      });
-      loadData();
-      setViewingPetDetail(updated);
+      try {
+        const updated = await updatePet({
+          ...pet,
+          weight: newWeight,
+          weightHistory: newHistory
+        }, currentUser?.id, currentUser?.role);
+        loadData(currentUser?.id, currentUser?.role);
+        setViewingPetDetail(updated);
+        sound.playSuccess();
+      } catch (err) {
+        alert(err.message || 'Lỗi cập nhật cân nặng');
+      }
     }
   };
 
   // Schedules Handlers
   const handleSaveSchedule = (scheduleData) => {
-    sound.playSuccess();
-    if (scheduleToEdit) {
-      updateSchedule({ ...scheduleToEdit, ...scheduleData });
-    } else {
-      addSchedule(scheduleData);
+    try {
+      if (scheduleToEdit) {
+        await updateSchedule({ ...scheduleToEdit, ...scheduleData }, currentUser?.id, currentUser?.role);
+      } else {
+        await addSchedule(scheduleData, currentUser?.id);
+      }
+      loadData(currentUser?.id, currentUser?.role);
+      setScheduleToEdit(null);
+      setScheduleInitialDate(null);
+      setScheduleInitialType(null);
+      setScheduleInitialTitle(null);
+      sound.playSuccess();
+    } catch (err) {
+      alert(err.message || 'Lỗi lưu lịch trình');
     }
-    loadData();
-    setScheduleToEdit(null);
-    setScheduleInitialDate(null);
-    setScheduleInitialType(null);
-    setScheduleInitialTitle(null);
   };
 
   const handleDeleteSchedule = (scheduleId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa lịch hẹn này?')) {
-      sound.playTrash();
-      deleteSchedule(scheduleId);
-      loadData();
+      try {
+        await deleteSchedule(scheduleId, currentUser?.id, currentUser?.role);
+        loadData(currentUser?.id, currentUser?.role);
+        sound.playTrash();
+      } catch (err) {
+        alert(err.message || 'Lỗi xóa lịch trình');
+      }
     }
   };
 
   const handleToggleComplete = (scheduleId) => {
-    sound.playSuccess();
-    toggleScheduleComplete(scheduleId);
-    loadData();
+    try {
+      await toggleScheduleComplete(scheduleId, currentUser?.id, currentUser?.role);
+      loadData(currentUser?.id, currentUser?.role);
+      sound.playSuccess();
+    } catch (err) {
+      alert(err.message || 'Lỗi cập nhật lịch');
+    }
   };
 
   const handleApplyBatchAiSchedule = (newSchedules) => {
-    sound.playSuccess();
-    addBatchSchedules(newSchedules);
-    loadData();
+    try {
+      addBatchSchedules(newSchedules, currentUser?.id);
+      loadData(currentUser?.id, currentUser?.role);
+      sound.playSuccess();
+    } catch (err) {
+      alert(err.message || 'Lỗi tạo lịch AI');
+    }
   };
 
   // Expenses Handlers
-  const handleAddExpense = (exp) => {
-    sound.playSuccess();
-    addExpense(exp);
-    loadData();
+  const handleAddExpense = async (exp) => {
+    try {
+      await addExpense(exp, currentUser?.id);
+      loadData(currentUser?.id, currentUser?.role);
+      sound.playSuccess();
+    } catch (err) {
+      alert(err.message || 'Lỗi thêm chi tiêu');
+    }
   };
 
   const handleDeleteExpense = (id) => {
     if (window.confirm('Xóa khoản chi tiêu này?')) {
-      sound.playTrash();
-      deleteExpense(id);
-      loadData();
+      try {
+        await deleteExpense(id, currentUser?.id);
+        loadData(currentUser?.id, currentUser?.role);
+        sound.playTrash();
+      } catch (err) {
+        alert(err.message || 'Lỗi xóa chi tiêu');
+      }
     }
   };
 
   // Daily Logs Handler
-  const handleAddDailyLog = (log) => {
-    sound.playSuccess();
-    addDailyLog(log);
-    loadData();
+  const handleAddDailyLog = async (log) => {
+    try {
+      await addDailyLog(log, currentUser?.id);
+      loadData(currentUser?.id, currentUser?.role);
+      sound.playSuccess();
+    } catch (err) {
+      alert(err.message || 'Lỗi thêm nhật ký');
+    }
   };
 
   // Prescriptions Handlers
-  const handleAddPrescription = (pres) => {
-    sound.playSuccess();
-    addPrescription(pres);
-    loadData();
+  const handleAddPrescription = async (pres) => {
+    try {
+      await addPrescription(pres, currentUser?.id);
+      loadData(currentUser?.id, currentUser?.role);
+      sound.playSuccess();
+    } catch (err) {
+      alert(err.message || 'Lỗi thêm đơn thuốc');
+    }
   };
 
   const handleDeletePrescription = (id) => {
     if (window.confirm('Xóa đơn thuốc này?')) {
-      sound.playTrash();
-      deletePrescription(id);
-      loadData();
+      try {
+        await deletePrescription(id, currentUser?.id);
+        loadData(currentUser?.id, currentUser?.role);
+        sound.playTrash();
+      } catch (err) {
+        alert(err.message || 'Lỗi xóa đơn thuốc');
+      }
     }
   };
 
   // Daily Habits Handlers
   const handleToggleHabit = (id, memberId) => {
-    toggleDailyHabit(id, memberId);
-    loadData();
+    try {
+      toggleDailyHabit(id, memberId, currentUser?.id);
+      loadData(currentUser?.id, currentUser?.role);
+    } catch (err) {
+      alert(err.message || 'Lỗi cập nhật thói quen');
+    }
   };
 
   const handleAddHabit = (habitData) => {
-    addDailyHabit(habitData);
-    loadData();
+    try {
+      addDailyHabit(habitData, currentUser?.id);
+      loadData(currentUser?.id, currentUser?.role);
+    } catch (err) {
+      alert(err.message || 'Lỗi thêm thói quen');
+    }
   };
 
   const handleDeleteHabit = (id) => {
-    deleteDailyHabit(id);
-    loadData();
+    try {
+      deleteDailyHabit(id, currentUser?.id);
+      loadData(currentUser?.id, currentUser?.role);
+    } catch (err) {
+      alert(err.message || 'Lỗi xóa thói quen');
+    }
   };
 
   // Family Members Handlers
-  const handleAddFamilyMember = (memberData) => {
-    addFamilyMember(memberData);
-    loadData();
+  const handleAddFamilyMember = async (memberData) => {
+    try {
+      await addFamilyMember(memberData, currentUser?.id);
+      loadData(currentUser?.id, currentUser?.role);
+    } catch (err) {
+      alert(err.message || 'Lỗi thêm thành viên');
+    }
   };
 
   const handleDeleteFamilyMember = (id) => {
     if (window.confirm('Xóa thành viên gia đình này?')) {
       sound.playTrash();
-      deleteFamilyMember(id);
-      loadData();
+      try {
+        await deleteFamilyMember(id, currentUser?.id);
+        loadData(currentUser?.id, currentUser?.role);
+      } catch (err) {
+        alert(err.message || 'Lỗi xóa thành viên');
+      }
     }
   };
 
   // Lost Mode Handlers
   const handleSaveLostMode = (petId, lostData) => {
-    updatePetLostMode(petId, lostData);
-    loadData();
+    try {
+      await updatePetLostMode(petId, lostData);
+      loadData(currentUser?.id, currentUser?.role);
+    } catch (err) {
+      alert(err.message || 'Lỗi lưu thông tin thất lạc');
+    }
   };
 
   // Medical OCR Pipeline Handler (Auto push 3-in-1: Schedule + Prescription + Expense)
   const handleOcrComplete = (ocrResult, petId) => {
-    applyOcrAutoPipeline(ocrResult, petId);
-    loadData();
+    try {
+      applyOcrAutoPipeline(ocrResult, petId, currentUser?.id);
+      loadData(currentUser?.id, currentUser?.role);
+    } catch (err) {
+      alert(err.message || 'Lỗi xử lý OCR');
+    }
   };
 
   // Omni-Channel Schedule Action (Done / Snooze)
   const handleOmniActionConfirm = (scheduleId, action) => {
     if (action === 'done') {
-      toggleScheduleComplete(scheduleId);
+      try {
+        await toggleScheduleComplete(scheduleId, currentUser?.id, currentUser?.role);
+      } catch (err) {
+        alert(err.message || 'Lỗi cập nhật lịch');
+      }
+    } else if (action === 'snooze') {
+      try {
+        const sched = schedules.find(s => s.id === scheduleId);
+        if (sched) {
+          let newTime = '09:00';
+          if (sched.time) {
+            const [h, m] = sched.time.split(':').map(Number);
+            const nextH = ((isNaN(h) ? 8 : h) + 1) % 24;
+            const nextM = isNaN(m) ? 0 : m;
+            newTime = `${String(nextH).padStart(2, '0')}:${String(nextM).padStart(2, '0')}`;
+          }
+          await updateSchedule({ ...sched, time: newTime }, currentUser?.id, currentUser?.role);
+        }
+      } catch (err) {
+        alert(err.message || 'Lỗi hoãn lịch');
+      }
     }
-    loadData();
+    loadData(currentUser?.id, currentUser?.role);
   };
 
   // 2-Way Vet Appointments Handlers
@@ -512,22 +713,22 @@ export default function App() {
   };
 
   const handleSaveAppointment = (bookingData) => {
-    const current = getAppointments();
+    const current = getAppointments(currentUser?.id, currentUser?.role);
     const exists = current.find(a => a.id === bookingData?.id);
-    const created = exists ? bookingData : addAppointment(bookingData);
-    setAppointments(getAppointments());
+    const created = exists ? bookingData : addAppointment({ ...bookingData, ownerId: currentUser?.id });
+    setAppointments(getAppointments(currentUser?.id, currentUser?.role));
     return created;
   };
 
   const handleUpdateAppointment = (id, updates) => {
     updateAppointment(id, updates);
-    setAppointments(getAppointments());
+    setAppointments(getAppointments(currentUser?.id, currentUser?.role));
   };
 
   const handleDeleteAppointment = (id) => {
     try { sound?.playTrash?.() || sound?.playClick?.(); } catch {}
     deleteAppointment(id);
-    setAppointments(getAppointments());
+    setAppointments(getAppointments(currentUser?.id, currentUser?.role));
   };
 
   const pendingAppointmentsCount = (appointments || []).filter(a => a.status === 'Chờ duyệt').length;
@@ -541,6 +742,36 @@ export default function App() {
   const overdueCount = schedules.filter(s => s.date < todayStr && !s.completed).length;
   const todayCount = schedules.filter(s => s.date === todayStr && !s.completed).length;
 
+  // ROUTE KHÔI PHỤC MẬT KHẨU (RESET PASSWORD):
+  if (activeTab === 'reset-password') {
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const currentToken = urlParams ? urlParams.get('token') : '';
+
+    return (
+      <GlobalErrorBoundary>
+        <AuraBackground>
+          <ResetPasswordPage
+            token={currentToken}
+            onBackToLogin={() => {
+              if (typeof window !== 'undefined') {
+                window.history.pushState(null, '', '/login');
+              }
+              setLoginInitialMode('login');
+              setActiveTab('login');
+            }}
+            onRequestNewLink={() => {
+              if (typeof window !== 'undefined') {
+                window.history.pushState(null, '', '/login');
+              }
+              setLoginInitialMode('forgot');
+              setActiveTab('login');
+            }}
+          />
+        </AuraBackground>
+      </GlobalErrorBoundary>
+    );
+  }
+
   // PROTECTED ROUTE / AUTH GUARD:
   // Nếu chưa đăng nhập (!isAuthenticated || !currentUser) hoặc đang ở route /login:
   // Chặn Dashboard, ẩn hoàn toàn Sidebar và Header, chỉ hiển thị duy nhất form đăng nhập căn giữa toàn màn hình.
@@ -549,6 +780,7 @@ export default function App() {
       <GlobalErrorBoundary>
         <AuraBackground>
           <LoginPage
+            initialMode={loginInitialMode}
             onLoginSuccess={(user) => {
               setIsAuthenticated(true);
               setCurrentUser(user);
@@ -558,14 +790,18 @@ export default function App() {
                 localStorage.setItem('petcare_is_authenticated', 'true');
               } catch {}
 
-              const isClinic = user?.role === 'CLINIC_ADMIN' || user?.role === 'vet_doctor';
-              const targetPortal = isClinic ? 'CLINIC' : 'OWNER';
+              let targetPortal = 'OWNER';
+              if (user?.role === ROLES.SYSTEM_ADMIN || user?.role === 'system_admin') {
+                targetPortal = 'ADMIN';
+              } else if ((user?.role === 'CLINIC_ADMIN' || user?.role === ROLES.VET_DOCTOR) && user?.vetStatus === 'approved') {
+                targetPortal = 'CLINIC';
+              }
               setCurrentPortal(targetPortal);
               try {
                 localStorage.setItem('petcare_current_portal', targetPortal);
               } catch {}
 
-              loadData(user?.id);
+              loadData(user?.id, user?.role);
               navigateToDashboard();
             }}
             onBackToHome={navigateToDashboard}
@@ -577,10 +813,100 @@ export default function App() {
   }
 
   // ============================================================================
+  // GUARD TOÀN CỤC: BẮT BUỘC ĐỔI MẬT KHẨU TẠM THỜI Ở LẦN ĐĂNG NHẬP ĐẦU TIÊN
+  // Tài khoản do Admin cấp phải đổi mật khẩu trước khi dùng bất kỳ chức năng nào
+  // ============================================================================
+  if (isAuthenticated && currentUser?.mustChangePassword) {
+    return (
+      <GlobalErrorBoundary>
+        <AuraBackground>
+          <div className="h-screen w-full flex items-center justify-center bg-transparent antialiased font-sans">
+            <FirstLoginPasswordModal
+              currentUser={currentUser}
+              onSuccess={(updatedUser) => {
+                setCurrentUser(updatedUser);
+                reloadSystemUsers();
+              }}
+              onLogout={handleLogout}
+            />
+          </div>
+        </AuraBackground>
+      </GlobalErrorBoundary>
+    );
+  }
+
+  // ============================================================================
+  // WORKSPACE 0: CỔNG QUẢN TRỊ VIÊN HỆ THỐNG (SYSTEM ADMIN PORTAL)
+  // Chỉ dành riêng cho Quản trị viên hệ thống (system_admin)
+  // ============================================================================
+  if (currentPortal === 'ADMIN' && (currentUser?.role === ROLES.SYSTEM_ADMIN || currentUser?.role === 'system_admin')) {
+    return (
+      <GlobalErrorBoundary>
+        <AuraBackground>
+          <div className="h-screen w-full flex flex-col overflow-hidden bg-transparent antialiased font-sans">
+            <AdminPortal
+              currentUser={currentUser}
+              users={systemUsers}
+              pets={pets}
+              schedules={schedules}
+              onLogout={handleLogout}
+              onSwitchPortal={(portal) => handleSwitchPortal(portal)}
+              onUsersUpdated={reloadSystemUsers}
+              onDataChanged={() => {
+                reloadSystemUsers();
+                setPets(getPets());
+                setSchedules(getSchedules());
+              }}
+            />
+          </div>
+        </AuraBackground>
+      </GlobalErrorBoundary>
+    );
+  }
+
+  // ============================================================================
   // WORKSPACE 1: CỔNG BÁC SĨ THÚ Y (CLINIC WORKSPACE / CLINIC OS - B2B)
   // Dành riêng cho Bác Sĩ / Quản trị viên phòng khám (CLINIC_ADMIN)
   // ============================================================================
   if (currentPortal === 'CLINIC') {
+    const isApprovedVet = (
+      currentUser?.role === ROLES.SYSTEM_ADMIN ||
+      currentUser?.role === 'system_admin' ||
+      currentUser?.role === 'CLINIC_ADMIN' ||
+      (currentUser?.role === ROLES.VET_DOCTOR && currentUser?.vetStatus === 'approved')
+    );
+    if (!isApprovedVet) {
+      return (
+        <GlobalErrorBoundary>
+          <AuraBackground>
+            <div className="h-screen w-full flex items-center justify-center p-4">
+              <div className="max-w-md w-full p-6 rounded-3xl bg-white/90 dark:bg-[#151622]/95 border border-amber-500/30 text-center shadow-2xl backdrop-blur-2xl">
+                <div className="w-16 h-16 rounded-2xl bg-amber-500/20 text-amber-400 text-3xl flex items-center justify-center mx-auto mb-4 border border-amber-500/30">
+                  ⏳
+                </div>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                  Quyền Bác sĩ chưa được kích hoạt
+                </h3>
+                <p className="text-xs text-slate-600 dark:text-slate-400 mb-6">
+                  {currentUser?.vetStatus === 'pending'
+                    ? 'Đơn đăng ký hành nghề Bác sĩ của bạn đang chờ Quản trị viên hệ thống xét duyệt.'
+                    : currentUser?.vetStatus === 'rejected'
+                    ? 'Đơn đăng ký quyền Bác sĩ của bạn đã bị từ chối.'
+                    : 'Bạn không có quyền truy cập vào Cổng Bác sĩ / Bệnh viện thú y.'}
+                </p>
+                <button
+                  onClick={() => handleSwitchPortal('OWNER')}
+                  className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/30 transition-all cursor-pointer"
+                >
+                  🐾 Quay lại Cổng Chủ Nuôi
+                </button>
+              </div>
+            </div>
+          </AuraBackground>
+        </GlobalErrorBoundary>
+      );
+    }
+
     return (
       <GlobalErrorBoundary>
         <AuraBackground>
@@ -734,14 +1060,23 @@ export default function App() {
             ? 'w-full md:pl-24 pr-2 sm:pr-4 py-1 sm:py-2 overflow-hidden flex flex-col'
             : activeTab === 'schedule'
             ? 'w-full pl-24 pr-6 py-3 overflow-hidden flex flex-col'
+            : activeTab === 'bonding'
+            ? 'w-full md:pl-24 pr-2 sm:pr-4 py-1 sm:py-2 overflow-hidden flex flex-col'
             : 'bg-transparent p-4 sm:p-6 lg:p-8 md:pl-28 overflow-y-auto custom-scrollbar'
         }`}>
-          <div className={`${activeTab === 'dashboard' ? 'w-full h-full max-w-[1680px] mx-auto flex flex-col overflow-hidden' : activeTab === 'schedule' ? 'w-full max-w-[1680px] mx-auto flex-1 min-h-0 flex flex-col' : 'max-w-7xl mx-auto space-y-6 pb-12'}`}>
+          <div className={`${
+            activeTab === 'dashboard' || activeTab === 'bonding'
+              ? 'w-full h-full max-w-7xl mx-auto flex flex-col overflow-hidden'
+              : activeTab === 'schedule'
+              ? 'w-full max-w-[1680px] mx-auto flex-1 min-h-0 flex flex-col'
+              : 'max-w-7xl mx-auto space-y-6 pb-12'
+          }`}>
           
           {activeTab === 'dashboard' && (
             <DashboardView
               pets={pets}
               schedules={displayedSchedules}
+              appointments={appointments}
               currentUser={currentUser}
               onToggleComplete={handleToggleComplete}
               onOpenAddSchedule={() => {
@@ -854,6 +1189,10 @@ export default function App() {
               }}
               onOpenVetBooking={handleOpenVetBooking}
             />
+          )}
+
+          {activeTab === 'bonding' && (
+            <PetBondingView pets={pets} />
           )}
 
           {activeTab === 'daily' && (
@@ -1010,7 +1349,8 @@ export default function App() {
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
-        onDataChanged={loadData}
+        currentUser={currentUser}
+        onDataChanged={() => loadData(currentUser?.id, currentUser?.role)}
       />
 
       <GlobalSearchModal
