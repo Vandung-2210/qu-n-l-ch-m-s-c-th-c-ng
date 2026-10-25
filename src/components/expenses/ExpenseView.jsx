@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { EXPENSE_CATEGORIES } from '../../constants/mockData';
 import { analyzePetExpense } from '../../services/aiService';
+import { getTodayVnDate } from '../../utils/dateUtils';
 
 export const ExpenseView = ({
   expenses = [],
@@ -25,14 +26,24 @@ export const ExpenseView = ({
   onDeleteExpense
 }) => {
   const [selectedPetId, setSelectedPetId] = useState('all');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedMonth, setSelectedMonth] = useState('all');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const getTodayDate = () => {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Ngân sách người dùng tự thiết lập
+  const [monthlyBudget, setMonthlyBudget] = useState(() => {
+    try {
+      const saved = localStorage.getItem('petcare_custom_monthly_budget');
+      return saved ? Number(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+  const [isEditingBudget, setIsEditingBudget] = useState(false);
+  const [budgetInput, setBudgetInput] = useState('');
+
+  const getTodayDate = () => getTodayVnDate();
 
   const [newExpense, setNewExpense] = useState({
     petId: pets[0]?.id || '',
@@ -43,19 +54,51 @@ export const ExpenseView = ({
     notes: ''
   });
 
+  // Trích xuất danh sách các tháng có dữ liệu chi tiêu
+  const availableMonths = React.useMemo(() => {
+    const set = new Set();
+    const currentMonth = getTodayDate().slice(0, 7);
+    set.add(currentMonth);
+    expenses.forEach(e => {
+      if (e.date && e.date.length >= 7) set.add(e.date.slice(0, 7));
+    });
+    return Array.from(set).sort().reverse();
+  }, [expenses]);
+
+  // Bộ lọc kết hợp: Thú cưng, Danh mục, Tháng
   const filteredExpenses = expenses.filter(e => {
-    return selectedPetId === 'all' || e.petId === selectedPetId;
+    const matchPet = selectedPetId === 'all' || e.petId === selectedPetId;
+    const matchCategory = selectedCategory === 'all' || e.category === selectedCategory;
+    const matchMonth = selectedMonth === 'all' || (e.date && e.date.startsWith(selectedMonth));
+    return matchPet && matchCategory && matchMonth;
   });
 
   const selectedPet = pets.find(p => p.id === selectedPetId) || null;
   const analysis = analyzePetExpense(filteredExpenses, selectedPet);
 
   const formatVND = (num) => {
+    if (num === null || num === undefined) return '0 đ';
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num);
   };
 
-  const handleCreate = (e) => {
+  const handleSaveBudget = (e) => {
     e.preventDefault();
+    const parsed = parseFloat(budgetInput);
+    if (isNaN(parsed) || parsed < 0) {
+      alert('Vui lòng nhập số tiền ngân sách hợp lệ!');
+      return;
+    }
+    setMonthlyBudget(parsed);
+    try {
+      localStorage.setItem('petcare_custom_monthly_budget', String(parsed));
+    } catch {}
+    setIsEditingBudget(false);
+  };
+
+  const handleCreate = async (e) => {
+    e.preventDefault();
+    if (isSubmitting) return;
+
     if (!newExpense.title.trim()) {
       alert('Vui lòng nhập tên khoản chi tiêu!');
       return;
@@ -68,43 +111,51 @@ export const ExpenseView = ({
     }
 
     const petObj = pets.find(p => p.id === newExpense.petId);
-    const assignedPetName = petObj ? petObj.name : 'Chung';
+    const assignedPetName = petObj ? petObj.name : 'Chi tiêu chung';
 
-    onAddExpense({
-      ...newExpense,
-      amount: numAmount,
-      date: newExpense.date || getTodayDate(),
-      petName: assignedPetName
-    });
+    setIsSubmitting(true);
+    try {
+      await onAddExpense({
+        ...newExpense,
+        amount: numAmount,
+        date: newExpense.date || getTodayDate(),
+        petName: assignedPetName
+      });
 
-    setNewExpense({
-      petId: pets[0]?.id || '',
-      category: 'food',
-      title: '',
-      amount: '',
-      date: getTodayDate(),
-      notes: ''
-    });
-    setIsAddModalOpen(false);
+      setNewExpense({
+        petId: pets[0]?.id || '',
+        category: 'food',
+        title: '',
+        amount: '',
+        date: getTodayDate(),
+        notes: ''
+      });
+      setIsAddModalOpen(false);
+    } catch (err) {
+      alert(err.message || 'Lỗi thêm chi tiêu. Dữ liệu đã được giữ nguyên để bạn chỉnh sửa.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="space-y-6 pb-12">
       
       {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight flex items-center gap-2.5">
             <DollarSign className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
             Quản Lý Chi Tiêu & Ngân Sách Nuôi Thú Cưng
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-            Theo dõi chi phí thức ăn, thuốc thú y, spa và nhận phân tích tài chính thông minh từ AI.
+            Theo dõi chi phí thực tế cho thức ăn, khám chữa bệnh, spa và đối soát ngân sách.
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 self-start sm:self-auto">
-          {/* Pet Filter */}
+        {/* Action Controls & Filters */}
+        <div className="flex flex-wrap items-center gap-2 self-start md:self-auto">
+          {/* Lọc Thú Cưng */}
           <select
             value={selectedPetId}
             onChange={(e) => setSelectedPetId(e.target.value)}
@@ -112,13 +163,37 @@ export const ExpenseView = ({
           >
             <option value="all">Tất cả thú cưng</option>
             {pets.map(p => (
-              <option key={p.id} value={p.id}>{p.name} ({p.breed})</option>
+              <option key={p.id} value={p.id}>{p.name} ({p.breed || 'Chưa cập nhật giống'})</option>
+            ))}
+          </select>
+
+          {/* Lọc Tháng */}
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 rounded-xl outline-hidden shadow-xs"
+          >
+            <option value="all">Tất cả các tháng</option>
+            {availableMonths.map(m => (
+              <option key={m} value={m}>Tháng {m.split('-')[1]}/{m.split('-')[0]}</option>
+            ))}
+          </select>
+
+          {/* Lọc Danh Mục */}
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className="px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-bold text-slate-800 dark:text-slate-200 rounded-xl outline-hidden shadow-xs"
+          >
+            <option value="all">Tất cả danh mục</option>
+            {Object.entries(EXPENSE_CATEGORIES).map(([k, v]) => (
+              <option key={k} value={k}>{v.label}</option>
             ))}
           </select>
 
           <button
             onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" /> Ghi Khoản Chi
           </button>
@@ -129,7 +204,7 @@ export const ExpenseView = ({
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         
         <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white shadow-lg shadow-emerald-600/20">
-          <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">Tổng Chi Tiêu Đã Ghi</span>
+          <span className="text-xs font-bold uppercase tracking-wider text-emerald-100">Tổng Chi Tiêu Thực Tế</span>
           <div className="text-2xl sm:text-3xl font-black mt-2">
             {formatVND(analysis.totalSpent)}
           </div>
@@ -160,7 +235,7 @@ export const ExpenseView = ({
 
       </div>
 
-      {/* AI Financial Advice & Monthly Forecast Box */}
+      {/* AI Financial Advice & Monthly Budget/Forecast Box */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Advice Box */}
         <div className="p-5 rounded-3xl bg-gradient-to-br from-indigo-900 to-slate-950 text-white shadow-xl flex items-start gap-4">
@@ -170,23 +245,31 @@ export const ExpenseView = ({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="text-sm font-black uppercase tracking-wider text-indigo-300">
-                AI Đánh Giá Tài Chính & Tối Ưu Chi Phí Nuôi Pet
+                AI Đánh Giá Tài Chính & Tối Ưu Chi Phí
               </h3>
             </div>
-            <p className="text-xs text-indigo-100/90 leading-relaxed mb-3">
-              {analysis.advice}
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              {analysis.tips.map((tip, idx) => (
-                <span key={idx} className="text-[11px] bg-white/10 px-2.5 py-1 rounded-lg text-indigo-200 border border-white/10">
-                  💡 {tip}
-                </span>
-              ))}
-            </div>
+            {filteredExpenses.length === 0 ? (
+              <p className="text-xs text-indigo-100/90 leading-relaxed mb-3">
+                Chưa có đủ dữ liệu chi tiêu trong kỳ đã chọn để đưa ra nhận xét cá nhân hóa. Vui lòng ghi lại các khoản chi thực tế của thú cưng.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-indigo-100/90 leading-relaxed mb-3">
+                  {analysis.advice}
+                </p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {analysis.tips.map((tip, idx) => (
+                    <span key={idx} className="text-[11px] bg-white/10 px-2.5 py-1 rounded-lg text-indigo-200 border border-white/10">
+                      💡 {tip}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Monthly Forecast Card */}
+        {/* Monthly Budget Card */}
         <div className="p-5 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -195,35 +278,103 @@ export const ExpenseView = ({
               </div>
               <div>
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-200">
-                  Dự Báo Chi Phí Tháng Tới (AI Forecast)
+                  Ngân Sách & Quản Trị Chi Phí
                 </h3>
-                <p className="text-[11px] text-slate-400">Dựa vào độ tuổi, cân nặng và lịch tiêm phòng</p>
+                <p className="text-[11px] text-slate-400">Thiết lập bởi người nuôi để kiểm soát chi tiêu</p>
               </div>
             </div>
-            <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400">
-              ~ 1.850.000 đ
-            </span>
+            
+            {monthlyBudget ? (
+              <div className="text-right">
+                <span className="text-xs font-extrabold text-amber-600 dark:text-amber-400 block">
+                  {formatVND(monthlyBudget)}
+                </span>
+                <button
+                  onClick={() => {
+                    setBudgetInput(String(monthlyBudget));
+                    setIsEditingBudget(true);
+                  }}
+                  className="text-[10px] text-slate-400 hover:text-indigo-600 underline cursor-pointer"
+                >
+                  Chỉnh sửa
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => {
+                  setBudgetInput('');
+                  setIsEditingBudget(true);
+                }}
+                className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 font-bold text-[11px] rounded-lg transition-colors cursor-pointer"
+              >
+                + Đặt ngân sách
+              </button>
+            )}
           </div>
 
-          <div className="space-y-2 text-xs pt-1">
-            <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-              <span>🍗 Thức ăn khô & dinh dưỡng (khoảng 12kg/tháng):</span>
-              <strong className="font-semibold text-slate-900 dark:text-white">950.000 đ</strong>
+          {/* Modal / Form sửa ngân sách inline */}
+          {isEditingBudget ? (
+            <form onSubmit={handleSaveBudget} className="flex items-center gap-2 pt-2">
+              <input
+                type="number"
+                placeholder="Ví dụ: 1500000"
+                value={budgetInput}
+                onChange={(e) => setBudgetInput(e.target.value)}
+                className="flex-1 px-3 py-1.5 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl text-xs"
+                autoFocus
+              />
+              <button
+                type="submit"
+                className="px-3 py-1.5 bg-emerald-600 text-white font-bold text-xs rounded-xl hover:bg-emerald-500 cursor-pointer"
+              >
+                Lưu
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsEditingBudget(false)}
+                className="px-2.5 py-1.5 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded-xl cursor-pointer"
+              >
+                Hủy
+              </button>
+            </form>
+          ) : (
+            <div className="space-y-2 text-xs pt-1">
+              {filteredExpenses.length === 0 ? (
+                <div className="py-2 text-slate-400 text-center">
+                  Chưa đủ dữ liệu chi tiêu thực tế để đưa ra dự báo hoặc so sánh ngân sách.
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
+                    <span>Tổng chi tiêu trong kỳ lọc:</span>
+                    <strong className="font-semibold text-slate-900 dark:text-white">{formatVND(analysis.totalSpent)}</strong>
+                  </div>
+                  {monthlyBudget && (
+                    <>
+                      <div className="w-full bg-slate-100 dark:bg-slate-700 rounded-full h-2 overflow-hidden mt-1">
+                        <div
+                          className={`h-full rounded-full transition-all duration-300 ${
+                            analysis.totalSpent > monthlyBudget ? 'bg-rose-500' : 'bg-emerald-500'
+                          }`}
+                          style={{ width: `${Math.min(100, Math.round((analysis.totalSpent / monthlyBudget) * 100))}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] pt-1">
+                        <span className={analysis.totalSpent > monthlyBudget ? 'text-rose-600 font-bold' : 'text-emerald-600 font-semibold'}>
+                          {analysis.totalSpent > monthlyBudget 
+                            ? `Đã vượt ngân sách ${formatVND(analysis.totalSpent - monthlyBudget)}`
+                            : `Còn lại ${formatVND(monthlyBudget - analysis.totalSpent)} trong ngân sách`}
+                        </span>
+                        <span className="text-slate-400">
+                          {Math.round((analysis.totalSpent / monthlyBudget) * 100)}% đã dùng
+                        </span>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
             </div>
-            <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-              <span>💉 Lịch nhỏ gáy trị ve & vắc-xin đến hạn:</span>
-              <strong className="font-semibold text-slate-900 dark:text-white">500.000 đ</strong>
-            </div>
-            <div className="flex items-center justify-between text-slate-600 dark:text-slate-300">
-              <span>✂️ Cát vệ sinh / Spa & Phụ kiện dự phòng:</span>
-              <strong className="font-semibold text-slate-900 dark:text-white">400.000 đ</strong>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-            <span>Đang nằm trong ngưỡng an toàn ngân sách gia đình</span>
-            <span className="text-slate-400">Trần: 2.500.000 đ/tháng</span>
-          </div>
+          )}
         </div>
       </div>
 
@@ -252,21 +403,14 @@ export const ExpenseView = ({
               {filteredExpenses.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-slate-400">
-                    Chưa có khoản chi nào được ghi nhận. Bấm "Ghi Khoản Chi" để bắt đầu!
+                    Chưa có khoản chi nào phù hợp với bộ lọc. Bấm "Ghi Khoản Chi" để bắt đầu!
                   </td>
                 </tr>
               ) : (
                 filteredExpenses.map((exp) => {
                   const pet = pets.find(p => p.id === exp.petId);
                   const catConfig = EXPENSE_CATEGORIES[exp.category] || EXPENSE_CATEGORIES.other;
-
-                  // 3. SỬA HIỂN THỊ CỘT "THÚ CƯNG":
-                  // Render trực tiếp trường exp.petName (Hiển thị rõ: Mochi, Luna, hoặc Bánh Bao). Nếu khoản chi chung cả nhà thì mới để "Tất cả".
-                  const displayPetName = exp.petName || pet?.name || (
-                    exp.petId === 'pet-1' ? 'Mochi' :
-                    exp.petId === 'pet-2' ? 'Luna' :
-                    exp.petId === 'pet-3' ? 'Bánh Bao' : 'Tất cả'
-                  );
+                  const displayPetName = exp.petName || pet?.name || 'Chi tiêu chung';
 
                   return (
                     <tr key={exp.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors">
@@ -275,15 +419,7 @@ export const ExpenseView = ({
                         {exp.notes && <div className="text-[11px] text-slate-400 font-normal">{exp.notes}</div>}
                       </td>
                       <td className="py-3.5 px-4 font-semibold text-slate-700 dark:text-slate-300">
-                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold ${
-                          displayPetName.includes('Mochi') ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20' :
-                          displayPetName.includes('Luna') ? 'bg-sky-500/10 text-sky-700 dark:text-sky-300 border border-sky-500/20' :
-                          displayPetName.includes('Bánh Bao') ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20' :
-                          'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                        }`}>
-                          {displayPetName.includes('Mochi') && '🐕 '}
-                          {displayPetName.includes('Luna') && '🐱 '}
-                          {displayPetName.includes('Bánh Bao') && '🐰 '}
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg text-xs font-bold bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
                           {displayPetName}
                         </span>
                       </td>
@@ -301,7 +437,7 @@ export const ExpenseView = ({
                       <td className="py-3.5 px-4 text-right">
                         <button
                           onClick={() => onDeleteExpense(exp.id)}
-                          className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
+                          className="p-1 text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
                           title="Xóa khoản chi"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -318,8 +454,8 @@ export const ExpenseView = ({
 
       {/* Add Expense Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#181926] text-slate-900 dark:text-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-white/10 transition-colors">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
               Ghi Khoản Chi Tiêu Mới
             </h3>
@@ -330,11 +466,11 @@ export const ExpenseView = ({
                 <select
                   value={newExpense.petId}
                   onChange={(e) => setNewExpense({ ...newExpense, petId: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-hidden cursor-pointer"
                 >
-                  <option value="all">Tất cả / Chung cho cả nhà</option>
+                  <option value="all" className="text-slate-900 dark:text-white dark:bg-slate-800">Tất cả / Chung cho cả nhà</option>
                   {pets.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.breed})</option>
+                    <option key={p.id} value={p.id} className="text-slate-900 dark:text-white dark:bg-slate-800">{p.name} ({p.breed})</option>
                   ))}
                 </select>
               </div>
@@ -344,10 +480,10 @@ export const ExpenseView = ({
                 <select
                   value={newExpense.category}
                   onChange={(e) => setNewExpense({ ...newExpense, category: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-hidden cursor-pointer"
                 >
                   {Object.entries(EXPENSE_CATEGORIES).map(([k, v]) => (
-                    <option key={k} value={k}>{v.label}</option>
+                    <option key={k} value={k} className="text-slate-900 dark:text-white dark:bg-slate-800">{v.label}</option>
                   ))}
                 </select>
               </div>
@@ -360,7 +496,7 @@ export const ExpenseView = ({
                   placeholder="Ví dụ: Mua bao thức ăn Orijen, Tiêm phòng vắc-xin dại..."
                   value={newExpense.title}
                   onChange={(e) => setNewExpense({ ...newExpense, title: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-500 transition-all font-medium"
                 />
               </div>
 
@@ -373,7 +509,7 @@ export const ExpenseView = ({
                     placeholder="Ví dụ: 350000"
                     value={newExpense.amount}
                     onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-500 transition-all font-semibold"
                   />
                 </div>
 
@@ -384,7 +520,7 @@ export const ExpenseView = ({
                     required
                     value={newExpense.date}
                     onChange={(e) => setNewExpense({ ...newExpense, date: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark] outline-hidden focus:border-emerald-500 transition-all cursor-pointer font-medium"
                   />
                 </div>
               </div>
@@ -396,7 +532,7 @@ export const ExpenseView = ({
                   placeholder="Nơi mua, chương trình khuyến mãi..."
                   value={newExpense.notes}
                   onChange={(e) => setNewExpense({ ...newExpense, notes: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-500 transition-all"
                 />
               </div>
 
@@ -404,15 +540,16 @@ export const ExpenseView = ({
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-xl"
+                  className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl shadow-xs"
+                  disabled={isSubmitting}
+                  className={`px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5 ${isSubmitting ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}
                 >
-                  Lưu Khoản Chi
+                  {isSubmitting ? 'Đang lưu...' : 'Lưu Khoản Chi'}
                 </button>
               </div>
             </form>

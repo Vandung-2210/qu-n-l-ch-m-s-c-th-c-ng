@@ -1,0 +1,2667 @@
+[
+  {
+    "id": "med-1792947394906",
+    "appointmentId": "BK-1792947121101",
+    "petId": "pet-demo-1792858945034",
+    "ownerId": "user_owner_demo",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Chủ nuôi báo: rụng lông",
+      "objective": "",
+      "assessment": "",
+      "plan": "",
+      "labSummary": "",
+      "allergyAlert": "rụng lông",
+      "planMedications": [
+        {
+          "name": "",
+          "dose": "",
+          "route": "",
+          "freq": "",
+          "startDate": "",
+          "days": "",
+          "instructions": ""
+        }
+      ],
+      "vaccines": [],
+      "vitals": {
+        "weight": "25.6 kg",
+        "temp": "",
+        "hr": "",
+        "bp": ""
+      }
+    },
+    "assessment": "",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:56:34.906Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:56:34.906Z",
+    "createdAt": "2026-10-25T16:56:34.906Z"
+  },
+  {
+    "id": "med-1792946735616",
+    "appointmentId": "app-veta-1792946735546",
+    "petId": "pet-m3-1792946734869",
+    "ownerId": "user_1792946734728_983057",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:45:35.616Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:45:35.616Z",
+    "createdAt": "2026-10-25T16:45:35.616Z"
+  },
+  {
+    "id": "med-1792946735383",
+    "appointmentId": "app-m3-8-1792946735356",
+    "petId": "pet-m3-1792946734869",
+    "ownerId": "user_1792946734728_983057",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:45:35.383Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:45:35.383Z",
+    "createdAt": "2026-10-25T16:45:35.383Z"
+  },
+  {
+    "id": "med-1792946735125",
+    "appointmentId": "app-m3-5-1792946735103",
+    "petId": "pet-m3-1792946734869",
+    "ownerId": "user_1792946734728_983057",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:45:35.125Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:45:35.125Z",
+    "createdAt": "2026-10-25T16:45:35.125Z"
+  },
+  {
+    "id": "med-1792946734995",
+    "appointmentId": "app-m3-2-1792946734970",
+    "petId": "pet-m3-1792946734869",
+    "ownerId": "user_1792946734728_983057",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:45:34.995Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:45:34.995Z",
+    "createdAt": "2026-10-25T16:45:34.995Z"
+  },
+  {
+    "id": "med-m3-draft-1792946734904",
+    "appointmentId": "app-m3-1-1792946734894",
+    "petId": "pet-m3-1792946734869",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792946734728_983057",
+    "createdAt": "2026-10-25T16:45:34.916Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-25T16:45:34.950Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:45:34.950Z"
+  },
+  {
+    "id": "med-1792946734490",
+    "appointmentId": "app-test-fs-1792946734261-1",
+    "petId": "pet-test-1792946734261",
+    "ownerId": "user_1792946734103_151e6f",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:45:34.490Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:45:34.490Z",
+    "createdAt": "2026-10-25T16:45:34.490Z"
+  },
+  {
+    "id": "med-1792946358838",
+    "appointmentId": "app-veta-1792946358795",
+    "petId": "pet-m3-1792946358147",
+    "ownerId": "user_1792946358005_6e371b",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:39:18.838Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:39:18.838Z",
+    "createdAt": "2026-10-25T16:39:18.838Z"
+  },
+  {
+    "id": "med-1792946358638",
+    "appointmentId": "app-m3-8-1792946358623",
+    "petId": "pet-m3-1792946358147",
+    "ownerId": "user_1792946358005_6e371b",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:39:18.638Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:39:18.638Z",
+    "createdAt": "2026-10-25T16:39:18.638Z"
+  },
+  {
+    "id": "med-1792946358387",
+    "appointmentId": "app-m3-5-1792946358364",
+    "petId": "pet-m3-1792946358147",
+    "ownerId": "user_1792946358005_6e371b",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:39:18.387Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:39:18.387Z",
+    "createdAt": "2026-10-25T16:39:18.387Z"
+  },
+  {
+    "id": "med-1792946358251",
+    "appointmentId": "app-m3-2-1792946358233",
+    "petId": "pet-m3-1792946358147",
+    "ownerId": "user_1792946358005_6e371b",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:39:18.251Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:39:18.251Z",
+    "createdAt": "2026-10-25T16:39:18.251Z"
+  },
+  {
+    "id": "med-m3-draft-1792946358179",
+    "appointmentId": "app-m3-1-1792946358172",
+    "petId": "pet-m3-1792946358147",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792946358005_6e371b",
+    "createdAt": "2026-10-25T16:39:18.186Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-25T16:39:18.213Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:39:18.213Z"
+  },
+  {
+    "id": "med-1792946357757",
+    "appointmentId": "app-test-fs-1792946357526-1",
+    "petId": "pet-test-1792946357526",
+    "ownerId": "user_1792946357394_ffcf50",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T16:39:17.757Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T16:39:17.757Z",
+    "createdAt": "2026-10-25T16:39:17.757Z"
+  },
+  {
+    "id": "med-1792942190436",
+    "appointmentId": "app-veta-1792942190387",
+    "petId": "pet-m3-1792942189693",
+    "ownerId": "user_1792942189550_262f1d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T15:29:50.436Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T15:29:50.436Z",
+    "createdAt": "2026-10-25T15:29:50.436Z"
+  },
+  {
+    "id": "med-1792942190223",
+    "appointmentId": "app-m3-8-1792942190196",
+    "petId": "pet-m3-1792942189693",
+    "ownerId": "user_1792942189550_262f1d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T15:29:50.223Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T15:29:50.223Z",
+    "createdAt": "2026-10-25T15:29:50.223Z"
+  },
+  {
+    "id": "med-1792942189968",
+    "appointmentId": "app-m3-5-1792942189942",
+    "petId": "pet-m3-1792942189693",
+    "ownerId": "user_1792942189550_262f1d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T15:29:49.968Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T15:29:49.968Z",
+    "createdAt": "2026-10-25T15:29:49.968Z"
+  },
+  {
+    "id": "med-1792942189832",
+    "appointmentId": "app-m3-2-1792942189797",
+    "petId": "pet-m3-1792942189693",
+    "ownerId": "user_1792942189550_262f1d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T15:29:49.831Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T15:29:49.831Z",
+    "createdAt": "2026-10-25T15:29:49.831Z"
+  },
+  {
+    "id": "med-m3-draft-1792942189734",
+    "appointmentId": "app-m3-1-1792942189716",
+    "petId": "pet-m3-1792942189693",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792942189550_262f1d",
+    "createdAt": "2026-10-25T15:29:49.745Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-25T15:29:49.782Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T15:29:49.782Z"
+  },
+  {
+    "id": "med-1792942189288",
+    "appointmentId": "app-test-fs-1792942189053-1",
+    "petId": "pet-test-1792942189053",
+    "ownerId": "user_1792942188916_240808",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-25T15:29:49.288Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-25T15:29:49.288Z",
+    "createdAt": "2026-10-25T15:29:49.288Z"
+  },
+  {
+    "appointmentId": "app-m3-3-1792860413596",
+    "petId": "pet-m3-1792860413361",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "",
+      "objective": "",
+      "assessment": "",
+      "plan": "",
+      "labSummary": "",
+      "allergyAlert": "Chưa có thông tin dị ứng (Cần kiểm tra trước khi kê đơn)",
+      "planMedications": [],
+      "vaccines": [],
+      "vitals": {
+        "weight": "4.2 kg",
+        "temp": "",
+        "hr": "",
+        "bp": ""
+      }
+    },
+    "isFinal": true,
+    "updatedAt": "2026-10-24T16:49:12.605Z",
+    "id": "med-1792860547490",
+    "ownerId": "user_1792860413212_5c6689",
+    "createdAt": "2026-10-24T16:49:07.490Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "status": "published",
+    "assessment": "",
+    "plan": "",
+    "notes": "",
+    "confirmedAt": "2026-10-24T16:49:12.605Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)"
+  },
+  {
+    "id": "med-1792860414274",
+    "appointmentId": "app-veta-1792860414197",
+    "petId": "pet-m3-1792860413361",
+    "ownerId": "user_1792860413212_5c6689",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:46:54.274Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:46:54.274Z",
+    "createdAt": "2026-10-24T16:46:54.274Z"
+  },
+  {
+    "id": "med-1792860414019",
+    "appointmentId": "app-m3-8-1792860413984",
+    "petId": "pet-m3-1792860413361",
+    "ownerId": "user_1792860413212_5c6689",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:46:54.019Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:46:54.019Z",
+    "createdAt": "2026-10-24T16:46:54.019Z"
+  },
+  {
+    "id": "med-1792860413691",
+    "appointmentId": "app-m3-5-1792860413654",
+    "petId": "pet-m3-1792860413361",
+    "ownerId": "user_1792860413212_5c6689",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:46:53.691Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:46:53.691Z",
+    "createdAt": "2026-10-24T16:46:53.691Z"
+  },
+  {
+    "id": "med-1792860413534",
+    "appointmentId": "app-m3-2-1792860413492",
+    "petId": "pet-m3-1792860413361",
+    "ownerId": "user_1792860413212_5c6689",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:46:53.534Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:46:53.534Z",
+    "createdAt": "2026-10-24T16:46:53.534Z"
+  },
+  {
+    "id": "med-m3-draft-1792860413423",
+    "appointmentId": "app-m3-1-1792860413400",
+    "petId": "pet-m3-1792860413361",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792860413212_5c6689",
+    "createdAt": "2026-10-24T16:46:53.434Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-24T16:46:53.468Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:46:53.468Z"
+  },
+  {
+    "id": "med-1792860412858",
+    "appointmentId": "app-test-fs-1792860412618-1",
+    "petId": "pet-test-1792860412617",
+    "ownerId": "user_1792860412468_f75490",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:46:52.858Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:46:52.858Z",
+    "createdAt": "2026-10-24T16:46:52.858Z"
+  },
+  {
+    "id": "med-1792859867941",
+    "appointmentId": "app-veta-1792859867855",
+    "petId": "pet-m3-1792859866985",
+    "ownerId": "user_1792859866839_f90633",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:37:47.941Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:37:47.941Z",
+    "createdAt": "2026-10-24T16:37:47.941Z"
+  },
+  {
+    "id": "med-1792859867672",
+    "appointmentId": "app-m3-8-1792859867637",
+    "petId": "pet-m3-1792859866985",
+    "ownerId": "user_1792859866839_f90633",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:37:47.672Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:37:47.672Z",
+    "createdAt": "2026-10-24T16:37:47.672Z"
+  },
+  {
+    "id": "med-1792859867348",
+    "appointmentId": "app-m3-5-1792859867319",
+    "petId": "pet-m3-1792859866985",
+    "ownerId": "user_1792859866839_f90633",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:37:47.348Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:37:47.348Z",
+    "createdAt": "2026-10-24T16:37:47.348Z"
+  },
+  {
+    "id": "med-1792859867166",
+    "appointmentId": "app-m3-2-1792859867128",
+    "petId": "pet-m3-1792859866985",
+    "ownerId": "user_1792859866839_f90633",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:37:47.166Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:37:47.166Z",
+    "createdAt": "2026-10-24T16:37:47.166Z"
+  },
+  {
+    "id": "med-m3-draft-1792859867039",
+    "appointmentId": "app-m3-1-1792859867021",
+    "petId": "pet-m3-1792859866985",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792859866839_f90633",
+    "createdAt": "2026-10-24T16:37:47.062Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-24T16:37:47.093Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:37:47.093Z"
+  },
+  {
+    "id": "med-1792859866530",
+    "appointmentId": "app-test-fs-1792859866297-1",
+    "petId": "pet-test-1792859866297",
+    "ownerId": "user_1792859866137_63d710",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:37:46.530Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:37:46.530Z",
+    "createdAt": "2026-10-24T16:37:46.530Z"
+  },
+  {
+    "id": "med-1792858959538",
+    "appointmentId": "app-veta-1792858959495",
+    "petId": "pet-m3-1792858958884",
+    "ownerId": "user_1792858958754_bec08f",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:22:39.538Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:22:39.538Z",
+    "createdAt": "2026-10-24T16:22:39.538Z"
+  },
+  {
+    "id": "med-1792858959344",
+    "appointmentId": "app-m3-8-1792858959319",
+    "petId": "pet-m3-1792858958884",
+    "ownerId": "user_1792858958754_bec08f",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:22:39.344Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:22:39.344Z",
+    "createdAt": "2026-10-24T16:22:39.344Z"
+  },
+  {
+    "id": "med-1792858959109",
+    "appointmentId": "app-m3-5-1792858959073",
+    "petId": "pet-m3-1792858958884",
+    "ownerId": "user_1792858958754_bec08f",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:22:39.109Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:22:39.109Z",
+    "createdAt": "2026-10-24T16:22:39.109Z"
+  },
+  {
+    "id": "med-1792858958984",
+    "appointmentId": "app-m3-2-1792858958960",
+    "petId": "pet-m3-1792858958884",
+    "ownerId": "user_1792858958754_bec08f",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:22:38.984Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:22:38.984Z",
+    "createdAt": "2026-10-24T16:22:38.984Z"
+  },
+  {
+    "id": "med-m3-draft-1792858958907",
+    "appointmentId": "app-m3-1-1792858958899",
+    "petId": "pet-m3-1792858958884",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792858958754_bec08f",
+    "createdAt": "2026-10-24T16:22:38.921Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-24T16:22:38.948Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:22:38.948Z"
+  },
+  {
+    "id": "med-1792858958507",
+    "appointmentId": "app-test-fs-1792858958286-1",
+    "petId": "pet-test-1792858958286",
+    "ownerId": "user_1792858958156_d3fb69",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:22:38.507Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:22:38.507Z",
+    "createdAt": "2026-10-24T16:22:38.507Z"
+  },
+  {
+    "id": "med-1792858812357",
+    "appointmentId": "app-veta-1792858812222",
+    "petId": "pet-m3-1792858811342",
+    "ownerId": "user_1792858811212_fca864",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:20:12.357Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:20:12.357Z",
+    "createdAt": "2026-10-24T16:20:12.357Z"
+  },
+  {
+    "id": "med-1792858811821",
+    "appointmentId": "app-m3-8-1792858811794",
+    "petId": "pet-m3-1792858811342",
+    "ownerId": "user_1792858811212_fca864",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:20:11.821Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:20:11.821Z",
+    "createdAt": "2026-10-24T16:20:11.821Z"
+  },
+  {
+    "id": "med-1792858811568",
+    "appointmentId": "app-m3-5-1792858811553",
+    "petId": "pet-m3-1792858811342",
+    "ownerId": "user_1792858811212_fca864",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:20:11.568Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:20:11.568Z",
+    "createdAt": "2026-10-24T16:20:11.568Z"
+  },
+  {
+    "id": "med-1792858811449",
+    "appointmentId": "app-m3-2-1792858811421",
+    "petId": "pet-m3-1792858811342",
+    "ownerId": "user_1792858811212_fca864",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:20:11.449Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:20:11.449Z",
+    "createdAt": "2026-10-24T16:20:11.449Z"
+  },
+  {
+    "id": "med-m3-draft-1792858811367",
+    "appointmentId": "app-m3-1-1792858811360",
+    "petId": "pet-m3-1792858811342",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792858811212_fca864",
+    "createdAt": "2026-10-24T16:20:11.378Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-24T16:20:11.406Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:20:11.406Z"
+  },
+  {
+    "id": "med-1792858810969",
+    "appointmentId": "app-test-fs-1792858810766-1",
+    "petId": "pet-test-1792858810766",
+    "ownerId": "user_1792858810635_fecba1",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T16:20:10.969Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T16:20:10.969Z",
+    "createdAt": "2026-10-24T16:20:10.969Z"
+  },
+  {
+    "id": "med-1792855203744",
+    "appointmentId": "app-veta-1792855203640",
+    "petId": "pet-m3-1792855202783",
+    "ownerId": "user_1792855202579_3f1f1d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T15:20:03.744Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T15:20:03.744Z",
+    "createdAt": "2026-10-24T15:20:03.744Z"
+  },
+  {
+    "id": "med-1792855203416",
+    "appointmentId": "app-m3-8-1792855203386",
+    "petId": "pet-m3-1792855202783",
+    "ownerId": "user_1792855202579_3f1f1d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T15:20:03.416Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T15:20:03.416Z",
+    "createdAt": "2026-10-24T15:20:03.416Z"
+  },
+  {
+    "id": "med-1792855203088",
+    "appointmentId": "app-m3-5-1792855203057",
+    "petId": "pet-m3-1792855202783",
+    "ownerId": "user_1792855202579_3f1f1d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T15:20:03.088Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T15:20:03.088Z",
+    "createdAt": "2026-10-24T15:20:03.088Z"
+  },
+  {
+    "id": "med-1792855202933",
+    "appointmentId": "app-m3-2-1792855202902",
+    "petId": "pet-m3-1792855202783",
+    "ownerId": "user_1792855202579_3f1f1d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T15:20:02.933Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T15:20:02.933Z",
+    "createdAt": "2026-10-24T15:20:02.933Z"
+  },
+  {
+    "id": "med-m3-draft-1792855202830",
+    "appointmentId": "app-m3-1-1792855202810",
+    "petId": "pet-m3-1792855202783",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792855202579_3f1f1d",
+    "createdAt": "2026-10-24T15:20:02.840Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-24T15:20:02.872Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T15:20:02.872Z"
+  },
+  {
+    "id": "med-1792855202220",
+    "appointmentId": "app-test-fs-1792855201980-1",
+    "petId": "pet-test-1792855201980",
+    "ownerId": "user_1792855201804_bd5e76",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-24T15:20:02.220Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-24T15:20:02.220Z",
+    "createdAt": "2026-10-24T15:20:02.220Z"
+  },
+  {
+    "id": "med-1792773246224",
+    "appointmentId": "app-veta-1792773246181",
+    "petId": "pet-m3-1792773245529",
+    "ownerId": "user_1792773245384_3c134c",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:34:06.224Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:34:06.224Z",
+    "createdAt": "2026-10-23T16:34:06.224Z"
+  },
+  {
+    "id": "med-1792773246034",
+    "appointmentId": "app-m3-8-1792773246015",
+    "petId": "pet-m3-1792773245529",
+    "ownerId": "user_1792773245384_3c134c",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:34:06.034Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:34:06.034Z",
+    "createdAt": "2026-10-23T16:34:06.034Z"
+  },
+  {
+    "id": "med-1792773245790",
+    "appointmentId": "app-m3-5-1792773245758",
+    "petId": "pet-m3-1792773245529",
+    "ownerId": "user_1792773245384_3c134c",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:34:05.790Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:34:05.790Z",
+    "createdAt": "2026-10-23T16:34:05.790Z"
+  },
+  {
+    "id": "med-1792773245647",
+    "appointmentId": "app-m3-2-1792773245621",
+    "petId": "pet-m3-1792773245529",
+    "ownerId": "user_1792773245384_3c134c",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:34:05.647Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:34:05.647Z",
+    "createdAt": "2026-10-23T16:34:05.647Z"
+  },
+  {
+    "id": "med-m3-draft-1792773245563",
+    "appointmentId": "app-m3-1-1792773245545",
+    "petId": "pet-m3-1792773245529",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792773245384_3c134c",
+    "createdAt": "2026-10-23T16:34:05.572Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-23T16:34:05.605Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:34:05.605Z"
+  },
+  {
+    "id": "med-1792773245140",
+    "appointmentId": "app-test-fs-1792773244922-1",
+    "petId": "pet-test-1792773244922",
+    "ownerId": "user_1792773244785_ff96f9",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:34:05.140Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:34:05.140Z",
+    "createdAt": "2026-10-23T16:34:05.140Z"
+  },
+  {
+    "id": "med-1792772501240",
+    "appointmentId": "app-veta-1792772501179",
+    "petId": "pet-m3-1792772500259",
+    "ownerId": "user_1792772500024_6eadc3",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:21:41.240Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:21:41.240Z",
+    "createdAt": "2026-10-23T16:21:41.240Z"
+  },
+  {
+    "id": "med-1792772500951",
+    "appointmentId": "app-m3-8-1792772500928",
+    "petId": "pet-m3-1792772500259",
+    "ownerId": "user_1792772500024_6eadc3",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:21:40.951Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:21:40.951Z",
+    "createdAt": "2026-10-23T16:21:40.951Z"
+  },
+  {
+    "id": "med-1792772500590",
+    "appointmentId": "app-m3-5-1792772500548",
+    "petId": "pet-m3-1792772500259",
+    "ownerId": "user_1792772500024_6eadc3",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:21:40.590Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:21:40.590Z",
+    "createdAt": "2026-10-23T16:21:40.590Z"
+  },
+  {
+    "id": "med-1792772500410",
+    "appointmentId": "app-m3-2-1792772500363",
+    "petId": "pet-m3-1792772500259",
+    "ownerId": "user_1792772500024_6eadc3",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:21:40.410Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:21:40.410Z",
+    "createdAt": "2026-10-23T16:21:40.410Z"
+  },
+  {
+    "id": "med-m3-draft-1792772500300",
+    "appointmentId": "app-m3-1-1792772500285",
+    "petId": "pet-m3-1792772500259",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792772500024_6eadc3",
+    "createdAt": "2026-10-23T16:21:40.312Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-23T16:21:40.345Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:21:40.345Z"
+  },
+  {
+    "id": "med-1792772499709",
+    "appointmentId": "app-test-fs-1792772499471-1",
+    "petId": "pet-test-1792772499470",
+    "ownerId": "user_1792772499242_ee2fd2",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:21:39.709Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:21:39.709Z",
+    "createdAt": "2026-10-23T16:21:39.709Z"
+  },
+  {
+    "id": "med-1792772180869",
+    "appointmentId": "app-veta-1792772180818",
+    "petId": "pet-m3-1792772180226",
+    "ownerId": "user_1792772180098_a28d6d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:16:20.869Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:16:20.869Z",
+    "createdAt": "2026-10-23T16:16:20.869Z"
+  },
+  {
+    "id": "med-1792772180661",
+    "appointmentId": "app-m3-8-1792772180628",
+    "petId": "pet-m3-1792772180226",
+    "ownerId": "user_1792772180098_a28d6d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:16:20.661Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:16:20.661Z",
+    "createdAt": "2026-10-23T16:16:20.661Z"
+  },
+  {
+    "id": "med-1792772180433",
+    "appointmentId": "app-m3-5-1792772180417",
+    "petId": "pet-m3-1792772180226",
+    "ownerId": "user_1792772180098_a28d6d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:16:20.433Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:16:20.433Z",
+    "createdAt": "2026-10-23T16:16:20.433Z"
+  },
+  {
+    "id": "med-1792772180320",
+    "appointmentId": "app-m3-2-1792772180304",
+    "petId": "pet-m3-1792772180226",
+    "ownerId": "user_1792772180098_a28d6d",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:16:20.320Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:16:20.320Z",
+    "createdAt": "2026-10-23T16:16:20.320Z"
+  },
+  {
+    "id": "med-m3-draft-1792772180251",
+    "appointmentId": "app-m3-1-1792772180243",
+    "petId": "pet-m3-1792772180226",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792772180098_a28d6d",
+    "createdAt": "2026-10-23T16:16:20.266Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-23T16:16:20.293Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:16:20.293Z"
+  },
+  {
+    "id": "med-1792772179846",
+    "appointmentId": "app-test-fs-1792772179619-1",
+    "petId": "pet-test-1792772179619",
+    "ownerId": "user_1792772179493_cee577",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:16:19.846Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:16:19.846Z",
+    "createdAt": "2026-10-23T16:16:19.846Z"
+  },
+  {
+    "id": "mr-final-1792772072630",
+    "petId": "pet-test-1792772072522",
+    "vetId": "user_vet_pro",
+    "isFinal": true,
+    "soap": {
+      "subjective": "Sốt cao",
+      "assessment": "Viêm phế quản cấp"
+    },
+    "ownerId": "user_1792772072207_b1d0cf",
+    "createdAt": "2026-10-23T16:14:32.639Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "status": "published",
+    "history": [
+      {
+        "version": 1,
+        "amendedAt": "2026-10-23T16:14:32.685Z",
+        "amendedBy": "user_vet_pro",
+        "amendedByName": "BS. Hoàng Hải Nam (Pro Vet)",
+        "reason": "Cập nhật diễn biến ngày 2",
+        "addendumNote": "Bé đã hạ sốt sau khi dùng kháng sinh",
+        "previousState": {}
+      }
+    ],
+    "lastAmendedAt": "2026-10-23T16:14:32.685Z"
+  },
+  {
+    "id": "mr-draft-1792772072593",
+    "petId": "pet-test-1792772072522",
+    "vetId": "user_vet_pro",
+    "isFinal": false,
+    "soap": {
+      "subjective": "Bé mệt",
+      "objective": "Nhiệt độ 38.5",
+      "assessment": "Viêm da",
+      "plan": "Thuốc thoa"
+    },
+    "ownerId": "user_1792772072207_b1d0cf",
+    "createdAt": "2026-10-23T16:14:32.598Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "status": "draft"
+  },
+  {
+    "id": "med-1792772065815",
+    "appointmentId": "app-veta-1792772065776",
+    "petId": "pet-m3-1792772065162",
+    "ownerId": "user_1792772065016_aa2a62",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:14:25.815Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:14:25.815Z",
+    "createdAt": "2026-10-23T16:14:25.815Z"
+  },
+  {
+    "id": "med-1792772065621",
+    "appointmentId": "app-m3-8-1792772065600",
+    "petId": "pet-m3-1792772065162",
+    "ownerId": "user_1792772065016_aa2a62",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:14:25.621Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:14:25.621Z",
+    "createdAt": "2026-10-23T16:14:25.621Z"
+  },
+  {
+    "id": "med-1792772065386",
+    "appointmentId": "app-m3-5-1792772065357",
+    "petId": "pet-m3-1792772065162",
+    "ownerId": "user_1792772065016_aa2a62",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:14:25.386Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:14:25.386Z",
+    "createdAt": "2026-10-23T16:14:25.386Z"
+  },
+  {
+    "id": "med-1792772065281",
+    "appointmentId": "app-m3-2-1792772065253",
+    "petId": "pet-m3-1792772065162",
+    "ownerId": "user_1792772065016_aa2a62",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:14:25.281Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:14:25.281Z",
+    "createdAt": "2026-10-23T16:14:25.281Z"
+  },
+  {
+    "id": "med-m3-draft-1792772065201",
+    "appointmentId": "app-m3-1-1792772065186",
+    "petId": "pet-m3-1792772065162",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792772065016_aa2a62",
+    "createdAt": "2026-10-23T16:14:25.210Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-23T16:14:25.238Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:14:25.238Z"
+  },
+  {
+    "id": "med-1792772043747",
+    "appointmentId": "app-veta-1792772043702",
+    "petId": "pet-m3-1792772043085",
+    "ownerId": "user_1792772042949_7153a4",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm mũi dị ứng cấp",
+      "planMedications": [
+        {
+          "name": "Siro Clorpheniramin 2mg",
+          "dose": "2ml",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Viêm mũi dị ứng cấp",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:14:03.747Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:14:03.747Z",
+    "createdAt": "2026-10-23T16:14:03.747Z"
+  },
+  {
+    "id": "med-1792772043545",
+    "appointmentId": "app-m3-8-1792772043520",
+    "petId": "pet-m3-1792772043085",
+    "ownerId": "user_1792772042949_7153a4",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Viêm da dị ứng nhẹ",
+      "planMedications": [
+        {
+          "name": "Kem bôi da Kẽm Oxyde",
+          "dose": "Bôi 2 lần/ngày",
+          "days": 7
+        }
+      ]
+    },
+    "assessment": "Viêm da dị ứng nhẹ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:14:03.545Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:14:03.545Z",
+    "createdAt": "2026-10-23T16:14:03.545Z"
+  },
+  {
+    "id": "med-1792772043324",
+    "appointmentId": "app-m3-5-1792772043286",
+    "petId": "pet-m3-1792772043085",
+    "ownerId": "user_1792772042949_7153a4",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:14:03.324Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:14:03.324Z",
+    "createdAt": "2026-10-23T16:14:03.324Z"
+  },
+  {
+    "id": "med-1792772043200",
+    "appointmentId": "app-m3-2-1792772043160",
+    "petId": "pet-m3-1792772043085",
+    "ownerId": "user_1792772042949_7153a4",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:14:03.200Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:14:03.200Z",
+    "createdAt": "2026-10-23T16:14:03.200Z"
+  },
+  {
+    "id": "med-m3-draft-1792772043108",
+    "appointmentId": "app-m3-1-1792772043098",
+    "petId": "pet-m3-1792772043085",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792772042949_7153a4",
+    "createdAt": "2026-10-23T16:14:03.122Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-23T16:14:03.150Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:14:03.150Z"
+  },
+  {
+    "id": "med-1792771987030",
+    "appointmentId": "app-m3-5-1792771987002",
+    "petId": "pet-m3-1792771986770",
+    "ownerId": "user_1792771986638_cf50a4",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "assessment": "Chẩn đoán lần 1 hợp lệ",
+      "planMedications": [
+        {
+          "name": "Thuốc Chuẩn Lần 1",
+          "dose": "1 viên",
+          "days": 5
+        }
+      ]
+    },
+    "assessment": "Chẩn đoán lần 1 hợp lệ",
+    "plan": "",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:13:07.030Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:13:07.030Z",
+    "createdAt": "2026-10-23T16:13:07.030Z"
+  },
+  {
+    "id": "med-1792771986902",
+    "appointmentId": "app-m3-2-1792771986872",
+    "petId": "pet-m3-1792771986770",
+    "ownerId": "user_1792771986638_cf50a4",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:13:06.902Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:13:06.902Z",
+    "createdAt": "2026-10-23T16:13:06.902Z"
+  },
+  {
+    "id": "med-m3-draft-1792771986816",
+    "appointmentId": "app-m3-1-1792771986793",
+    "petId": "pet-m3-1792771986770",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792771986638_cf50a4",
+    "createdAt": "2026-10-23T16:13:06.832Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-23T16:13:06.860Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:13:06.860Z"
+  },
+  {
+    "id": "med-1792771953590",
+    "appointmentId": "app-m3-2-1792771953555",
+    "petId": "pet-m3-1792771953443",
+    "ownerId": "user_1792771953301_123bfa",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Tái khám sau điều trị, mèo ăn ngủ tốt",
+      "objective": "Thân nhiệt 38.5C bình thường, phổi trong",
+      "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+      "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+      "planMedications": []
+    },
+    "assessment": "Đã khỏi hoàn toàn, sức khỏe ổn định",
+    "plan": "Duy trì dinh dưỡng hợp lý, không cần dùng thêm thuốc",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:12:33.590Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:12:33.590Z",
+    "createdAt": "2026-10-23T16:12:33.590Z"
+  },
+  {
+    "id": "med-m3-draft-1792771953483",
+    "appointmentId": "app-m3-1-1792771953467",
+    "petId": "pet-m3-1792771953443",
+    "soap": {
+      "subjective": "Miu hắt hơi và chảy nước mũi",
+      "objective": "Thân nhiệt 39.2C, phổi có ran ẩm nhẹ",
+      "assessment": "Viêm phế quản thể cấp",
+      "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+      "planMedications": [
+        {
+          "name": "Amoxicillin 250mg",
+          "dose": "1.5 viên",
+          "route": "Uống",
+          "freq": "2 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 10,
+          "instructions": "Uống sau ăn no"
+        },
+        {
+          "name": "Siro Bromhexin 4mg",
+          "dose": "2.5ml",
+          "route": "Uống",
+          "freq": "3 lần/ngày",
+          "startDate": "2026-11-20",
+          "days": 5,
+          "instructions": "Uống trước khi đi ngủ"
+        }
+      ]
+    },
+    "isFinal": true,
+    "status": "published",
+    "ownerId": "user_1792771953301_123bfa",
+    "createdAt": "2026-10-23T16:12:33.511Z",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "assessment": "Viêm phế quản thể cấp",
+    "plan": "Kháng sinh kết hợp long đờm liều tăng cường",
+    "notes": "",
+    "confirmedAt": "2026-10-23T16:12:33.537Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:12:33.537Z"
+  },
+  {
+    "id": "med-1792771947872",
+    "appointmentId": "app-test-fs-1792771947654-1",
+    "petId": "pet-test-1792771947653",
+    "ownerId": "user_1792771947518_ab3fca",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:12:27.872Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:12:27.872Z",
+    "createdAt": "2026-10-23T16:12:27.872Z"
+  },
+  {
+    "id": "med-1792771925525",
+    "appointmentId": "app-test-fs-1792771925299-1",
+    "petId": "pet-test-1792771925298",
+    "ownerId": "user_1792771925142_5089da",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:12:05.525Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:12:05.525Z",
+    "createdAt": "2026-10-23T16:12:05.525Z"
+  },
+  {
+    "id": "med-1792771897494",
+    "appointmentId": "app-test-fs-1792771897285-1",
+    "petId": "pet-test-1792771897285",
+    "ownerId": "user_1792771897157_1aabf1",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:11:37.494Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:11:37.494Z",
+    "createdAt": "2026-10-23T16:11:37.494Z"
+  },
+  {
+    "id": "med-1792771853773",
+    "appointmentId": "app-test-fs-1792771853561-1",
+    "petId": "pet-test-1792771853560",
+    "ownerId": "user_1792771853419_866154",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:10:53.773Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:10:53.773Z",
+    "createdAt": "2026-10-23T16:10:53.773Z"
+  },
+  {
+    "id": "med-1792771793233",
+    "appointmentId": "app-test-fs-1792771793025-1",
+    "petId": "pet-test-1792771793024",
+    "ownerId": "user_1792771792884_3c0f9e",
+    "authorId": "user_vet_pro",
+    "authorName": "BS. Hoàng Hải Nam (Pro Vet)",
+    "vetId": "user_vet_pro",
+    "soap": {
+      "subjective": "Miu sốt 39.5C, ho khan 3 ngày",
+      "objective": "Nhiệt độ 39.5C, hạch dưới hàm sưng",
+      "assessment": "Viêm đường hô hấp trên thể cấp",
+      "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày"
+    },
+    "assessment": "Viêm đường hô hấp trên thể cấp",
+    "plan": "Kháng sinh Amoxicillin 250mg 2 lần/ngày x 7 ngày",
+    "notes": "",
+    "isFinal": true,
+    "status": "published",
+    "confirmedAt": "2026-10-23T16:09:53.233Z",
+    "confirmedBy": "BS. Hoàng Hải Nam (Pro Vet)",
+    "updatedAt": "2026-10-23T16:09:53.233Z",
+    "createdAt": "2026-10-23T16:09:53.233Z"
+  },
+  {
+    "id": "rec-err1-1792771120647",
+    "test": true
+  }
+]

@@ -9,6 +9,7 @@ import {
   PawPrint
 } from 'lucide-react';
 import { ScheduleBadge } from '../common/Badges';
+import { getTodayVnDate, getVnDateString } from '../../utils/dateUtils.js';
 
 export const CalendarMonthView = ({
   schedules = [],
@@ -17,7 +18,10 @@ export const CalendarMonthView = ({
   onToggleComplete,
   onOpenAddScheduleWithDate
 }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => {
+    const [y, m, d] = getTodayVnDate().split('-').map(Number);
+    return new Date(y, m - 1, d);
+  });
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -38,7 +42,7 @@ export const CalendarMonthView = ({
     setCurrentDate(new Date(year, month + 1, 1));
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayVnDate();
   const [selectedDayStr, setSelectedDayStr] = useState(todayStr);
 
   const monthNames = [
@@ -52,7 +56,7 @@ export const CalendarMonthView = ({
   // Gom lịch theo ngày YYYY-MM-DD
   const schedulesByDate = safeSchedules.reduce((acc, sch) => {
     if (!sch || !sch.date) return acc;
-    const dateKey = String(sch.date).split('T')[0];
+    const dateKey = getVnDateString(sch.date);
     if (!acc[dateKey]) acc[dateKey] = [];
     acc[dateKey].push(sch);
     return acc;

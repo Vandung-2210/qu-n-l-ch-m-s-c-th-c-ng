@@ -1,0 +1,41 @@
+{
+  "pet-reg-1792771120469": {
+    "weight": 99.9,
+    "note": "Khám sức khỏe giao dịch nguyên tử"
+  },
+  "pet-reg-1792771605948": {
+    "weight": 99.9,
+    "note": "Khám sức khỏe giao dịch nguyên tử"
+  },
+  "pet-test-1792772072522": {
+    "petId": "pet-test-1792772072522",
+    "weight": 15.5,
+    "weightHistory": [
+      {
+        "date": "2026-10-15",
+        "weight": 15.5,
+        "note": "Khám sức khỏe"
+      }
+    ]
+  },
+  "pet-demo-1792858945034": {
+    "petId": "pet-demo-1792858945034",
+    "weight": 25.6,
+    "weightHistory": [
+      {
+        "id": "w-1792941200408",
+        "weight": 25.6,
+        "date": "2026-10-25",
+        "fullDate": "2026-10-25T15:13:20.408Z",
+        "note": "hạt mới ăn"
+      },
+      {
+        "id": "w-1792947710033",
+        "weight": 25.6,
+        "date": "2026-10-26",
+        "fullDate": "2026-10-25T17:01:50.033Z",
+        "note": "Cập nhật định kỳ"
+      }
+    ]
+  }
+}

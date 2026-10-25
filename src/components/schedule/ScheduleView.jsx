@@ -47,55 +47,10 @@ import {
   updatePetWeight,
   normalizePetHealthKey
 } from '../../services/storageService';
+import { getTodayVnDate, getVnDateString } from '../../utils/dateUtils.js';
 
-// DANH SÁCH THÚ CƯNG CHUẨN ĐỂ PHÂN BẢNG CHĂM SÓC RIÊNG BIỆT CHO TỪNG BÉ
-export const PETS_LIST = [
-  { 
-    id: 'mochi', 
-    altId: 'pet-1',
-    name: 'Mochi', 
-    species: 'Chó Golden Retriever', 
-    avatar: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=300',
-    age: '2.5 Tuổi',
-    weight: '24.5 kg',
-    gender: 'Đực',
-    accentColor: 'amber',
-    badgeClass: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    borderClass: 'border-amber-500/30 hover:border-amber-400/50',
-    headerGradient: 'from-amber-500/15 via-amber-500/5 to-transparent',
-    iconEmoji: '🐕'
-  },
-  { 
-    id: 'luna', 
-    altId: 'pet-2',
-    name: 'Luna', 
-    species: 'Mèo Anh Lông Ngắn (BSH)', 
-    avatar: 'https://images.unsplash.com/photo-1573865526739-10659fec78a5?auto=format&fit=crop&w=300',
-    age: '1.5 Tuổi',
-    weight: '4.2 kg',
-    gender: 'Cái',
-    accentColor: 'sky',
-    badgeClass: 'bg-sky-500/20 text-sky-300 border-sky-500/30',
-    borderClass: 'border-sky-500/30 hover:border-sky-400/50',
-    headerGradient: 'from-sky-500/15 via-sky-500/5 to-transparent',
-    iconEmoji: '🐱'
-  },
-  { 
-    id: 'banh-bao', 
-    altId: 'pet-3',
-    name: 'Bánh Bao', 
-    species: 'Thỏ Minilop', 
-    avatar: 'https://images.unsplash.com/photo-1585110396000-c9ffd4e4b308?auto=format&fit=crop&w=300',
-    age: '8 Tháng',
-    weight: '1.8 kg',
-    gender: 'Đực',
-    accentColor: 'emerald',
-    badgeClass: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-    borderClass: 'border-emerald-500/30 hover:border-emerald-400/50',
-    headerGradient: 'from-emerald-500/15 via-emerald-500/5 to-transparent',
-    iconEmoji: '🐰'
-  }
-];
+// DANH SÁCH THÚ CƯNG (RỖNG THEO MẶC ĐỊNH, CHỜ DỮ LIỆU THẬT TỪ NGƯỜI DÙNG)
+export const PETS_LIST = [];
 
 // BẢNG DANH SÁCH VIỆC CHĂM SÓC MẪU MẶC ĐỊNH TẠI NHÀ THEO YÊU CẦU CHO CẢ 3 BÉ
 export const DEFAULT_HOME_ROUTINES = [];
@@ -109,140 +64,18 @@ export const isRoutineForPet = (routine, pet) => {
 
   const rPetId = String(routine.petId || '').toLowerCase().trim();
   const rPetName = String(routine.petName || routine.pet_name || '').toLowerCase().trim();
-  const rTitle = String(routine.title || '').toLowerCase().trim();
 
-  // 1. Khớp chính xác ID hoặc Alt ID (petId / altId)
-  if (rPetId) {
-    if (rPetId === pId || (pAltId && rPetId === pAltId)) return true;
-    if ((pId === 'mochi' || pAltId === 'pet-1' || pName.includes('mochi')) && (rPetId === 'mochi' || rPetId === 'pet-1')) return true;
-    if ((pId === 'luna' || pAltId === 'pet-2' || pName.includes('luna')) && (rPetId === 'luna' || rPetId === 'pet-2')) return true;
-    if ((pId === 'banh-bao' || pAltId === 'pet-3' || pName.includes('bánh bao') || pName.includes('banh bao')) && 
-        (rPetId === 'banh-bao' || rPetId === 'banhbao' || rPetId === 'pet-3')) return true;
-  }
+  // Khớp chính xác theo petId
+  if (rPetId && pId && rPetId === pId) return true;
 
-  // 2. Khớp theo petName
-  if (pName && rPetName) {
-    if (rPetName.includes(pName) || pName.includes(rPetName)) return true;
-  }
-
-  // 3. Khớp theo title
-  if (pName && rTitle) {
-    if (rTitle.includes(pName)) return true;
-  }
-
-  // 4. Khớp theo ngữ cảnh / từ khóa đặc thù từng bé
-  if (pName.includes('mochi') || pId === 'mochi' || pAltId === 'pet-1') {
-    if (rTitle.includes('golden') || rTitle.includes('drontal') || rTitle.includes('bravecto') || rTitle.includes('glucosamine') || rTitle.includes('epi-otic')) return true;
-  }
-  if (pName.includes('luna') || pId === 'luna' || pAltId === 'pet-2') {
-    if (rTitle.includes('broadline') || rTitle.includes('revolution') || rTitle.includes('cỏ mèo') || rTitle.includes('bsh') || rTitle.includes('mèo')) return true;
-  }
-  if (pName.includes('bánh bao') || pName.includes('banh bao') || pId === 'banh-bao' || pAltId === 'pet-3') {
-    if (rTitle.includes('alfalfa') || rTitle.includes('thỏ') || rTitle.includes('minilop')) return true;
-  }
+  // Khớp chính xác theo petName
+  if (rPetName && pName && (rPetName === pName || rPetName.includes(pName) || pName.includes(rPetName))) return true;
 
   return false;
 };
 
-// BỘ DỮ LIỆU MẪU DỰ PHÒNG CHUẨN THÚ Y TRONG THÁNG 09/2026
-export const DEFAULT_SCHEDULES = [
-  {
-    id: 'sch-def-1',
-    petId: 'pet-1',
-    title: 'Tiêm phòng dại Rabisin & Vắc-xin 7 bệnh nhắc lại - Mochi (Golden)',
-    type: 'vaccine',
-    date: '2026-09-26',
-    time: '09:30',
-    location: 'Bệnh viện thú y PetHealth 262 Quang Trung',
-    completed: false,
-    notes: 'Mang theo sổ tiêm chủng của Mochi. Nhịn ăn sáng 2 tiếng trước khi tiêm.',
-    repeat: 'yearly'
-  },
-  {
-    id: 'sch-def-2',
-    petId: 'pet-2',
-    title: 'Nhỏ gáy trị ve rận & giun sán Broadline - Luna (Mèo BSH)',
-    type: 'deworm',
-    date: '2026-09-27',
-    time: '19:00',
-    location: 'Tại nhà',
-    completed: false,
-    notes: 'Không tắm cho mèo trước và sau khi nhỏ thuốc 48 tiếng.',
-    repeat: 'monthly'
-  },
-  {
-    id: 'sch-def-3',
-    petId: 'pet-3',
-    title: 'Khám kiểm tra mài răng cửa & cắt tỉa móng - Bánh Bao (Thỏ Minilop)',
-    type: 'vet',
-    date: '2026-09-28',
-    time: '10:00',
-    location: 'Phòng khám thú y Sammi Animal Clinic',
-    completed: false,
-    notes: 'Kiểm tra khớp cắn và răng cửa xem có mọc lệch gây đau miệng không.',
-    repeat: 'quarterly'
-  },
-  {
-    id: 'sch-def-4',
-    petId: 'pet-1',
-    title: 'Spa tắm sục ozone & cạo lông đệm chân - Mochi',
-    type: 'grooming',
-    date: '2026-09-29',
-    time: '14:00',
-    location: 'Paddy Pet Care & Grooming Spa',
-    completed: false,
-    notes: 'Vệ sinh tai và tuyến hôi hậu môn kỹ lưỡng.',
-    repeat: 'monthly'
-  },
-  {
-    id: 'sch-def-5',
-    petId: 'pet-2',
-    title: 'Siêu âm tim màu & Xét nghiệm sinh hóa máu định kỳ - Luna',
-    type: 'vet',
-    date: '2026-09-30',
-    time: '08:30',
-    location: 'Bệnh viện Thú y 2Vet Hospital',
-    completed: false,
-    notes: 'Nhịn ăn 6 tiếng trước giờ lấy mẫu máu kiểm tra chức năng thận.',
-    repeat: 'yearly'
-  },
-  {
-    id: 'sch-def-6',
-    petId: 'pet-1',
-    title: 'Uống viên tẩy giun định kỳ Drontal Plus (2.5 viên) - Mochi',
-    type: 'deworm',
-    date: '2026-09-30',
-    time: '07:30',
-    location: 'Tại nhà',
-    completed: false,
-    notes: 'Cho uống kèm thức ăn buổi sáng sau khi tập thể dục.',
-    repeat: 'quarterly'
-  },
-  {
-    id: 'sch-def-7',
-    petId: 'pet-2',
-    title: 'Bổ sung men vi sinh tiêu hóa & gel dinh dưỡng Megaderm - Luna',
-    type: 'medicine',
-    date: '2026-09-27',
-    time: '08:30',
-    location: 'Tại nhà',
-    completed: false,
-    notes: 'Trộn 1/2 gói gel dinh dưỡng vào thức ăn ướt buổi sáng.',
-    repeat: 'monthly'
-  },
-  {
-    id: 'sch-def-8',
-    petId: 'pet-1',
-    title: 'Nhỏ gáy phòng ve rận & ghẻ tai (Bravecto) - Mochi',
-    type: 'deworm',
-    date: '2026-09-28',
-    time: '19:30',
-    location: 'Tại nhà',
-    completed: false,
-    notes: 'Sử dụng Bravecto hoặc Nexgard / Frontline. Không tắm cho bé trong vòng 48h.',
-    repeat: 'monthly'
-  }
-];
+// Không sử dụng dữ liệu lịch mẫu hardcode ban đầu
+export const DEFAULT_SCHEDULES = [];
 
 // HÀM ĐỊNH DẠNG NGÀY THÁNG AN TOÀN CHỐNG CRASH
 export const safeFormatDate = (dateStr) => {
@@ -260,8 +93,9 @@ export const safeFormatDate = (dateStr) => {
 };
 
 // HELPER GÁN ĐÍCH DANH TÊN BÉ THAY VÌ ĐỂ RỖNG "Bé: Thú cưng"
+// Helper định danh tên bé từ safePets hoặc thuộc tính bản ghi
 export const resolvePetName = (item, safePets = []) => {
-  if (!item) return 'Mochi';
+  if (!item) return 'Chưa có tên';
   // 1. Tìm trong safePets theo petId
   const matchedPet = safePets.find(p => p && p.id === item.petId);
   if (matchedPet?.name && matchedPet.name.trim() && matchedPet.name !== 'Thú cưng') {
@@ -272,21 +106,7 @@ export const resolvePetName = (item, safePets = []) => {
   if (directName && directName.trim() && directName !== 'Thú cưng') {
     return directName;
   }
-  // 3. Phân tích ngữ cảnh từ tiêu đề hoặc ghi chú
-  const content = `${item.title || ''} ${item.service || ''} ${item.notes || ''} ${item.note || ''} ${item.petType || ''}`.toLowerCase();
-  if (content.includes('mochi') || content.includes('golden')) return 'Mochi';
-  if (content.includes('luna') || content.includes('bsh') || content.includes('mèo')) return 'Luna';
-  if (content.includes('bánh bao') || content.includes('banh bao') || content.includes('thỏ') || content.includes('minilop')) return 'Bánh Bao';
-
-  // 4. Theo petId
-  if (item.petId === 'pet-1') return 'Mochi';
-  if (item.petId === 'pet-2') return 'Luna';
-  if (item.petId === 'pet-3') return 'Bánh Bao';
-
-  // 5. Fallback luân phiên đích danh
-  const hash = String(item.id || '').split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const fallbacks = ['Mochi', 'Luna', 'Bánh Bao'];
-  return fallbacks[hash % fallbacks.length];
+  return 'Thú cưng';
 };
 
 const ScheduleViewInner = ({
@@ -331,7 +151,13 @@ const ScheduleViewInner = ({
   const [filterPetId, setFilterPetId] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [filterStatus, setFilterStatus] = useState('all'); // 'all' | 'today' | 'upcoming' | 'overdue' | 'completed'
-  const [selectedRoutinePetId, setSelectedRoutinePetId] = useState('mochi');
+  const [selectedRoutinePetId, setSelectedRoutinePetId] = useState(() => propPets?.[0]?.id || '');
+
+  useEffect(() => {
+    if (!selectedRoutinePetId && propPets && propPets.length > 0) {
+      setSelectedRoutinePetId(propPets[0].id);
+    }
+  }, [propPets, selectedRoutinePetId]);
 
   // Quản lý dữ liệu sức khỏe và cân nặng đồng bộ 2 chiều (Global / LocalStorage)
   const [petsHealthData, setPetsHealthData] = useState(() => getPetsHealthData());
@@ -355,7 +181,7 @@ const ScheduleViewInner = ({
     };
   }, []);
 
-  const handleQuickUpdateWeight = (e) => {
+  const handleQuickUpdateWeight = async (e) => {
     e?.preventDefault?.();
     const val = parseFloat(currentWeightInput);
     if (isNaN(val) || val < 0.5 || val > 150) {
@@ -363,17 +189,15 @@ const ScheduleViewInner = ({
       return;
     }
 
-    try { sound?.playSuccess?.(); } catch {}
+    try {
+      // 1. Cập nhật state và storage toàn cục (Đồng bộ sang Dashboard & Server)
+      const updatedHealth = await updatePetWeight(activePetKey, val);
+      try { sound?.playSuccess?.(); } catch {}
+      setPetsHealthData(updatedHealth);
 
-    // 1. Cập nhật state và storage toàn cục (Đồng bộ sang Dashboard)
-    const updatedHealth = updatePetWeight(activePetKey, val);
-    setPetsHealthData(updatedHealth);
-
-    // 2. Cập nhật lại dòng mô tả liều lượng thuốc tẩy giun Drontal Plus
-    // "Liều lượng ${(weight / 10).toFixed(1)} viên theo cân nặng ${weight}kg"
-    const dewormDoseText = `Liều lượng ${(val / 10).toFixed(1)} viên theo cân nặng ${val}kg`;
-    setHomeRoutinesList(prevList => {
-      const updated = prevList.map(r => {
+      // 2. Cập nhật lại dòng mô tả liều lượng thuốc tẩy giun Drontal Plus
+      const dewormDoseText = `Liều lượng ${(val / 10).toFixed(1)} viên theo cân nặng ${val}kg`;
+      const updatedRoutines = homeRoutinesList.map(r => {
         if (isRoutineForPet(r, { id: activePetKey, name: activePetKey }) && 
             ((r.title || '').includes('Drontal') || (r.title || '').toLowerCase().includes('tẩy giun'))) {
           let newNotes = r.notes || '';
@@ -386,86 +210,52 @@ const ScheduleViewInner = ({
         }
         return r;
       });
+      setHomeRoutinesList(updatedRoutines);
       try {
-        localStorage.setItem('petcare_home_routines', JSON.stringify(updated));
+        localStorage.setItem('petcare_home_routines', JSON.stringify(updatedRoutines));
       } catch {}
-      return updated;
-    });
+    } catch (err) {
+      alert(err.message || 'Không thể lưu cân nặng lên máy chủ. Vui lòng thử lại.');
+    }
   };
 
-  // Khởi tạo state homeRoutinesList theo yêu cầu với cơ chế Data Seeding & Fallback
+  // Khởi tạo state homeRoutinesList thuần túy từ bộ nhớ đã lưu, không tự tạo mock data
   const [homeRoutinesList, setHomeRoutinesList] = useState(() => {
     try {
       const saved = localStorage.getItem('petcare_home_routines');
       if (saved) {
-        let parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          // Normalize Mochi routines to guarantee 4 overdue, 1 today
-          parsed = parsed.map(r => {
-            if (r.id === 'routine-mochi-4' && r.status === 'today') {
-              return { ...r, status: 'overdue', date: '2026-09-28' };
-            }
-            if (r.id === 'routine-mochi-1' && r.status === 'upcoming') {
-              return { ...r, status: 'overdue', date: '2026-09-22' };
-            }
-            if (r.id === 'routine-mochi-5') {
-              return { ...r, status: 'today', date: '2026-10-04' };
-            }
-            return r;
-          });
-          localStorage.setItem('petcare_home_routines', JSON.stringify(parsed));
-          return parsed;
-        }
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch (err) {
       console.error("Lỗi đọc storage routines:", err);
     }
-    localStorage.setItem('petcare_home_routines', JSON.stringify(DEFAULT_HOME_ROUTINES));
-    return DEFAULT_HOME_ROUTINES;
+    return [];
   });
 
   // Dữ liệu an toàn: tôn trọng propSchedules và propPets đã được lọc theo người dùng
   const rawSchedules = Array.isArray(propSchedules) ? propSchedules : [];
 
-  // Chuẩn hóa và sửa triệt để các mock data có năm 2099, 2098 và loại bỏ các bản ghi trùng lặp
+  // Dữ liệu lịch trình an toàn tôn trọng chính xác những gì người dùng đã nhập
   const cleanSchedules = useMemo(() => {
     const seen = new Set();
     const result = [];
 
-    (rawSchedules || []).forEach((sch, idx) => {
+    (rawSchedules || []).forEach((sch) => {
       if (!sch || typeof sch !== 'object') return;
-      const dateStr = sch.date ? String(sch.date).split('T')[0] : '';
-      const yr = dateStr ? new Date(dateStr).getFullYear() : 0;
-      
-      let item = { ...sch };
-      if (dateStr.includes('2099') || dateStr.includes('2098') || yr >= 2028 || yr < 2024) {
-        const realisticDay = 24 + (idx % 7);
-        const formattedDay = realisticDay < 10 ? `0${realisticDay}` : `${realisticDay}`;
-        item.date = `2026-09-${formattedDay}`;
-      }
-
-      if ((item.title || '').includes('Drontal Plus') && (item.date === '2026-09-28' || !item.date)) {
-        item.date = '2026-09-30';
-      }
-
-      if (item.title && (item.title.includes('cho kkk') || item.title.toLowerCase().includes('ghẻ tai cho kkk') || item.title.includes('kkk'))) {
-        item.title = 'Nhỏ gáy phòng ve rận & ghẻ tai (Bravecto)';
-        item.petId = item.petId || (propPets?.[0]?.id || '');
-      }
-
-      const pId = String(item.petId || '').trim();
-      const pTitle = String(item.title || '').trim().toLowerCase();
-      const pDate = String(item.date || '').split('T')[0];
-      const sig = `${pId}__${pDate}__${pTitle}`;
+      const pId = String(sch.petId || '').trim();
+      const pTitle = String(sch.title || '').trim().toLowerCase();
+      const pDate = String(sch.date || '').split('T')[0];
+      const sig = `${sch.id || ''}__${pId}__${pDate}__${pTitle}`;
 
       // Bỏ qua nếu trùng bản ghi
       if (seen.has(sig)) return;
       seen.add(sig);
-      result.push(item);
+      result.push(sch);
     });
 
     return result;
-  }, [rawSchedules, propPets]);
+  }, [rawSchedules]);
 
   const safeSchedules = cleanSchedules;
 
@@ -496,13 +286,10 @@ const ScheduleViewInner = ({
   const safeAppointments = appointmentsList;
   const safePets = Array.isArray(propPets) ? propPets : [];
 
-  // 1. KHẮC PHỤC LỖI TRÙNG LẶP LỊCH HẸN TRONG ScheduleView.jsx:
-  // - Làm sạch danh sách ca khám: Xóa các bản ghi trùng lặp nội dung "Cấp cứu & Xử lý sốc / Dị ứng cấp" của Mochi vào rạng sáng ngày 27/09.
-  // - Thêm bộ lọc dedup tự động dựa trên mã id hoặc tổ hợp thời gian hẹn/dịch vụ để tránh việc dữ liệu test từ Admin làm tràn ngập màn hình Chủ nuôi.
+  // Dedup danh sách ca hẹn dựa trên ID hoặc đặc trưng cuộc hẹn
   const dedupedAppointments = useMemo(() => {
     const seenIds = new Set();
     const seenSignatures = new Set();
-    let hasSeenMochiEmergency = false;
 
     return (safeAppointments || []).filter(app => {
       if (!app) return false;
@@ -511,21 +298,8 @@ const ScheduleViewInner = ({
       const d = String(app.date || '').split('T')[0];
       const t = (app.time || '').trim();
 
-      // Kiểm tra ca cấp cứu trùng lặp của Mochi rạng sáng 27/09
-      const isMochiEmergencyTest = pName.includes('mochi') && 
-        (srv.includes('cấp cứu') || srv.includes('dị ứng') || srv.includes('sốc')) && 
-        (d === '2026-09-27' || d.includes('27/09'));
-
-      if (isMochiEmergencyTest) {
-        if (hasSeenMochiEmergency) {
-          return false; // Loại bỏ bản ghi trùng lặp thứ 2 trở đi
-        }
-        hasSeenMochiEmergency = true;
-      }
-
-      // Dedup tự động dựa trên id hoặc tổ hợp thời gian hẹn, dịch vụ, thú cưng
       const idKey = app.id ? String(app.id) : null;
-      const sigKey = `${pName}__${d}__${t}__${srv}`;
+      const sigKey = `${app.petId || pName}__${d}__${t}__${srv}`;
 
       if (idKey && seenIds.has(idKey)) return false;
       if (seenSignatures.has(sigKey)) return false;
@@ -536,12 +310,6 @@ const ScheduleViewInner = ({
     });
   }, [safeAppointments]);
 
-  // 2. SỬA HÀM TÍNH SỐ LƯỢNG CA THEO TỪNG BÉ (FILTER COUNTER):
-  // Logic đếm số lượng ca khám chính xác theo yêu cầu:
-  const mochiCount = dedupedAppointments.filter(a => a.petName?.toLowerCase().includes('mochi')).length;
-  const lunaCount = dedupedAppointments.filter(a => a.petName?.toLowerCase().includes('luna')).length;
-  const banhBaoCount = dedupedAppointments.filter(a => a.petName?.toLowerCase().includes('bánh bao')).length;
-
   const getPetCount = (pet) => {
     if (!pet) return 0;
     if (scheduleViewMode === 'home_routines' || (scheduleViewMode === 'habits' && habitsTab === 'home_care')) {
@@ -549,24 +317,15 @@ const ScheduleViewInner = ({
     }
     const pName = (pet.name || '').toLowerCase();
     if (scheduleViewMode === 'clinical' || activeMainTab === 'clinical' || activeMainTab === 'CLINICAL') {
-      if (pName.includes('mochi')) return mochiCount;
-      if (pName.includes('luna')) return lunaCount;
-      if (pName.includes('bánh bao') || pName.includes('banh bao')) return banhBaoCount;
       return dedupedAppointments.filter(a => {
         const aName = (a.petName || '').toLowerCase();
         return a.petId === pet.id || (pName && aName.includes(pName));
       }).length;
     }
-    return safeSchedules.filter(s => s.petId === pet.id || (pet.altId && s.petId === pet.altId) || isRoutineForPet(s, pet)).length;
+    return safeSchedules.filter(s => s.petId === pet.id || isRoutineForPet(s, pet)).length;
   };
 
-  const todayStr = (() => {
-    const d = new Date();
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  })();
+  const todayStr = getTodayVnDate();
 
   // Lọc dữ liệu an toàn theo pet, type, status
   const filteredSchedules = (safeSchedules || []).filter((sch) => {
@@ -575,7 +334,7 @@ const ScheduleViewInner = ({
     const matchType = filterType === 'all' || sch.type === filterType;
 
     let matchStatus = true;
-    const schDate = sch.date ? String(sch.date).split('T')[0] : '';
+    const schDate = sch.date ? getVnDateString(sch.date) : '';
 
     if (filterStatus === 'today') {
       matchStatus = schDate === todayStr;
@@ -600,7 +359,7 @@ const ScheduleViewInner = ({
     const isCancelled = st === 'CANCELLED' || st === 'HỦY' || st === 'CANCEL';
     if (isCancelled) return 'CANCELLED';
 
-    const d = item.date ? String(item.date).split('T')[0] : '';
+    const d = item.date ? getVnDateString(item.date) : '';
     if (!d) return 'UPCOMING';
 
     if (st === 'OVERDUE' || (d < refToday && !item.completed)) {
@@ -612,7 +371,7 @@ const ScheduleViewInner = ({
     return 'UPCOMING';
   };
 
-  // Helper kiểm tra item có thuộc về pet đang lọc không
+  // Helper kiểm tra item có thuộc về pet đang lọc không (dựa trên petId và tên thực tế)
   const isItemForPet = (item, petId) => {
     if (!item || !petId || petId === 'all') return true;
     const selectedPet = safePets.find(p => p.id === petId);
@@ -621,18 +380,9 @@ const ScheduleViewInner = ({
     const itemPetId = String(item.petId || '').toLowerCase().trim();
     const targetPetId = String(petId).toLowerCase().trim();
 
-    if (itemPetId === targetPetId) return true;
-    if (targetPetId === 'pet-1' || targetPetId === 'mochi') {
-      if (itemPetId === 'pet-1' || itemPetId === 'mochi' || itemPetName.includes('mochi')) return true;
-    }
-    if (targetPetId === 'pet-2' || targetPetId === 'luna') {
-      if (itemPetId === 'pet-2' || itemPetId === 'luna' || itemPetName.includes('luna')) return true;
-    }
-    if (targetPetId === 'pet-3' || targetPetId === 'banh-bao' || targetPetId === 'banhbao') {
-      if (itemPetId === 'pet-3' || itemPetId === 'banh-bao' || itemPetId === 'banhbao' || itemPetName.includes('bánh bao') || itemPetName.includes('banh bao')) return true;
-    }
+    if (itemPetId && targetPetId && itemPetId === targetPetId) return true;
     if (selectedPetName && itemPetName) {
-      return itemPetName.includes(selectedPetName) || selectedPetName.includes(itemPetName);
+      return itemPetName === selectedPetName || itemPetName.includes(selectedPetName) || selectedPetName.includes(itemPetName);
     }
     return false;
   };
@@ -641,7 +391,6 @@ const ScheduleViewInner = ({
   const allUniqueClinicalItems = useMemo(() => {
     const seenSignatures = new Set();
     const seenIds = new Set();
-    let hasSeenLunaBloodTest = false;
     const result = [];
 
     // 1. Nạp và dedup các ca hẹn từ appointments
@@ -652,14 +401,7 @@ const ScheduleViewInner = ({
       const d = app.date ? String(app.date).split('T')[0] : '';
       const t = app.time ? String(app.time).trim().padStart(5, '0') : '09:00';
       const srv = (app.service || app.title || '').toLowerCase().trim();
-      const sig = `${pName}__${d}__${t}__${srv}`;
-
-      // Khắc phục triệt để lỗi trùng 5 thẻ Luna xét nghiệm máu ngày 24/09
-      const isLunaBloodTestDup = pName.includes('luna') && d === '2026-09-24' && (srv.includes('xét nghiệm') || srv.includes('khám tổng quát'));
-      if (isLunaBloodTestDup) {
-        if (hasSeenLunaBloodTest) return;
-        hasSeenLunaBloodTest = true;
-      }
+      const sig = `${app.petId || pName}__${d}__${t}__${srv}`;
 
       if (seenIds.has(id) || seenSignatures.has(sig)) return;
       seenIds.add(id);
@@ -680,13 +422,7 @@ const ScheduleViewInner = ({
       const d = sch.date ? String(sch.date).split('T')[0] : '';
       const t = sch.time ? String(sch.time).trim().padStart(5, '0') : '09:00';
       const title = (sch.title || '').toLowerCase().trim();
-      const sig = `${pName}__${d}__${t}__${title}`;
-
-      const isLunaBloodTestDup = pName.includes('luna') && d === '2026-09-24' && (title.includes('xét nghiệm') || title.includes('khám tổng quát'));
-      if (isLunaBloodTestDup) {
-        if (hasSeenLunaBloodTest) return;
-        hasSeenLunaBloodTest = true;
-      }
+      const sig = `${sch.petId || pName}__${d}__${t}__${title}`;
 
       if (seenIds.has(id) || seenSignatures.has(sig)) return;
       seenIds.add(id);
@@ -793,11 +529,6 @@ const ScheduleViewInner = ({
       });
 
       if (hasChanges) {
-        try {
-          localStorage.setItem('petcare_home_routines', JSON.stringify(nextList));
-        } catch (e) {
-          console.error("Lỗi lưu storage home routines:", e);
-        }
         return nextList;
       }
       return prevList;
@@ -808,15 +539,13 @@ const ScheduleViewInner = ({
   const handleDeleteRoutine = (routineId) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa việc chăm sóc này?')) {
       try { sound?.playTrash?.(); } catch {}
-      setHomeRoutinesList(prev => {
-        const next = prev.filter(r => String(r.id) !== String(routineId));
-        try {
-          localStorage.setItem('petcare_home_routines', JSON.stringify(next));
-        } catch (e) {
-          console.error("Lỗi cập nhật storage khi xóa routine:", e);
-        }
-        return next;
-      });
+      const next = homeRoutinesList.filter(r => String(r.id) !== String(routineId));
+      setHomeRoutinesList(next);
+      try {
+        localStorage.setItem('petcare_home_routines', JSON.stringify(next));
+      } catch (e) {
+        console.error("Lỗi cập nhật storage khi xóa routine:", e);
+      }
       if (typeof onDeleteSchedule === 'function') {
         onDeleteSchedule(routineId);
       }
@@ -851,8 +580,8 @@ const ScheduleViewInner = ({
     const isHomeCareActive = scheduleViewMode === 'home_routines' || (scheduleViewMode === 'habits' && habitsTab === 'home_care');
     const typeToUse = defaultType || (isHomeCareActive ? 'deworm' : null);
     // Nếu đang ở Home Routines, truyền chính xác mã bé đang được chọn vào Modal
-    const activeTargetPet = PETS_LIST.find(p => p.id === selectedRoutinePetId || p.altId === selectedRoutinePetId);
-    const petIdToUse = defaultPetId || (isHomeCareActive ? (activeTargetPet?.altId || selectedRoutinePetId) : null);
+    const activeTargetPet = (safePets || []).find(p => p.id === selectedRoutinePetId || p.altId === selectedRoutinePetId) || safePets[0];
+    const petIdToUse = defaultPetId || (isHomeCareActive ? (activeTargetPet?.altId || activeTargetPet?.id || selectedRoutinePetId) : null);
 
     if (typeof onOpenAddSchedule === 'function') {
       try {
@@ -863,42 +592,41 @@ const ScheduleViewInner = ({
     }
   };
 
-  const handleTaskCheck = (sch) => {
+  const handleTaskCheck = async (sch) => {
     if (!sch || !sch.id) return;
+
     try {
-      sound?.playSuccess?.();
-    } catch {}
+      await onToggleComplete(sch.id);
 
-    // Cập nhật trạng thái trong homeRoutinesList nếu việc thuộc danh sách này
-    setHomeRoutinesList(prev => {
-      const exists = prev.some(item => String(item.id) === String(sch.id));
-      if (!exists) return prev;
-      const next = prev.map(item => {
-        if (String(item.id) === String(sch.id)) {
-          const nextCompleted = !item.completed;
-          return {
-            ...item,
-            completed: nextCompleted,
-            status: nextCompleted ? 'completed' : (item.date && String(item.date).split('T')[0] < todayStr ? 'overdue' : 'upcoming')
-          };
-        }
-        return item;
-      });
-      try {
-        localStorage.setItem('petcare_home_routines', JSON.stringify(next));
-      } catch {}
-      return next;
-    });
-
-    onToggleComplete(sch.id);
-    if (!sch.completed) {
-      try {
-        confetti({
-          particleCount: 50,
-          spread: 60,
-          origin: { y: 0.7 }
+      // Cập nhật trạng thái trong homeRoutinesList (chỉ cập nhật bộ nhớ React, không lưu đè trong callback)
+      setHomeRoutinesList(prev => {
+        const exists = prev.some(item => String(item.id) === String(sch.id));
+        if (!exists) return prev;
+        return prev.map(item => {
+          if (String(item.id) === String(sch.id)) {
+            const nextCompleted = !item.completed;
+            return {
+              ...item,
+              completed: nextCompleted,
+              status: nextCompleted ? 'completed' : (item.date && getVnDateString(item.date) < todayStr ? 'overdue' : (getVnDateString(item.date) === todayStr ? 'today' : 'upcoming'))
+            };
+          }
+          return item;
         });
-      } catch {}
+      });
+
+      if (!sch.completed) {
+        try {
+          sound?.playSuccess?.();
+          confetti({
+            particleCount: 50,
+            spread: 60,
+            origin: { y: 0.7 }
+          });
+        } catch {}
+      }
+    } catch (err) {
+      console.warn('Không thể cập nhật lịch trình:', err);
     }
   };
 
@@ -926,8 +654,8 @@ const ScheduleViewInner = ({
     ? (safeSchedules || []).filter(s => s && s.type !== 'vet' && s.type !== 'vaccine')
     : (safeSchedules || []);
 
-  const overdueCount = baseListForCounts.filter(s => s && s.date && String(s.date).split('T')[0] < todayStr && !s.completed).length;
-  const todayCount = baseListForCounts.filter(s => s && s.date && String(s.date).split('T')[0] === todayStr && !s.completed).length;
+  const overdueCount = baseListForCounts.filter(s => s && s.date && getVnDateString(s.date) < todayStr && !s.completed).length;
+  const todayCount = baseListForCounts.filter(s => s && s.date && getVnDateString(s.date) === todayStr && !s.completed).length;
 
   // KHỐI 1: LỊCH HẸN LÂM SÀNG (CLINICAL APPOINTMENTS) - CHỈ HIỂN THỊ KHI Ở TAB TIERED
   const renderClinicalAppointmentsSection = () => (
@@ -951,10 +679,20 @@ const ScheduleViewInner = ({
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
+            id="btn-export-ics"
+            onClick={handleExportIcs}
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-1.5 transition-all border border-slate-300 dark:border-white/10 cursor-pointer active:scale-95"
+            title="Xuất lịch ra file iCalendar (.ics)"
+          >
+            <Download size={14} />
+            <span>Xuất lịch (.ics)</span>
+          </button>
+          <button
+            type="button"
             onClick={() => {
               sound?.playClick?.();
               if (typeof onOpenVetBooking === 'function') {
-                onOpenVetBooking();
+                onOpenVetBooking({ isAiVision: false });
               } else if (typeof onOpenAddSchedule === 'function') {
                 onOpenAddSchedule(null, 'vet', 'Khám lâm sàng thú y');
               }
@@ -1159,26 +897,51 @@ const ScheduleViewInner = ({
   );
 
   const renderHomeRoutinesSection = (isStandalone = false) => {
+    if (!safePets || safePets.length === 0) {
+      return (
+        <div className="w-full flex-1 flex flex-col items-center justify-center p-12 text-center bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-3xl border border-dashed border-slate-300 dark:border-white/10 my-6">
+          <div className="w-16 h-16 rounded-3xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-4 border border-cyan-500/20">
+            <Home className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-black text-slate-800 dark:text-white uppercase tracking-wider mb-2">
+            Chưa có thú cưng trong hồ sơ
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mb-6 leading-relaxed">
+            Vui lòng thêm thú cưng đầu tiên để thiết lập bảng chăm sóc tại nhà, nhắc nhở định kỳ và nhật ký sức khỏe.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              try { sound?.playClick?.(); } catch {}
+              window.dispatchEvent(new CustomEvent('petcare_open_add_pet'));
+            }}
+            className="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white text-xs font-bold transition-all shadow-md active:scale-95 flex items-center gap-2 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Thêm thú cưng mới</span>
+          </button>
+        </div>
+      );
+    }
+
     // 1. Tìm thông tin thú cưng đang chọn (Active Pet)
-    const activePet = PETS_LIST.find(p => 
+    const activePet = safePets.find(p => 
       p.id === selectedRoutinePetId || 
       p.altId === selectedRoutinePetId ||
-      p.name.toLowerCase() === String(selectedRoutinePetId).toLowerCase()
-    ) || PETS_LIST[0];
+      String(p.name).toLowerCase() === String(selectedRoutinePetId).toLowerCase()
+    ) || safePets[0];
 
-    // Đồng bộ thông tin từ safePets nếu có
-    const matchSafe = safePets.find(sp => sp && (sp.id === activePet.id || sp.id === activePet.altId || sp.name?.toLowerCase() === activePet.name?.toLowerCase()));
     const normKey = normalizePetHealthKey(activePet.id || activePet.name);
-    const dynamicWeightVal = petsHealthData[normKey]?.weight || '';
+    const dynamicWeightVal = petsHealthData[normKey]?.weight || activePet.weight || '';
 
     const resolvedActivePet = {
       ...activePet,
-      name: matchSafe?.name || activePet.name,
-      avatar: matchSafe?.avatar || activePet.avatar,
-      species: matchSafe?.breed || matchSafe?.species || activePet.species,
-      age: matchSafe?.age || activePet.age || '2.5 Tuổi',
-      weight: `${dynamicWeightVal} kg`,
-      gender: matchSafe?.gender || activePet.gender || 'Đực'
+      name: activePet.name || 'Thú cưng',
+      avatar: activePet.avatar || 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=80',
+      species: activePet.breed || activePet.species || 'Chưa cập nhật',
+      age: activePet.age || 'Chưa cập nhật',
+      weight: dynamicWeightVal ? `${dynamicWeightVal} kg` : 'Chưa có dữ liệu',
+      gender: activePet.gender || 'Chưa cập nhật'
     };
 
     // 2. Danh sách tất cả việc của bé này (sử dụng helper isRoutineForPet nhận diện 2 chiều chuẩn xác)
@@ -1186,8 +949,8 @@ const ScheduleViewInner = ({
 
     // Khắc phục logic số học (Derived Stats): Đảm bảo đẳng thức logic total = completed + today + overdue (+ upcoming nếu có)
     const isRoutineCompleted = (r) => Boolean(r.completed || r.status === 'completed');
-    const isRoutineOverdue = (r) => !isRoutineCompleted(r) && (r.status === 'overdue' || (r.date && String(r.date).split('T')[0] < todayStr && r.status !== 'today'));
-    const isRoutineToday = (r) => !isRoutineCompleted(r) && !isRoutineOverdue(r) && (r.status === 'today' || (r.date && String(r.date).split('T')[0] === todayStr));
+    const isRoutineOverdue = (r) => !isRoutineCompleted(r) && (r.status === 'overdue' || (r.date && getVnDateString(r.date) < todayStr && r.status !== 'today'));
+    const isRoutineToday = (r) => !isRoutineCompleted(r) && !isRoutineOverdue(r) && (r.status === 'today' || (r.date && getVnDateString(r.date) === todayStr));
     const isRoutineUpcoming = (r) => !isRoutineCompleted(r) && !isRoutineOverdue(r) && !isRoutineToday(r);
 
     const completedCount = allActivePetRoutines.filter(isRoutineCompleted).length;
@@ -1260,11 +1023,11 @@ const ScheduleViewInner = ({
             <div className="flex-shrink-0 bg-white dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200/80 dark:border-white/10 rounded-2xl p-2.5 shadow-[0_4px_20px_-2px_rgba(15,23,42,0.05)] dark:shadow-lg">
               <div className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-2 py-0.5 flex justify-between items-center mb-1">
                 <span>Chọn Thú Cưng</span>
-                <span className="text-cyan-600 dark:text-cyan-400 font-mono">3 bé</span>
+                <span className="text-cyan-600 dark:text-cyan-400 font-mono">{safePets.length} bé</span>
               </div>
               
               <div className="grid grid-cols-3 gap-2">
-                {PETS_LIST.map((pet) => {
+                {safePets.map((pet) => {
                   const isSelected = selectedRoutinePetId === pet.id || 
                                      selectedRoutinePetId === pet.altId || 
                                      String(selectedRoutinePetId).toLowerCase() === pet.name.toLowerCase();
@@ -1286,12 +1049,20 @@ const ScheduleViewInner = ({
                       }`}
                     >
                       <div className="relative mb-1">
-                        <img
-                          src={pet.avatar}
-                          alt={pet.name}
-                          className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-white/20"
-                          onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=80'; }}
-                        />
+                        {pet.avatar ? (
+                          <img
+                            src={pet.avatar}
+                            alt={pet.name}
+                            className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-white/20"
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-8 h-8 rounded-full border border-slate-200 dark:border-white/20 bg-slate-100 dark:bg-slate-800 items-center justify-center text-slate-400 ${pet.avatar ? 'hidden' : 'flex'}`}>
+                          <PawPrint className="w-4 h-4" />
+                        </div>
                         {petOverdue > 0 && (
                           <span className="absolute -top-1 -right-1.5 px-1 min-w-[14px] h-[14px] bg-rose-500 text-white text-[9px] font-black rounded-full flex items-center justify-center ring-2 ring-white dark:ring-slate-900 animate-pulse">
                             {petOverdue}
@@ -1315,12 +1086,20 @@ const ScheduleViewInner = ({
               {/* 1. Header bé */}
               <div className="flex items-center gap-3">
                 <div className="relative flex-shrink-0">
-                  <img
-                    src={currentPet.avatar}
-                    alt={currentPet.name}
-                    className="w-13 h-13 rounded-2xl object-cover border-2 border-cyan-400/60 shadow-lg shadow-cyan-500/20"
-                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1552053831-71594a27632d?w=160'; }}
-                  />
+                  {currentPet.avatar ? (
+                    <img
+                      src={currentPet.avatar}
+                      alt={currentPet.name}
+                      className="w-13 h-13 rounded-2xl object-cover border-2 border-cyan-400/60 shadow-lg shadow-cyan-500/20"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        if (e.target.nextElementSibling) e.target.nextElementSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className={`w-13 h-13 rounded-2xl border-2 border-slate-200 dark:border-white/20 bg-slate-100 dark:bg-slate-800 items-center justify-center text-slate-400 ${currentPet.avatar ? 'hidden' : 'flex'}`}>
+                    <PawPrint className="w-6 h-6" />
+                  </div>
                   <span className="absolute -bottom-1 -right-1 text-[9px] bg-amber-500 text-slate-950 font-black px-1.5 py-0.2 rounded-md uppercase">
                     {currentPet.gender || 'Đực'}
                   </span>
@@ -1556,7 +1335,7 @@ const ScheduleViewInner = ({
                 </div>
               ) : (
                 activePetRoutines.map(sch => {
-                  const schDate = sch.date ? String(sch.date).split('T')[0] : '';
+                  const schDate = sch.date ? getVnDateString(sch.date) : '';
                   const isOverdue = sch.status === 'overdue' || Boolean(schDate && schDate < todayStr && !sch.completed);
                   const isToday = sch.status === 'today' || schDate === todayStr;
                   const isUpcoming = sch.status === 'upcoming' || Boolean(schDate && schDate > todayStr && !sch.completed);
@@ -1859,7 +1638,7 @@ const ScheduleViewInner = ({
 
                   {onOpenVetBooking && (
                     <button
-                      onClick={() => { sound?.playClick?.(); onOpenVetBooking(); }}
+                      onClick={() => { sound?.playClick?.(); onOpenVetBooking({ isAiVision: false }); }}
                       className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-cyan-500 to-sky-500 hover:opacity-95 shadow-md shadow-cyan-500/20 active:scale-95 transition-all cursor-pointer font-black"
                       title="Đặt lịch khám 2 chiều với Bác sĩ Thú y"
                     >
@@ -1956,7 +1735,6 @@ const ScheduleViewInner = ({
             onOpenAddSchedule={handleOpenAddSchedule}
             onOpenEditSchedule={onOpenEditSchedule}
             onDeleteSchedule={handleDeleteRoutine}
-            onResetHomeRoutines={handleResetHomeRoutines}
             onToggleComplete={handleTaskCheck}
             familyMembers={propFamilyMembers}
             currentMemberId={currentMemberId}

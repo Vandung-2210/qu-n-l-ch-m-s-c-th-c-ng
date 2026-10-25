@@ -1,0 +1,571 @@
+[
+  {
+    "id": "pet-valid-1792946740619",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792946740376_186142",
+    "createdAt": "2026-10-25T16:45:40.622Z"
+  },
+  {
+    "id": "pet-reg-1792946740503",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792946740376_186142",
+    "createdAt": "2026-10-25T16:45:40.507Z"
+  },
+  {
+    "id": "pet-m3-1792946734869",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792946734728_983057",
+    "createdAt": "2026-10-25T16:45:34.886Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792946735413_e68fc9"
+    ]
+  },
+  {
+    "id": "pet-valid-1792946732850",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792946732606_6ab6e3",
+    "createdAt": "2026-10-25T16:45:32.854Z"
+  },
+  {
+    "id": "pet-reg-1792946732749",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792946732606_6ab6e3",
+    "createdAt": "2026-10-25T16:45:32.753Z"
+  },
+  {
+    "id": "pet-m3-1792946358147",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792946358005_6e371b",
+    "createdAt": "2026-10-25T16:39:18.150Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792946358653_bff670"
+    ]
+  },
+  {
+    "id": "pet-valid-1792946356249",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792946356015_9a80ae",
+    "createdAt": "2026-10-25T16:39:16.249Z"
+  },
+  {
+    "id": "pet-reg-1792946356147",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792946356015_9a80ae",
+    "createdAt": "2026-10-25T16:39:16.145Z"
+  },
+  {
+    "id": "pet-valid-1792946339779",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792946339545_ab701f",
+    "createdAt": "2026-10-25T16:38:59.782Z"
+  },
+  {
+    "id": "pet-reg-1792946339673",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792946339545_ab701f",
+    "createdAt": "2026-10-25T16:38:59.677Z"
+  },
+  {
+    "id": "pet-valid-1792946334792",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792946334560_a49691",
+    "createdAt": "2026-10-25T16:38:54.798Z"
+  },
+  {
+    "id": "pet-reg-1792946334685",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792946334560_a49691",
+    "createdAt": "2026-10-25T16:38:54.692Z"
+  },
+  {
+    "id": "pet-reg-1792946290412",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792946290259_e56d56",
+    "createdAt": "2026-10-25T16:38:10.416Z"
+  },
+  {
+    "id": "pet-valid-1792946187223",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792946186997_39fdb6",
+    "createdAt": "2026-10-25T16:36:27.229Z"
+  },
+  {
+    "id": "pet-reg-1792946187116",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792946186997_39fdb6",
+    "createdAt": "2026-10-25T16:36:27.122Z"
+  },
+  {
+    "id": "pet-valid-1792946145928",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792946145708_6f18cd",
+    "createdAt": "2026-10-25T16:35:45.937Z"
+  },
+  {
+    "id": "pet-reg-1792946145823",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792946145708_6f18cd",
+    "createdAt": "2026-10-25T16:35:45.833Z"
+  },
+  {
+    "id": "pet-m3-1792942189693",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792942189550_262f1d",
+    "createdAt": "2026-10-25T15:29:49.700Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792942190253_155c3c"
+    ]
+  },
+  {
+    "id": "pet-valid-1792942187670",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792942187431_ae3591",
+    "createdAt": "2026-10-25T15:29:47.672Z"
+  },
+  {
+    "id": "pet-reg-1792942187565",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792942187431_ae3591",
+    "createdAt": "2026-10-25T15:29:47.568Z"
+  },
+  {
+    "id": "pet-m3-1792860413361",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792860413212_5c6689",
+    "createdAt": "2026-10-24T16:46:53.387Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792860414045_ec146b"
+    ]
+  },
+  {
+    "id": "pet-valid-1792860411027",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792860410704_5f5c84",
+    "createdAt": "2026-10-24T16:46:51.031Z"
+  },
+  {
+    "id": "pet-reg-1792860410848",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792860410704_5f5c84",
+    "createdAt": "2026-10-24T16:46:50.854Z"
+  },
+  {
+    "id": "pet-m3-1792859866985",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792859866839_f90633",
+    "createdAt": "2026-10-24T16:37:47.006Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792859867704_553bd7"
+    ]
+  },
+  {
+    "id": "pet-valid-1792859864698",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792859864399_883745",
+    "createdAt": "2026-10-24T16:37:44.708Z"
+  },
+  {
+    "id": "pet-reg-1792859864529",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792859864399_883745",
+    "createdAt": "2026-10-24T16:37:44.537Z"
+  },
+  {
+    "id": "pet-m3-1792858958884",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792858958754_bec08f",
+    "createdAt": "2026-10-24T16:22:38.891Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792858959358_a04675"
+    ]
+  },
+  {
+    "id": "pet-valid-1792858957031",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792858956812_1cfb2a",
+    "createdAt": "2026-10-24T16:22:37.038Z"
+  },
+  {
+    "id": "pet-reg-1792858956936",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792858956812_1cfb2a",
+    "createdAt": "2026-10-24T16:22:36.942Z"
+  },
+  {
+    "id": "pet-demo-1792858945034",
+    "name": "Mèo Miu Miu Demo",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Ngắn",
+    "weight": 25.6,
+    "ownerId": "user_owner_demo",
+    "createdAt": "2026-10-24T16:22:25.038Z"
+  },
+  {
+    "id": "pet-m3-1792858811342",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792858811212_fca864",
+    "createdAt": "2026-10-24T16:20:11.350Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792858811844_ce42d7"
+    ]
+  },
+  {
+    "id": "pet-valid-1792858809546",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792858809212_c3c14c",
+    "createdAt": "2026-10-24T16:20:09.545Z"
+  },
+  {
+    "id": "pet-reg-1792858809340",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792858809212_c3c14c",
+    "createdAt": "2026-10-24T16:20:09.352Z"
+  },
+  {
+    "id": "pet-m3-1792855202783",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792855202579_3f1f1d",
+    "createdAt": "2026-10-24T15:20:02.793Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792855203446_94609b"
+    ]
+  },
+  {
+    "id": "pet-valid-1792855199981",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792855199650_9bd668",
+    "createdAt": "2026-10-24T15:19:59.985Z"
+  },
+  {
+    "id": "pet-reg-1792855199831",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792855199650_9bd668",
+    "createdAt": "2026-10-24T15:19:59.835Z"
+  },
+  {
+    "id": "pet-m3-1792773245529",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792773245384_3c134c",
+    "createdAt": "2026-10-23T16:34:05.535Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792773246050_ba1d06"
+    ]
+  },
+  {
+    "id": "pet-valid-1792773243597",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792773243365_6d4111",
+    "createdAt": "2026-10-23T16:34:03.601Z"
+  },
+  {
+    "id": "pet-reg-1792773243491",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792773243365_6d4111",
+    "createdAt": "2026-10-23T16:34:03.495Z"
+  },
+  {
+    "id": "pet-m3-1792772500259",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792772500024_6eadc3",
+    "createdAt": "2026-10-23T16:21:40.269Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792772500974_3e85e7"
+    ]
+  },
+  {
+    "id": "pet-valid-1792772497567",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792772497210_76b3c2",
+    "createdAt": "2026-10-23T16:21:37.575Z"
+  },
+  {
+    "id": "pet-reg-1792772497428",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792772497210_76b3c2",
+    "createdAt": "2026-10-23T16:21:37.437Z"
+  },
+  {
+    "id": "pet-m3-1792772180226",
+    "name": "Bé Miu Mục 3",
+    "species": "cat",
+    "breed": "Mèo Anh Lông Dài",
+    "age": 2,
+    "weight": 4.2,
+    "ownerId": "user_1792772180098_a28d6d",
+    "createdAt": "2026-10-23T16:16:20.236Z",
+    "assignedVetId": "user_vet_pro",
+    "sharedWithVetIds": [
+      "user_1792772180682_62a878"
+    ]
+  },
+  {
+    "id": "pet-valid-1792772178360",
+    "name": "Miu Miu Bền Vững",
+    "species": "cat",
+    "breed": "Anh lông ngắn",
+    "weight": 3.8,
+    "ownerId": "user_1792772178137_b30f39",
+    "createdAt": "2026-10-23T16:16:18.366Z"
+  },
+  {
+    "id": "pet-reg-1792772178262",
+    "name": "Bé Bông Nghiệm Thu",
+    "species": "dog",
+    "breed": "Poodle",
+    "weight": 4.5,
+    "ownerId": "user_1792772178137_b30f39",
+    "createdAt": "2026-10-23T16:16:18.267Z"
+  },
+  {
+    "id": "pet-1792128958474",
+    "name": "Cún Kiểm Thử",
+    "species": "dog",
+    "breed": "Poodle",
+    "ownerId": "user_1791541299976_7ebbe5",
+    "weight": 4.5,
+    "birthDate": "2024-05-10",
+    "avatar": ""
+  },
+  {
+    "id": "pet-test-1792772179619",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792772179493_cee577",
+    "assignedVetId": "user_vet_pro"
+  },
+  {
+    "id": "pet-test-1792772499470",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792772499242_ee2fd2",
+    "assignedVetId": "user_vet_pro"
+  },
+  {
+    "id": "pet-test-1792773244922",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792773244785_ff96f9",
+    "assignedVetId": "user_vet_pro"
+  },
+  {
+    "id": "pet-test-1792855201980",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792855201804_bd5e76",
+    "assignedVetId": "user_vet_pro"
+  },
+  {
+    "id": "pet-test-1792858810766",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792858810635_fecba1",
+    "assignedVetId": "user_vet_pro"
+  },
+  {
+    "id": "pet-test-1792858958286",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792858958156_d3fb69",
+    "assignedVetId": "user_vet_pro"
+  },
+  {
+    "id": "pet-test-1792859866297",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792859866137_63d710",
+    "assignedVetId": "user_vet_pro"
+  },
+  {
+    "id": "pet-test-1792860412617",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792860412468_f75490",
+    "assignedVetId": "user_vet_pro"
+  },
+  {
+    "id": "pet-test-1792942189053",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792942188916_240808",
+    "assignedVetId": "user_vet_pro"
+  },
+  {
+    "id": "pet-test-1792946357526",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792946357394_ffcf50",
+    "assignedVetId": "user_vet_pro"
+  },
+  {
+    "id": "pet-test-1792946734261",
+    "name": "Miu Test",
+    "species": "Cat",
+    "breed": "Anh Lông Ngắn",
+    "weight": 4.2,
+    "ownerId": "user_1792946734103_151e6f",
+    "assignedVetId": "user_vet_pro"
+  }
+]

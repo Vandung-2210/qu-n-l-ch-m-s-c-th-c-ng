@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
-import { config } from './config.js';
+import path from 'path';
+import fs from 'fs';
+import { config, JWT_SECRET } from './config.js';
 import { 
   getUsers, 
   findUserByEmail, 
@@ -20,16 +22,44 @@ import {
 } from './db.js';
 import { sendPasswordResetEmail } from './mailer.js';
 import { checkForgotPasswordRateLimit, recordForgotPasswordAttempt } from './rateLimiter.js';
-import apiRouter from './api.js';
+import apiRouter, { authenticateToken } from './api.js';
+import backupRouter from './backupHandler.js';
 import jwt from 'jsonwebtoken';
 
 const app = express();
-const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-dev';
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Thư mục lưu trữ tệp tải lên (ảnh đại diện thú cưng thật)
+const uploadsDir = path.join(process.cwd(), 'server', 'uploads');
+const avatarsDir = path.join(uploadsDir, 'avatars');
+if (!fs.existsSync(avatarsDir)) {
+  fs.mkdirSync(avatarsDir, { recursive: true });
+}
+app.use('/api/uploads', express.static(uploadsDir));
+
+// Middleware xác thực quyền Quản trị viên hệ thống (system_admin) từ JWT Token thật
+const requireAdmin = (req, res, next) => {
+  authenticateToken(req, res, () => {
+    if (!req.user || req.user.role !== 'system_admin' || req.user.isLocked) {
+      return res.status(403).json({
+        success: false,
+        error: 'Truy cập bị từ chối: Yêu cầu quyền Quản trị viên hệ thống (system_admin).',
+        code: 'FORBIDDEN_ADMIN_REQUIRED'
+      });
+    }
+    next();
+  });
+};
 
 app.use('/api/data', apiRouter);
+app.use('/api/ai', (req, res, next) => {
+  req.url = '/ai' + req.url;
+  apiRouter(req, res, next);
+});
+app.use('/api/backup', requireAdmin, backupRouter);
 
 // Helper lấy IP client
 const getClientIp = (req) => {
@@ -37,6 +67,131 @@ const getClientIp = (req) => {
          req.socket?.remoteAddress || 
          '127.0.0.1';
 };
+
+// ============================================================================
+// HỆ THỐNG NHẬT KÝ KIỂM TOÁN (AUDIT LOGS) QUẢN TRỊ VIÊN
+// ============================================================================
+const AUDIT_LOG_FILE = path.join(process.cwd(), 'server', 'data', 'audit_logs.json');
+
+const getAuditLogs = () => {
+  try {
+    if (!fs.existsSync(AUDIT_LOG_FILE)) return [];
+    return JSON.parse(fs.readFileSync(AUDIT_LOG_FILE, 'utf8'));
+  } catch {
+    return [];
+  }
+};
+
+const saveAuditLogs = (logs) => {
+  try {
+    fs.writeFileSync(AUDIT_LOG_FILE, JSON.stringify(logs, null, 2), 'utf8');
+  } catch (err) {
+    console.error('Lỗi lưu audit logs:', err);
+  }
+};
+
+const recordAuditLog = ({ action, actor, targetType, targetId, details, result = 'SUCCESS' }) => {
+  const logs = getAuditLogs();
+  const entry = {
+    id: `AUDIT-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+    timestamp: new Date().toISOString(),
+    action,
+    actorId: actor?.id || 'system',
+    actorName: actor?.name || 'Hệ thống',
+    actorEmail: actor?.email || 'system@petcare.ai',
+    targetType,
+    targetId,
+    details: details || '',
+    result
+  };
+  logs.unshift(entry);
+  if (logs.length > 500) logs.length = 500;
+  saveAuditLogs(logs);
+  return entry;
+};
+
+// GET /api/admin/audit-logs
+app.get('/api/admin/audit-logs', requireAdmin, (req, res) => {
+  const logs = getAuditLogs();
+  res.json({ success: true, data: logs });
+});
+
+// GET /api/admin/docs
+app.get('/api/admin/docs', requireAdmin, (req, res) => {
+  try {
+    const docsDir = path.join(process.cwd(), 'server', 'data', 'docs');
+    if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
+    const files = fs.readdirSync(docsDir).filter(f => f.endsWith('.md') || f.endsWith('.txt'));
+    const docList = files.map(filename => {
+      const filePath = path.join(docsDir, filename);
+      const stat = fs.statSync(filePath);
+      const content = fs.readFileSync(filePath, 'utf8');
+      return {
+        filename,
+        size: stat.size,
+        updatedAt: stat.mtime.toISOString(),
+        version: '1.0',
+        title: content.split('\n')[0].replace(/^#+\s*/, '') || filename,
+        content
+      };
+    });
+    res.json({ success: true, data: docList });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// POST /api/admin/docs
+app.post('/api/admin/docs', requireAdmin, (req, res) => {
+  try {
+    const { filename, content } = req.body;
+    if (!filename || !content) {
+      return res.status(400).json({ success: false, error: 'Tên file và nội dung tài liệu không được để trống.' });
+    }
+    const cleanFilename = filename.endsWith('.md') || filename.endsWith('.txt') ? filename : `${filename}.md`;
+    const docsDir = path.join(process.cwd(), 'server', 'data', 'docs');
+    if (!fs.existsSync(docsDir)) fs.mkdirSync(docsDir, { recursive: true });
+    const filePath = path.join(docsDir, cleanFilename);
+    fs.writeFileSync(filePath, content, 'utf8');
+
+    recordAuditLog({
+      action: 'DOC_UPDATE',
+      actor: req.user,
+      targetType: 'AI_DOC',
+      targetId: cleanFilename,
+      details: `Cập nhật tài liệu tri thức AI: ${cleanFilename}`
+    });
+
+    res.json({ success: true, message: 'Lưu tài liệu thành công', filename: cleanFilename });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// DELETE /api/admin/docs/:filename
+app.delete('/api/admin/docs/:filename', requireAdmin, (req, res) => {
+  try {
+    const { filename } = req.params;
+    if (filename === 'README.md') {
+      return res.status(400).json({ success: false, error: 'Không thể xóa tệp README hệ thống.' });
+    }
+    const filePath = path.join(process.cwd(), 'server', 'data', 'docs', filename);
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      recordAuditLog({
+        action: 'DOC_DELETE',
+        actor: req.user,
+        targetType: 'AI_DOC',
+        targetId: filename,
+        details: `Xóa tài liệu tri thức AI: ${filename}`
+      });
+      return res.json({ success: true, message: `Đã xóa tài liệu ${filename}` });
+    }
+    res.status(404).json({ success: false, error: 'Không tìm thấy tài liệu.' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // ----------------------------------------------------------------------------
 // 1. HEALTH CHECK
@@ -252,7 +407,7 @@ app.post('/api/auth/login', (req, res) => {
     const safeUser = { ...user };
     delete safeUser.password;
 
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    const token = jwt.sign({ id: user.id, pwdChangedAt: user.passwordChangedAt || null }, JWT_SECRET, { expiresIn: '7d' });
 
     return res.json({
       success: true,
@@ -287,20 +442,12 @@ app.post('/api/auth/register', (req, res) => {
 // - Đặt mustChangePassword: true
 // - Bác sĩ do admin tạo được cấp quyền ngay lập tức (approved)
 // ----------------------------------------------------------------------------
-app.post('/api/auth/admin/create-user', (req, res) => {
+app.post('/api/auth/admin/create-user', requireAdmin, (req, res) => {
   try {
-    const { callerId, name, email, phone, role, password, isLocked } = req.body;
+    const { name, email, phone, role, password, isLocked } = req.body;
+    const caller = req.user;
 
-    // 1. Kiểm tra quyền của caller
-    const caller = findUserById(callerId);
-    if (!caller || caller.role !== 'system_admin' || caller.isLocked) {
-      return res.status(403).json({
-        success: false,
-        error: 'Truy cập bị từ chối: Chỉ Quản trị viên hệ thống mới có quyền tạo tài khoản.'
-      });
-    }
-
-    // 2. Kiểm tra dữ liệu bắt buộc
+    // 1. Kiểm tra dữ liệu bắt buộc
     if (!name || typeof name !== 'string' || !name.trim()) {
       return res.status(400).json({ success: false, error: 'Vui lòng nhập Họ và tên.' });
     }
@@ -327,7 +474,7 @@ app.post('/api/auth/admin/create-user', (req, res) => {
       return res.status(400).json({ success: false, error: 'Vai trò không hợp lệ. Chỉ được chọn Chủ nuôi hoặc Bác sĩ thú y.' });
     }
 
-    // 3. Tạo tài khoản trong cơ sở dữ liệu chung
+    // 2. Tạo tài khoản trong cơ sở dữ liệu chung
     const newUser = createUser({
       name: name.trim(),
       email: cleanEmail,
@@ -342,6 +489,14 @@ app.post('/api/auth/admin/create-user', (req, res) => {
     const safeUser = { ...newUser };
     delete safeUser.password;
 
+    recordAuditLog({
+      action: 'USER_CREATE',
+      actor: caller,
+      targetType: 'USER',
+      targetId: newUser.id,
+      details: `Tạo tài khoản mới: ${newUser.name} (${newUser.email}), vai trò: ${newUser.role}`
+    });
+
     return res.json({
       success: true,
       message: 'Tạo tài khoản thành công.',
@@ -354,22 +509,15 @@ app.post('/api/auth/admin/create-user', (req, res) => {
 
 // ----------------------------------------------------------------------------
 // 6.2. QUẢN TRỊ VIÊN ĐẶT LẠI MẬT KHẨU TẠM THỜI (ADMIN RESET PASSWORD)
-// - Xác thực quyền system_admin của caller
+// - Xác thực quyền system_admin của caller từ Token
 // - Cập nhật mật khẩu tạm thời mới (băm PBKDF2)
 // - Bật mustChangePassword: true
 // - Cập nhật passwordChangedAt để vô hiệu hóa tất cả các phiên đăng nhập cũ
 // ----------------------------------------------------------------------------
-app.post('/api/auth/admin/reset-password', (req, res) => {
+app.post('/api/auth/admin/reset-password', requireAdmin, (req, res) => {
   try {
-    const { callerId, targetUserId, targetEmail, newTemporaryPassword } = req.body;
-
-    const caller = findUserById(callerId);
-    if (!caller || caller.role !== 'system_admin' || caller.isLocked) {
-      return res.status(403).json({
-        success: false,
-        error: 'Truy cập bị từ chối: Chỉ Quản trị viên hệ thống mới có quyền đặt lại mật khẩu.'
-      });
-    }
+    const { targetUserId, targetEmail, newTemporaryPassword } = req.body;
+    const caller = req.user;
 
     // Tìm kiếm bằng ID hoặc Email fallback
     const target = findUser(targetUserId, targetEmail);
@@ -403,6 +551,14 @@ app.post('/api/auth/admin/reset-password', (req, res) => {
     const safeUser = { ...updated };
     delete safeUser.password;
 
+    recordAuditLog({
+      action: 'USER_RESET_PASSWORD',
+      actor: caller,
+      targetType: 'USER',
+      targetId: target.id,
+      details: `Đặt lại mật khẩu tạm thời cho tài khoản: ${target.name} (${target.email})`
+    });
+
     return res.json({
       success: true,
       message: `Đã đặt lại mật khẩu tạm thời cho tài khoản ${target.name}.`,
@@ -421,20 +577,12 @@ app.post('/api/auth/admin/reset-password', (req, res) => {
 // - Yêu cầu xác nhận đúng email của tài khoản
 // - Thu hồi phiên và token khôi phục
 // ----------------------------------------------------------------------------
-app.post('/api/auth/admin/delete-user', (req, res) => {
+app.post('/api/auth/admin/delete-user', requireAdmin, (req, res) => {
   try {
-    const { callerId, targetUserId, targetEmail, confirmEmail } = req.body;
+    const { targetUserId, targetEmail, confirmEmail } = req.body;
+    const caller = req.user;
 
-    // 1. Kiểm tra quyền caller
-    const caller = findUserById(callerId);
-    if (!caller || caller.role !== 'system_admin' || caller.isLocked) {
-      return res.status(403).json({
-        success: false,
-        error: 'Truy cập bị từ chối: Chỉ Quản trị viên hệ thống mới có quyền xóa tài khoản.'
-      });
-    }
-
-    // 2. Tìm tài khoản cần xóa
+    // 1. Tìm tài khoản cần xóa
     const target = findUser(targetUserId, targetEmail);
     if (!target) {
       return res.status(404).json({
@@ -443,7 +591,7 @@ app.post('/api/auth/admin/delete-user', (req, res) => {
       });
     }
 
-    // 3. Chặn tự xóa tài khoản admin đang đăng nhập
+    // 2. Chặn tự xóa tài khoản admin đang đăng nhập
     if (String(caller.id).trim() === String(target.id).trim() || 
         caller.email.trim().toLowerCase() === target.email.trim().toLowerCase()) {
       return res.status(400).json({
@@ -452,7 +600,7 @@ app.post('/api/auth/admin/delete-user', (req, res) => {
       });
     }
 
-    // 4. Chặn xóa admin hoạt động cuối cùng
+    // 3. Chặn xóa admin hoạt động cuối cùng
     const allUsers = getUsers();
     if (target.role === 'system_admin') {
       const activeAdmins = allUsers.filter(u => u.role === 'system_admin' && !u.isLocked);
@@ -464,7 +612,7 @@ app.post('/api/auth/admin/delete-user', (req, res) => {
       }
     }
 
-    // 5. Kiểm tra email xác nhận
+    // 4. Kiểm tra email xác nhận
     if (!confirmEmail || confirmEmail.trim().toLowerCase() !== target.email.trim().toLowerCase()) {
       return res.status(400).json({
         success: false,
@@ -472,8 +620,16 @@ app.post('/api/auth/admin/delete-user', (req, res) => {
       });
     }
 
-    // 6. Thực hiện xóa an toàn
+    // 5. Thực hiện xóa an toàn
     const deleted = deleteUser(target.id, target.email);
+
+    recordAuditLog({
+      action: 'USER_DELETE',
+      actor: caller,
+      targetType: 'USER',
+      targetId: deleted.id,
+      details: `Xóa tài khoản: ${deleted.name} (${deleted.email}), vai trò: ${target.role}`
+    });
 
     return res.json({
       success: true,
@@ -492,16 +648,34 @@ app.post('/api/auth/admin/delete-user', (req, res) => {
 // ----------------------------------------------------------------------------
 // 6.3. ĐỔI MẬT KHẨU BẮT BUỘC Ở LẦN ĐĂNG NHẬP ĐẦU TIÊN (FIRST LOGIN CHANGE PASSWORD)
 // - Người dùng cập nhật mật khẩu mới thay thế mật khẩu tạm thời
+// - Bắt buộc xác thực từ Token của chính người dùng đó
 // - Đặt mustChangePassword: false
-// - Vô hiệu hóa mật khẩu tạm thời cũ
+// - Cấp token mới cho phiên tiếp theo
 // ----------------------------------------------------------------------------
-app.post('/api/auth/first-login-change-password', (req, res) => {
+app.post('/api/auth/first-login-change-password', authenticateToken, (req, res) => {
   try {
-    const { userId, newPassword } = req.body;
+    const { newPassword } = req.body;
+    const userId = req.user.id;
+
+    // Chặn người dùng đổi mật khẩu của tài khoản khác
+    if (req.body.userId && String(req.body.userId).trim() !== String(userId).trim()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Bảo mật: Không được phép đổi mật khẩu cho tài khoản người dùng khác!'
+      });
+    }
 
     const user = findUserById(userId);
     if (!user) {
       return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản người dùng.' });
+    }
+
+    // Chỉ cho phép dùng endpoint này khi tài khoản thật sự có mustChangePassword=true
+    if (!user.mustChangePassword) {
+      return res.status(400).json({
+        success: false,
+        error: 'Tài khoản không ở trạng thái yêu cầu đổi mật khẩu lần đầu. Vui lòng sử dụng tính năng Đổi mật khẩu thông thường kèm mật khẩu hiện tại.'
+      });
     }
 
     if (!newPassword || newPassword.length < 6) {
@@ -518,9 +692,47 @@ app.post('/api/auth/first-login-change-password', (req, res) => {
     const safeUser = { ...updated };
     delete safeUser.password;
 
+    const token = jwt.sign({ id: user.id, pwdChangedAt: updated.passwordChangedAt }, JWT_SECRET, { expiresIn: '7d' });
+
     return res.json({
       success: true,
       message: 'Mật khẩu đã được cập nhật thành công.',
+      user: safeUser,
+      token
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// ----------------------------------------------------------------------------
+// 6.4. CẬP NHẬT THÔNG TIN CÁ NHÂN (UPDATE PROFILE)
+// - Xác thực Token hợp lệ của chính người dùng
+// - Lưu bền vững trên cơ sở dữ liệu Server
+// - Không cho phép đổi email, role hoặc password qua endpoint này
+// ----------------------------------------------------------------------------
+app.put('/api/auth/profile', authenticateToken, (req, res) => {
+  try {
+    const { name, phone, address, avatar } = req.body;
+    const userId = req.user.id;
+    const user = findUserById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản người dùng.' });
+    }
+
+    const updates = {};
+    if (typeof name === 'string' && name.trim()) updates.name = name.trim();
+    if (typeof phone === 'string') updates.phone = phone.trim();
+    if (typeof address === 'string') updates.address = address.trim();
+    if (typeof avatar === 'string') updates.avatar = avatar.trim();
+
+    const updated = updateUser(userId, updates);
+    const safeUser = { ...updated };
+    delete safeUser.password;
+
+    return res.json({
+      success: true,
+      message: 'Cập nhật thông tin cá nhân thành công.',
       user: safeUser
     });
   } catch (error) {
@@ -533,12 +745,22 @@ app.post('/api/auth/first-login-change-password', (req, res) => {
 // - Bắt buộc kiểm tra đúng mật khẩu hiện tại
 // - Băm mật khẩu mới
 // - Cập nhật passwordChangedAt
+// - Cấp token mới cho phiên hiện tại trong khi các phiên cũ bị thu hồi
 // ----------------------------------------------------------------------------
-app.post('/api/auth/change-password', (req, res) => {
+app.post('/api/auth/change-password', authenticateToken, (req, res) => {
   try {
-    const { userId, currentPassword, newPassword } = req.body;
-    const user = findUserById(userId);
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.user.id;
 
+    // Chặn người dùng đổi mật khẩu của tài khoản khác
+    if (req.body.userId && String(req.body.userId).trim() !== String(userId).trim()) {
+      return res.status(403).json({
+        success: false,
+        error: 'Bảo mật: Không được phép đổi mật khẩu cho tài khoản người dùng khác!'
+      });
+    }
+
+    const user = findUserById(userId);
     if (!user) {
       return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản.' });
     }
@@ -556,7 +778,13 @@ app.post('/api/auth/change-password', (req, res) => {
       passwordChangedAt: new Date().toISOString()
     });
 
-    return res.json({ success: true, message: 'Đổi mật khẩu thành công.' });
+    const token = jwt.sign({ id: user.id, pwdChangedAt: updated.passwordChangedAt }, JWT_SECRET, { expiresIn: '7d' });
+
+    return res.json({ 
+      success: true, 
+      message: 'Đổi mật khẩu thành công.',
+      token 
+    });
   } catch (error) {
     return res.status(500).json({ success: false, error: error.message });
   }
@@ -564,8 +792,9 @@ app.post('/api/auth/change-password', (req, res) => {
 
 // ----------------------------------------------------------------------------
 // 8. ĐỒNG BỘ / DANH SÁCH TÀI KHOẢN CHO QUẢN TRỊ VIÊN (ADMIN ENDPOINTS)
+// - Bảo vệ nghiêm ngặt: Chỉ system_admin có token hợp lệ mới được truy cập
 // ----------------------------------------------------------------------------
-app.get('/api/auth/users', (req, res) => {
+app.get('/api/auth/users', requireAdmin, (req, res) => {
   try {
     const users = getUsers();
     const safeUsers = users.map(u => {
@@ -579,7 +808,7 @@ app.get('/api/auth/users', (req, res) => {
   }
 });
 
-app.get('/api/auth/deleted-users', (req, res) => {
+app.get('/api/auth/deleted-users', requireAdmin, (req, res) => {
   try {
     const list = getDeletedUsers();
     return res.json(list);
@@ -588,46 +817,148 @@ app.get('/api/auth/deleted-users', (req, res) => {
   }
 });
 
-app.post('/api/auth/users/:id/toggle-lock', (req, res) => {
+app.post('/api/auth/users/:id/toggle-lock', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
-    const user = findUserById(id);
-    if (!user) return res.status(404).json({ error: 'Không tìm thấy tài khoản.' });
+    const caller = req.user;
 
-    const updated = updateUser(id, { isLocked: !user.isLocked });
+    // 1. Tìm tài khoản mục tiêu
+    const user = findUserById(id);
+    if (!user) return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản.' });
+
+    // 2. Chặn tự khóa chính tài khoản admin đang thao tác
+    if (String(caller.id).trim() === String(user.id).trim() || 
+        caller.email.trim().toLowerCase() === user.email.trim().toLowerCase()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Không thể tự khóa tài khoản quản trị viên đang đăng nhập!'
+      });
+    }
+
+    // 3. Chặn khóa Quản trị viên hệ thống hoạt động cuối cùng
+    if (user.role === 'system_admin' && !user.isLocked) {
+      const activeAdmins = getUsers().filter(u => u.role === 'system_admin' && !u.isLocked);
+      if (activeAdmins.length <= 1) {
+        return res.status(400).json({
+          success: false,
+          error: 'Không thể khóa Quản trị viên hệ thống hoạt động cuối cùng của hệ thống!'
+        });
+      }
+    }
+
+    const newLocked = !user.isLocked;
+    const updates = { isLocked: newLocked };
+    // Khi khóa tài khoản, lập tức thu hồi mọi phiên đăng nhập của người dùng đó
+    if (newLocked) {
+      updates.passwordChangedAt = new Date().toISOString();
+    }
+
+    const updated = updateUser(id, updates);
     const copy = { ...updated };
     delete copy.password;
+
+    recordAuditLog({
+      action: newLocked ? 'USER_LOCK' : 'USER_UNLOCK',
+      actor: caller,
+      targetType: 'USER',
+      targetId: id,
+      details: `${newLocked ? 'Khóa' : 'Mở khóa'} tài khoản: ${user.name} (${user.email})`
+    });
+
     return res.json(copy);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/api/auth/users/:id/approve-vet', (req, res) => {
+app.post('/api/auth/users/:id/approve-vet', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const { isApproved } = req.body;
+    const caller = req.user;
+
+    // 1. Tìm tài khoản mục tiêu
+    const user = findUserById(id);
+    if (!user) return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản.' });
+    if (user.role !== 'vet_doctor') {
+      return res.status(400).json({ success: false, error: 'Tài khoản này không đăng ký vai trò Bác sĩ thú y.' });
+    }
+
     const updated = updateUser(id, { 
       vetStatus: isApproved ? 'approved' : 'rejected' 
     });
     const copy = { ...updated };
     delete copy.password;
+
+    recordAuditLog({
+      action: isApproved ? 'VET_APPROVE' : 'VET_REJECT',
+      actor: caller,
+      targetType: 'USER',
+      targetId: id,
+      details: `${isApproved ? 'Duyệt hồ sơ' : 'Từ chối hồ sơ'} bác sĩ: ${user.name} (${user.email})`
+    });
+
     return res.json(copy);
   } catch (error) {
     return res.status(500).json({ error: error.message });
   }
 });
 
-app.post('/api/auth/users/:id/change-role', (req, res) => {
+app.post('/api/auth/users/:id/change-role', requireAdmin, (req, res) => {
   try {
     const { id } = req.params;
     const { role } = req.body;
-    const updated = updateUser(id, { role });
+    const caller = req.user;
+
+    // 1. Chặn leo thang đặc quyền: Tuyệt đối không cho phép gán vai trò system_admin
+    if (role === 'system_admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Bảo mật: Tuyệt đối không được phép thăng quyền lên Quản trị viên hệ thống!'
+      });
+    }
+
+    // 2. Chỉ cho phép chuyển đổi vai trò giữa pet_owner và vet_doctor
+    if (role !== 'pet_owner' && role !== 'vet_doctor') {
+      return res.status(400).json({
+        success: false,
+        error: 'Vai trò không hợp lệ. Chỉ cho phép chuyển đổi giữa Chủ nuôi và Bác sĩ thú y.'
+      });
+    }
+
+    // 3. Kiểm tra tài khoản mục tiêu
+    const target = findUserById(id);
+    if (!target) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy tài khoản người dùng.' });
+    }
+
+    // 4. Tuyệt đối không cho phép thay đổi vai trò của Quản trị viên hệ thống
+    if (target.role === 'system_admin') {
+      return res.status(403).json({
+        success: false,
+        error: 'Không thể thay đổi vai trò của Quản trị viên hệ thống!'
+      });
+    }
+
+    const updates = {
+      role,
+      vetStatus: role === 'vet_doctor' ? 'approved' : null
+    };
+    const updated = updateUser(id, updates);
     const copy = { ...updated };
     delete copy.password;
-    return res.json(copy);
+
+    recordAuditLog({
+      action: 'USER_CHANGE_ROLE',
+      actor: caller,
+      targetType: 'USER',
+      targetId: id,
+      details: `Đổi vai trò tài khoản ${target.name} (${target.email}) thành: ${role}`
+    });
+
+    return res.json({ success: true, user: copy });
   } catch (error) {
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ success: false, error: error.message });
   }
 });
 

@@ -188,7 +188,7 @@ export const Sidebar = ({
 
           {/* Tooltip Avatar */}
           <div className="absolute left-full ml-3.5 px-3 py-1.5 rounded-xl bg-[#1c1d2e] border border-white/10 text-white text-xs font-semibold shadow-2xl backdrop-blur-md pointer-events-none opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-200 whitespace-nowrap z-50 flex items-center gap-1.5">
-            <span>{currentUser?.name || 'Mạnh Đinh 🐾'}</span>
+            <span>{currentUser?.name || 'Tài khoản cá nhân'}</span>
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
           </div>
         </div>

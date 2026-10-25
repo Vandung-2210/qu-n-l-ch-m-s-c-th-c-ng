@@ -1,29 +1,28 @@
 import React, { useState, useMemo } from 'react';
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, RotateCcw } from 'lucide-react';
 import { sound } from '../../services/soundService';
+import { getTodayVnDate, getVnDateString, formatDateKey } from '../../utils/dateUtils.js';
+import { useCurrentVnDate } from '../../hooks/useCurrentVnDate';
+
+export { formatDateKey };
 
 /**
- * Helper: Lấy ngày Thứ 2 đầu tuần cho bất kỳ ngày nào
+ * Helper: Lấy ngày Thứ 2 đầu tuần cho bất kỳ ngày nào theo lịch địa phương/VN
  */
 export const getMonday = (d) => {
-  const date = new Date(d);
+  let date;
+  if (typeof d === 'string') {
+    const clean = getVnDateString(d);
+    const [y, m, dayNum] = clean.split('-').map(Number);
+    date = new Date(y, m - 1, dayNum);
+  } else {
+    date = new Date(d);
+  }
   date.setHours(0, 0, 0, 0);
   const day = date.getDay(); // 0: Chủ Nhật, 1: Thứ Hai, ..., 6: Thứ Bảy
   const diff = day === 0 ? -6 : 1 - day; // Chuyển Thứ 2 thành ngày đầu tuần
   date.setDate(date.getDate() + diff);
   return date;
-};
-
-/**
- * Helper: Định dạng ngày theo chuẩn YYYY-MM-DD theo giờ địa phương (tránh lệch timezone)
- */
-export const formatDateKey = (d) => {
-  if (!d) return '';
-  const date = new Date(d);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
 };
 
 /**
@@ -75,16 +74,16 @@ export const WeeklyCalendar = ({
   // Quản lý tuần hiện tại người dùng đang xem (offset số tuần so với tuần hiện tại)
   const [weekOffset, setWeekOffset] = useState(0);
 
-  // Ngày hôm nay (Thời gian thực)
-  const today = useMemo(() => new Date(), []);
-  const todayKey = useMemo(() => formatDateKey(today), [today]);
+  // Ngày hôm nay (Thời gian thực theo chuẩn Asia/Ho_Chi_Minh, tự cập nhật qua nửa đêm)
+  const todayKey = useCurrentVnDate();
 
   // Thứ 2 của tuần được hiển thị
   const currentMonday = useMemo(() => {
-    const ref = new Date();
+    const [y, m, d] = todayKey.split('-').map(Number);
+    const ref = new Date(y, m - 1, d);
     ref.setDate(ref.getDate() + weekOffset * 7);
     return getMonday(ref);
-  }, [weekOffset]);
+  }, [todayKey, weekOffset]);
 
   // Chủ nhật của tuần được hiển thị
   const currentSunday = useMemo(() => {

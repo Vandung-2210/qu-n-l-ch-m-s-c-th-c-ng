@@ -18,33 +18,13 @@ import {
   Check
 } from 'lucide-react';
 import { sound } from '../../services/soundService';
-
-/**
- * Định dạng ngày theo chuẩn Việt Nam DD/MM/YYYY
- */
-const formatDateVi = (dateStr) => {
-  if (!dateStr) return '---';
-  try {
-    const parts = dateStr.split('-');
-    if (parts.length === 3) {
-      return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}/${month}/${year}`;
-  } catch {
-    return dateStr;
-  }
-};
+import { formatDateVi, getTodayVnDate } from '../../utils/dateUtils';
 
 /**
  * Tính tuổi thân thiện từ birthDate
  */
 const getAgeText = (birthDateStr) => {
-  if (!birthDateStr) return '2 tuổi 7 tháng';
+  if (!birthDateStr) return 'Chưa cập nhật ngày sinh';
   try {
     const birth = new Date(birthDateStr);
     const now = new Date();
@@ -57,7 +37,7 @@ const getAgeText = (birthDateStr) => {
     if (years <= 0) return `${months} tháng`;
     return months > 0 ? `${years} tuổi ${months} tháng` : `${years} tuổi`;
   } catch {
-    return '2 tuổi 7 tháng';
+    return 'Chưa cập nhật';
   }
 };
 
@@ -66,7 +46,8 @@ export const WsavaPassportModal = ({
   onClose = () => {},
   pets = [],
   selectedPetId = null,
-  schedules = []
+  schedules = [],
+  currentUser = null
 }) => {
   // Xác định bé cưng mặc định
   const initialPetId = useMemo(() => {
@@ -74,10 +55,7 @@ export const WsavaPassportModal = ({
       const match = pets.find(p => p.id === selectedPetId);
       if (match) return match.id;
     }
-    // Mặc định tìm Mochi hoặc bé đầu tiên
-    const mochi = pets.find(p => p.name?.toLowerCase().includes('mochi'));
-    if (mochi) return mochi.id;
-    return pets[0]?.id || 'pet-1';
+    return pets[0]?.id || null;
   }, [pets, selectedPetId]);
 
   const [activePetId, setActivePetId] = useState(initialPetId);
@@ -92,10 +70,7 @@ export const WsavaPassportModal = ({
           return;
         }
       }
-      const mochi = pets.find(p => p.name?.toLowerCase().includes('mochi'));
-      if (mochi) {
-        setActivePetId(mochi.id);
-      } else if (pets[0]) {
+      if (pets[0]) {
         setActivePetId(pets[0].id);
       }
     }
@@ -108,37 +83,38 @@ export const WsavaPassportModal = ({
     return {
       ...found,
       name: found.name || 'Thú cưng',
-      breed: found.breed || 'Chưa rõ',
+      breed: found.breed || 'Chưa cập nhật',
       species: found.species || 'dog',
       gender: found.gender === 'male' || found.gender === 'Đực' ? 'Đực (Male)' : 'Cái (Female)',
-      weight: found.weight || 0,
+      weight: found.weight != null ? found.weight : null,
       microchip: found.microchip || 'Chưa cập nhật',
       birthDate: found.birthDate || '',
-      isNeutered: found.isNeutered !== false,
-      color: found.color || 'Chưa rõ',
+      isNeutered: Boolean(found.isNeutered),
+      color: (found.color && String(found.color).trim()) ? String(found.color).trim() : 'Chưa cập nhật',
       avatar: found.avatar || 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&w=600&q=80',
-      ownerName: 'Người nuôi',
-      ownerPhone: 'Chưa cập nhật',
-      ownerAddress: 'Chưa cập nhật'
+      ownerName: currentUser?.name || found.ownerName || 'Chưa cập nhật',
+      ownerPhone: currentUser?.phone || found.ownerPhone || 'Chưa cập nhật',
+      ownerAddress: currentUser?.address || found.ownerAddress || 'Chưa cập nhật'
     };
-  }, [pets, activePetId]);
+  }, [pets, activePetId, currentUser]);
 
   const activePetKey = activePet.id;
 
   // Phác đồ vắc-xin từ lịch trình thực tế
   const vaccines = useMemo(() => {
     const vaxData = schedules.filter(s => s.petId === activePetId && s.type === 'vaccine');
-    return vaxData.map((v, idx) => ({
+    return vaxData.map((v) => ({
       id: v.id,
       title: v.title,
-      diseaseDesc: v.notes || 'Phòng bệnh truyền nhiễm',
-      batchNumber: v.batchNumber || `NV-2026-${idx}`,
+      diseaseDesc: v.notes || 'Phòng bệnh truyền nhiễm thú y',
+      batchNumber: v.batchNumber || 'Chưa cập nhật',
       date: v.date,
       nextDueDate: v.nextDueDate || v.date,
-      doctor: v.doctor || 'Bác sĩ thú y',
-      license: 'CCHN: 00981/TY-HN',
-      facility: v.location || 'Phòng khám',
-      status: v.completed ? 'HỢP LỆ (VALID)' : 'CHƯA HOÀN THÀNH'
+      doctor: v.doctor || (v.completed ? 'Người nuôi ghi nhận' : 'Chưa có bác sĩ xác nhận'),
+      license: v.doctorLicense || (v.completed ? 'Chưa cập nhật CCHN' : 'Chưa cập nhật'),
+      facility: v.location || 'Chưa cập nhật cơ sở',
+      status: v.completed ? 'ĐÃ TIÊM (COMPLETED)' : 'DỰ KIẾN (SCHEDULED)',
+      completed: Boolean(v.completed)
     }));
   }, [schedules, activePetId]);
 
@@ -149,12 +125,13 @@ export const WsavaPassportModal = ({
       id: d.id,
       title: d.title,
       diseaseDesc: d.notes || 'Nội ngoại ký sinh trùng',
-      batchNumber: d.batchNumber || `DT-2026-${d.id}`,
+      batchNumber: d.batchNumber || 'Chưa cập nhật',
       date: d.date,
       nextDueDate: d.nextDueDate || d.date,
       repeat: d.repeat || 'Định kỳ',
-      doctor: d.doctor || 'Bác sĩ thú y',
-      facility: d.location || 'Phòng khám'
+      doctor: d.doctor || (d.completed ? 'Người nuôi ghi nhận' : 'Chưa có bác sĩ xác nhận'),
+      facility: d.location || 'Chưa cập nhật cơ sở',
+      completed: Boolean(d.completed)
     }));
   }, [schedules, activePetId]);
 
@@ -187,6 +164,23 @@ export const WsavaPassportModal = ({
 
   if (!isOpen) return null;
 
+  if (pets.length === 0 || !activePet.id) {
+    return createPortal(
+      <div className="fixed inset-0 z-[9999] overflow-y-auto flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md transition-opacity" onClick={onClose} />
+        <div className="relative w-full max-w-sm bg-white dark:bg-slate-900 rounded-3xl p-6 text-center shadow-2xl border border-slate-200 dark:border-slate-800">
+           <PawPrint className="w-12 h-12 text-slate-300 dark:text-slate-700 mx-auto mb-4" />
+           <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 mb-2">Chưa có thú cưng</h3>
+           <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Bạn cần thêm thông tin thú cưng vào hệ thống trước khi xuất Hộ chiếu tiêm chủng WSAVA.</p>
+           <button onClick={onClose} className="px-5 py-2.5 w-full bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all">
+             Đóng
+           </button>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
   return createPortal(
     <div id="wsava-print-portal" className="fixed inset-0 z-[9999] overflow-y-auto">
       {/* Backdrop mờ chỉ hiển thị trên màn hình (ẩn khi in) */}
@@ -216,7 +210,7 @@ export const WsavaPassportModal = ({
                 </span>
               </div>
               <p className="text-[11px] text-slate-600 dark:text-slate-400">
-                Xuất file PDF chuẩn A4, chứng nhận xuất cảnh IATA & kiểm soát dịch tễ
+                Xuất file PDF chuẩn A4 theo dõi tiêm phòng & y bạ điện tử thú cưng
               </p>
             </div>
           </div>
@@ -297,10 +291,10 @@ export const WsavaPassportModal = ({
                     HỆ THỐNG BỆNH VIỆN THÚ Y QUỐC TẾ PETCARE CENTRAL
                   </h1>
                   <p className="text-[11px] font-bold text-slate-700 uppercase tracking-wide">
-                    INTERNATIONAL PET PASSPORT & OFFICIAL VACCINATION RECORD
+                    SỔ THEO DÕI TIÊM PHÒNG & Y BẠ ĐIỆN TỬ WSAVA
                   </p>
                   <p className="text-[10px] text-slate-500 font-medium">
-                    Chứng nhận đạt quy chuẩn tiêm phòng WSAVA 2026 & Quy chuẩn xuất cảnh động vật IATA
+                    Tài liệu lưu hành nội bộ và quản lý sức khỏe thú cưng (Không thay thế giấy kiểm dịch động vật của cơ quan thẩm quyền)
                   </p>
                 </div>
               </div>
@@ -312,14 +306,11 @@ export const WsavaPassportModal = ({
                     PASSPORT NO.
                   </div>
                   <div className="text-xs sm:text-sm font-black text-slate-950 font-mono tracking-wider">
-                    WSAVA-{activePet.microchip}
+                    {activePet.microchip !== 'Chưa cập nhật' ? `WSAVA-${activePet.microchip}` : `ID-${activePet.id}`}
                   </div>
                 </div>
                 <div className="text-[10px] text-slate-600 font-medium">
-                  Ngày cấp: <strong className="font-mono text-slate-900">{formatDateVi(new Date().toISOString().split('T')[0])}</strong>
-                </div>
-                <div className="text-[9px] text-emerald-700 font-bold uppercase">
-                  STATUS: VERIFIED & ACTIVE
+                  Ngày cấp: <strong className="font-mono text-slate-900">{formatDateVi(getTodayVnDate())}</strong>
                 </div>
               </div>
 
@@ -375,11 +366,11 @@ export const WsavaPassportModal = ({
                   </div>
                   <div>
                     <span className="text-slate-500 font-semibold block text-[10px] uppercase">Tuổi & Ngày sinh:</span>
-                    <span className="font-semibold text-slate-900">{getAgeText(activePet.birthDate)} ({formatDateVi(activePet.birthDate)})</span>
+                    <span className="font-semibold text-slate-900">{getAgeText(activePet.birthDate)} ({formatDateVi(activePet.birthDate) || 'Chưa cập nhật'})</span>
                   </div>
                   <div>
                     <span className="text-slate-500 font-semibold block text-[10px] uppercase">Cân nặng (Weight):</span>
-                    <strong className="font-bold text-slate-900">{activePet.weight} kg</strong>
+                    <strong className="font-bold text-slate-900">{activePet.weight != null ? `${activePet.weight} kg` : 'Chưa cập nhật'}</strong>
                   </div>
                   <div>
                     <span className="text-slate-500 font-semibold block text-[10px] uppercase">Màu lông (Color):</span>
@@ -396,40 +387,14 @@ export const WsavaPassportModal = ({
                 </div>
               </div>
 
-              {/* Mã QR Xác thực Hải quan / Bệnh viện */}
+              {/* Mã QR Tra cứu */}
               <div className="col-span-3 sm:col-span-3 flex flex-col items-center justify-center p-2 rounded border border-slate-300 bg-white text-center">
-                <svg viewBox="0 0 100 100" className="w-18 h-18 text-slate-950" fill="currentColor">
-                  {/* Top-left marker */}
-                  <rect x="5" y="5" width="28" height="28" rx="3" fill="currentColor" />
-                  <rect x="10" y="10" width="18" height="18" rx="1" fill="#fff" />
-                  <rect x="14" y="14" width="10" height="10" rx="1" fill="currentColor" />
-                  {/* Top-right marker */}
-                  <rect x="67" y="5" width="28" height="28" rx="3" fill="currentColor" />
-                  <rect x="72" y="10" width="18" height="18" rx="1" fill="#fff" />
-                  <rect x="76" y="14" width="10" height="10" rx="1" fill="currentColor" />
-                  {/* Bottom-left marker */}
-                  <rect x="5" y="67" width="28" height="28" rx="3" fill="currentColor" />
-                  <rect x="10" y="72" width="18" height="18" rx="1" fill="#fff" />
-                  <rect x="14" y="76" width="10" height="10" rx="1" fill="currentColor" />
-                  {/* Patterns */}
-                  <rect x="38" y="10" width="8" height="8" />
-                  <rect x="50" y="10" width="8" height="8" />
-                  <rect x="38" y="24" width="20" height="6" />
-                  <rect x="10" y="42" width="22" height="8" />
-                  <rect x="38" y="38" width="24" height="24" fill="#047857" />
-                  <circle cx="50" cy="50" r="6" fill="#fff" />
-                  <rect x="68" y="42" width="10" height="10" />
-                  <rect x="82" y="42" width="12" height="18" />
-                  <rect x="38" y="68" width="12" height="12" />
-                  <rect x="54" y="68" width="8" height="24" />
-                  <rect x="68" y="68" width="26" height="10" />
-                  <rect x="68" y="82" width="26" height="12" />
-                </svg>
+                <QrCode className="w-16 h-16 text-slate-800" />
                 <div className="mt-1 text-[8px] font-mono font-bold text-slate-700 uppercase leading-tight">
-                  QR XÁC THỰC SỐ
+                  QR HỒ SƠ ĐIỆN TỬ
                 </div>
                 <div className="text-[7px] text-slate-500 leading-tight">
-                  Tra cứu Hải quan & Thú y
+                  Tra cứu lịch tiêm & điều trị
                 </div>
               </div>
 
@@ -445,7 +410,7 @@ export const WsavaPassportModal = ({
                 <span>II. LỊCH SỬ TIÊM PHÒNG VẮC-XIN (VACCINATION HISTORY & PROPHYLAXIS)</span>
               </h2>
               <span className="text-[10px] font-bold text-emerald-800 uppercase">
-                TIÊU CHUẨN BẢO HỘ MIỄN DỊCH WSAVA
+                TIÊU CHUẨN WSAVA
               </span>
             </div>
 
@@ -456,45 +421,43 @@ export const WsavaPassportModal = ({
                   <th className="p-2 border border-slate-400 text-center w-[15%]">Số Lô (Lot #)</th>
                   <th className="p-2 border border-slate-400 text-center w-[14%]">Ngày Tiêm</th>
                   <th className="p-2 border border-slate-400 text-center w-[14%]">Hạn Nhắc Lại</th>
-                  <th className="p-2 border border-slate-400 w-[17%]">Bác Sĩ & CCHN</th>
+                  <th className="p-2 border border-slate-400 w-[17%]">Bác Sĩ / Người Thực Hiện</th>
                   <th className="p-2 border border-slate-400 text-center w-[10%]">Trạng Thái</th>
                 </tr>
               </thead>
               <tbody>
                 {vaccines.length > 0 ? vaccines.map((vax) => (
                   <tr key={vax.id} className="border-b border-slate-300">
-                    {/* Tên vắc-xin */}
                     <td className="p-2 border border-slate-400 align-top">
                       <div className="font-extrabold text-slate-950 text-[11px] leading-tight">{vax.title}</div>
                       <div className="text-[9px] text-slate-600 mt-0.5 leading-snug">{vax.diseaseDesc}</div>
                     </td>
-                    {/* Số lô */}
                     <td className="p-2 border border-slate-400 align-top text-center font-mono font-bold text-slate-900">
                       {vax.batchNumber}
                     </td>
-                    {/* Ngày tiêm */}
                     <td className="p-2 border border-slate-400 align-top text-center font-mono font-medium text-slate-900">
                       {formatDateVi(vax.date)}
                     </td>
-                    {/* Hạn nhắc lại */}
                     <td className="p-2 border border-slate-400 align-top text-center font-mono font-bold text-emerald-800">
                       {formatDateVi(vax.nextDueDate)}
                     </td>
-                    {/* Bác sĩ & CCHN */}
                     <td className="p-2 border border-slate-400 align-top text-slate-900">
                       <div className="font-bold">{vax.doctor}</div>
                       <div className="text-[9px] text-slate-600 font-mono">{vax.license}</div>
                     </td>
-                    {/* Trạng thái hợp lệ */}
-                    <td className="p-2 border border-slate-400 align-top text-center font-bold text-emerald-800">
-                      <span className="inline-block px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-600 text-[9px] font-black">
-                        {vax.status === 'HỢP LỆ (VALID)' ? '✓ HỢP LỆ' : '⚠ CHƯA ĐẠT'}
+                    <td className="p-2 border border-slate-400 align-top text-center">
+                      <span className={`inline-block px-1.5 py-0.5 rounded text-[9px] font-black ${
+                        vax.completed
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-600'
+                          : 'bg-amber-50 text-amber-800 border border-amber-600'
+                      }`}>
+                        {vax.completed ? '✓ ĐÃ TIÊM' : '⏳ DỰ KIẾN'}
                       </span>
                     </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="6" className="p-2 border border-slate-400 text-center text-slate-500">Chưa có dữ liệu</td>
+                    <td colSpan="6" className="p-2 border border-slate-400 text-center text-slate-500">Chưa có dữ liệu vắc-xin</td>
                   </tr>
                 )}
               </tbody>
@@ -510,7 +473,7 @@ export const WsavaPassportModal = ({
                 <span>III. KIỂM SOÁT NỘI NGOẠI KÝ SINH TRÙNG (PARASITE CONTROL PROTOCOL)</span>
               </h2>
               <span className="text-[10px] font-bold text-slate-600 uppercase">
-                TẨY GIUN, DIỆT VE RẬN & DỰ PHÒNG GIUN TIM
+                TẨY GIUN & DIỆT VE RẬN ĐỊNH KỲ
               </span>
             </div>
 
@@ -522,41 +485,35 @@ export const WsavaPassportModal = ({
                   <th className="p-2 border border-slate-400 text-center w-[14%]">Ngày Dùng</th>
                   <th className="p-2 border border-slate-400 text-center w-[14%]">Hẹn Tái Liều</th>
                   <th className="p-2 border border-slate-400 text-center w-[12%]">Chu Kỳ</th>
-                  <th className="p-2 border border-slate-400 w-[15%]">Bác Sĩ / Dược Sĩ</th>
+                  <th className="p-2 border border-slate-400 w-[15%]">Bác Sĩ / Người Cho Uống</th>
                 </tr>
               </thead>
               <tbody>
                 {deworms.length > 0 ? deworms.map((dew) => (
                   <tr key={dew.id} className="border-b border-slate-300">
-                    {/* Tên thuốc */}
                     <td className="p-2 border border-slate-400 align-top">
                       <div className="font-extrabold text-slate-950 text-[11px] leading-tight">{dew.title}</div>
                       <div className="text-[9px] text-slate-600 mt-0.5 leading-snug">{dew.diseaseDesc}</div>
                     </td>
-                    {/* Số lô */}
                     <td className="p-2 border border-slate-400 align-top text-center font-mono font-bold text-slate-900">
                       {dew.batchNumber}
                     </td>
-                    {/* Ngày dùng */}
                     <td className="p-2 border border-slate-400 align-top text-center font-mono text-slate-900">
                       {formatDateVi(dew.date)}
                     </td>
-                    {/* Hẹn tái liều */}
                     <td className="p-2 border border-slate-400 align-top text-center font-mono font-bold text-emerald-800">
                       {formatDateVi(dew.nextDueDate)}
                     </td>
-                    {/* Chu kỳ */}
                     <td className="p-2 border border-slate-400 align-top text-center font-semibold text-slate-800">
                       {dew.repeat}
                     </td>
-                    {/* Bác sĩ / Dược sĩ */}
                     <td className="p-2 border border-slate-400 align-top text-slate-900 font-medium">
                       {dew.doctor}
                     </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan="6" className="p-2 border border-slate-400 text-center text-slate-500">Chưa có dữ liệu</td>
+                    <td colSpan="6" className="p-2 border border-slate-400 text-center text-slate-500">Chưa có dữ liệu tẩy giun</td>
                   </tr>
                 )}
               </tbody>
@@ -564,12 +521,11 @@ export const WsavaPassportModal = ({
           </div>
 
           {/* ============================================================ */}
-          {/* PHẦN CHỨNG THỰC: CON DẤU MỘC & CHỮ KÝ ĐIỆN TỬ BÁC SĨ THÚ Y   */}
+          {/* PHẦN CHỨNG THỰC & CHỮ KÝ                                     */}
           {/* ============================================================ */}
           <div className="border-t-2 border-slate-900 pt-3 wsava-avoid-break">
-            {/* Lời chứng nhận lâm sàng */}
             <p className="text-[10px] text-slate-700 italic leading-relaxed mb-4">
-              "Tôi - Bác sĩ Thú y Trưởng ký tên dưới đây chứng nhận rằng thú cưng có mã định danh vi mạch Microchip số <strong>{activePet.microchip}</strong> đã được khám lâm sàng toàn diện, hoàn thành đầy đủ các mũi vắc-xin phòng bệnh cốt lõi và kiểm soát ký sinh trùng định kỳ theo tiêu chuẩn Hướng dẫn Tiêm chủng Quốc tế WSAVA 2026. Thú cưng có sức khỏe tốt, đạt bảo hộ miễn dịch và đủ điều kiện xuất nhập cảnh, lưu trú hoặc di chuyển đường hàng không."
+              "Sổ theo dõi tiêm phòng và chăm sóc định kỳ được ghi nhận cho thú cưng có mã định danh Microchip {activePet.microchip}. Mọi thông tin tiêm chủng và sử dụng thuốc được lưu trữ điện tử minh bạch trên hệ thống PetCare PRO AI."
             </p>
 
             <div className="grid grid-cols-2 gap-6 items-end">
@@ -582,65 +538,45 @@ export const WsavaPassportModal = ({
                 <div className="text-[9px] text-slate-500">
                   Cam kết thông tin định danh và quản lý thú cưng chính xác
                 </div>
-                <div className="h-16 flex items-center pt-2">
+                <div className="h-14 flex items-center pt-2">
                   <span className="font-serif italic text-lg text-slate-800 font-bold tracking-wider">
-                    {activePet.ownerName || 'Mạnh Đinh'}
+                    {activePet.ownerName}
                   </span>
                 </div>
                 <div className="text-[10px] font-bold text-slate-900 border-t border-slate-300 pt-1">
-                  Chủ nuôi: {activePet.ownerName || 'Mạnh Đinh'} • ĐT: {activePet.ownerPhone || '0912.345.678'}
+                  Chủ nuôi: {activePet.ownerName} • ĐT: {activePet.ownerPhone}
                 </div>
               </div>
 
-              {/* Bên phải: Dấu mộc đỏ & Chữ ký Bác sĩ Thú y Trưởng */}
-              <div className="text-center relative">
+              {/* Bên phải: Xác nhận chuyên môn */}
+              <div className="text-center">
                 <div className="text-[10px] font-black uppercase tracking-wider text-slate-900">
-                  BÁC SĨ THÚ Y TRƯỞNG & DẤU MỘC CHỨNG THỰC
+                  XÁC NHẬN CHUYÊN MÔN THÚ Y
                 </div>
                 <div className="text-[9px] text-slate-500">
-                  Chief Veterinary Officer • PetCare Central Hospital
+                  Hệ thống Phòng khám / Bệnh viện Thú y PetCare
                 </div>
 
-                {/* Khu vực con dấu & chữ ký lồng ghép */}
-                <div className="h-20 relative flex items-center justify-center my-1">
-                  
-                  {/* Con Dấu Mộc Đỏ Bệnh Viện Tròn (Realistic Circular Stamp) */}
-                  <div className="absolute w-24 h-24 rounded-full border-2 border-dashed border-red-600 text-red-600 flex flex-col items-center justify-center p-1 opacity-90 rotate-[-8deg] pointer-events-none select-none shadow-xs">
-                    <div className="w-full h-full rounded-full border border-red-600 flex flex-col items-center justify-center p-0.5 text-center">
-                      <div className="text-[6.5px] font-black uppercase tracking-tighter leading-tight">
-                        ★ PETCARE CENTRAL ★
-                      </div>
-                      <div className="w-5 h-5 my-0.5 flex items-center justify-center text-red-600">
-                        <Award className="w-4 h-4 stroke-[2]" />
-                      </div>
-                      <div className="text-[7px] font-black uppercase tracking-tighter leading-tight bg-red-600 text-white px-1 rounded-xs">
-                        ĐÃ CHỨNG THỰC
-                      </div>
-                      <div className="text-[5.5px] font-bold uppercase tracking-tighter leading-tight mt-0.5">
-                        WSAVA GUIDELINES 2026
-                      </div>
+                <div className="h-14 flex flex-col items-center justify-center my-1 text-slate-500 text-xs italic">
+                  {vaccines.some(v => v.completed && v.doctor && !v.doctor.includes('Người nuôi')) ? (
+                    <div className="text-emerald-700 font-bold not-italic text-sm">
+                      ✓ Đã có xác nhận lâm sàng
                     </div>
-                  </div>
-
-                  {/* Chữ ký điện tử uốn lượn màu xanh mực */}
-                  <div className="relative z-10 font-serif italic text-xl font-bold text-blue-900 tracking-wide rotate-[-3deg] select-none">
-                    BS. Nguyễn Hải Nam
-                  </div>
+                  ) : (
+                    <div className="text-[10px] text-slate-400 not-italic border border-dashed border-slate-300 rounded px-2 py-1">
+                      (Chưa có bác sĩ thú y chứng thực chính thức)
+                    </div>
+                  )}
                 </div>
 
-                {/* Thông tin bác sĩ chứng thực */}
                 <div className="border-t border-slate-300 pt-1">
-                  <div className="text-xs font-black text-slate-950">
-                    BS. Nguyễn Hải Nam (CCHN: 00981/TY-HN)
+                  <div className="text-xs font-bold text-slate-800">
+                    Bác sĩ phụ trách: {vaccines.find(v => v.completed && v.doctor && !v.doctor.includes('Người nuôi'))?.doctor || 'Chưa cập nhật'}
                   </div>
-                  <div className="text-[9px] text-slate-600">
-                    Giám đốc Chuyên môn • Bệnh Viện Thú Y PetCare Central
-                  </div>
-                  <div className="text-[8px] font-mono text-emerald-800 mt-0.5">
-                    Mã xác thực số: SHA256: {activePet.microchip}-WSAVA-VALIDATED
+                  <div className="text-[8px] font-mono text-slate-500 mt-0.5">
+                    Mã hồ sơ: {activePet.id} • Cấp ngày: {formatDateVi(getTodayVnDate())}
                   </div>
                 </div>
-
               </div>
 
             </div>

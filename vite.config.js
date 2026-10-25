@@ -12,7 +12,7 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 5173,
     watch: {
-      ignored: ['**/scratch/**', '**/temp_*/**', '**/.git/**']
+      ignored: ['**/scratch/**', '**/temp_*/**', '**/.git/**', '**/server/**', '**/tests/**']
     },
     proxy: {
       '/api': {

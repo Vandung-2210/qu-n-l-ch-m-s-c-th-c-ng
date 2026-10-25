@@ -20,18 +20,29 @@ import { AdminBackupView } from './AdminBackupView';
 import { DayNightSwitch } from '../common/DayNightSwitch';
 import { useTheme } from '../../context/ThemeContext';
 import { sound } from '../../services/soundService';
+import { AdminAuditLogsView } from './AdminAuditLogsView';
+import { AdminAiDocsView } from './AdminAiDocsView';
+import { VetAppointmentsAdminView } from '../booking/VetAppointmentsAdminView';
+import { Calendar, Bot, FileText } from 'lucide-react';
 
 export const AdminPortal = ({
   currentUser,
   users = [],
+  usersLoading = false,
+  usersError = null,
+  onRetryLoadUsers = null,
   pets = [],
   schedules = [],
+  appointments = [],
+  onUpdateAppointment,
+  onDeleteAppointment,
+  onOpenCreateBooking,
   onLogout,
   onSwitchPortal,
   onUsersUpdated,
   onDataChanged
 }) => {
-  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'accounts' | 'backup'
+  const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'accounts' | 'appointments' | 'docs' | 'audit' | 'backup'
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { theme, isDark, toggleTheme } = useTheme();
 
@@ -46,6 +57,24 @@ export const AdminPortal = ({
       id: 'accounts',
       label: 'Quản lý tài khoản',
       icon: Users,
+      badge: null
+    },
+    {
+      id: 'appointments',
+      label: 'Lịch khám & Phân công',
+      icon: Calendar,
+      badge: (appointments || []).filter(a => a.status === 'Chờ duyệt' || a.status === 'pending').length || null
+    },
+    {
+      id: 'docs',
+      label: 'Tri thức AI & FAQ',
+      icon: FileText,
+      badge: null
+    },
+    {
+      id: 'audit',
+      label: 'Nhật ký kiểm toán',
+      icon: Activity,
       badge: null
     },
     {
@@ -258,6 +287,9 @@ export const AdminPortal = ({
             {activeTab === 'overview' && (
               <AdminOverviewView
                 users={users}
+                usersLoading={usersLoading}
+                usersError={usersError}
+                onRetry={onRetryLoadUsers}
                 pets={pets}
                 schedules={schedules}
                 onNavigateTab={(tab) => {
@@ -270,9 +302,31 @@ export const AdminPortal = ({
             {activeTab === 'accounts' && (
               <AdminAccountsView
                 users={users}
+                usersLoading={usersLoading}
+                usersError={usersError}
+                onRetry={onRetryLoadUsers}
                 currentAdmin={currentUser}
                 onUsersUpdated={onUsersUpdated}
               />
+            )}
+
+            {activeTab === 'appointments' && (
+              <VetAppointmentsAdminView
+                appointments={appointments}
+                users={users}
+                pets={pets}
+                onUpdateAppointment={onUpdateAppointment}
+                onDeleteAppointment={onDeleteAppointment}
+                onOpenCreateBooking={onOpenCreateBooking}
+              />
+            )}
+
+            {activeTab === 'docs' && (
+              <AdminAiDocsView />
+            )}
+
+            {activeTab === 'audit' && (
+              <AdminAuditLogsView currentAdmin={currentUser} />
             )}
 
             {activeTab === 'backup' && (

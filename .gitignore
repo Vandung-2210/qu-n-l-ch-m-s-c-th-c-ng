@@ -23,3 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 *.zip
+
+# Test profiles & temporary artifacts
+scratch/cdp_test_profile*/
+scratch/*.png
+server/data_backup_before_fix/
+server/uploads/avatars/*
+!server/uploads/avatars/.gitkeep

@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { WeeklyCalendar, formatDateKey } from './WeeklyCalendar';
 import { getAppointments, getPetsHealthData, updatePetWeight, normalizePetHealthKey } from '../../services/storageService';
+import { getTodayVnDate, getVnDateString, formatDateVi } from '../../utils/dateUtils.js';
+import { useCurrentVnDate } from '../../hooks/useCurrentVnDate';
 import { 
   Bell, 
   ShieldAlert, 
@@ -57,11 +59,12 @@ export const OwnerDashboardView = ({
   currentUser = null
 }) => {
   const [selectedPetFilter, setSelectedPetFilter] = useState('all');
-  const [selectedBiometricPet, setSelectedBiometricPet] = useState('mochi');
+  const [selectedBiometricPet, setSelectedBiometricPet] = useState(() => pets[0]?.id || '');
   const [isEmergencyModalOpen, setIsEmergencyModalOpen] = useState(false);
   const [appointmentConfirmed, setAppointmentConfirmed] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
-  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => new Date());
+  const todayVn = useCurrentVnDate();
+  const [selectedCalendarDate, setSelectedCalendarDate] = useState(() => getTodayVnDate());
 
   // Đồng bộ danh sách lịch hẹn lâm sàng
   const allAppointments = useMemo(() => {
@@ -78,7 +81,8 @@ export const OwnerDashboardView = ({
       .filter(apt => {
         if (!apt || !apt.date) return false;
         const timeStr = apt.time ? (apt.time.length === 5 ? apt.time : apt.time.padStart(5, '0')) : '09:00';
-        const aptDateTime = new Date(`${apt.date}T${timeStr}:00`);
+        const cleanDate = getVnDateString(apt.date);
+        const aptDateTime = new Date(`${cleanDate}T${timeStr}:00+07:00`);
         const st = String(apt.status || '').toUpperCase().trim();
         const isCancelled = st === 'CANCELLED' || st === 'HỦY' || st === 'CANCEL';
         const isCompleted = st === 'COMPLETED' || st === 'HOÀN THÀNH' || st === 'ĐÃ KHÁM' || Boolean(apt.completed);
@@ -88,7 +92,7 @@ export const OwnerDashboardView = ({
       .sort((a, b) => {
         const timeA = a.time ? (a.time.length === 5 ? a.time : a.time.padStart(5, '0')) : '09:00';
         const timeB = b.time ? (b.time.length === 5 ? b.time : b.time.padStart(5, '0')) : '09:00';
-        return new Date(`${a.date}T${timeA}:00`) - new Date(`${b.date}T${timeB}:00`);
+        return new Date(`${getVnDateString(a.date)}T${timeA}:00+07:00`) - new Date(`${getVnDateString(b.date)}T${timeB}:00+07:00`);
       })[0] || null;
   }, [allAppointments]);
 
@@ -205,7 +209,7 @@ export const OwnerDashboardView = ({
     setIsWeightModalOpen(true);
   };
 
-  const handleSaveWeight = (e) => {
+  const handleSaveWeight = async (e) => {
     e?.preventDefault?.();
     const val = parseFloat(weightModalValue);
     if (isNaN(val) || val <= 0 || val > 150) {
@@ -241,11 +245,15 @@ export const OwnerDashboardView = ({
       [selectedBiometricPet]: updatedList
     };
 
-    saveWeightHistories(nextHistories);
-    updatePetWeight(selectedBiometricPet, val, noteText);
-    sound.playSuccess();
-    showToast(`✓ Đã cập nhật cân nặng ${val} kg cho bé ${currentBiometricPet?.name || 'thú cưng'} thành công!`);
-    setIsWeightModalOpen(false);
+    try {
+      await updatePetWeight(selectedBiometricPet, val, noteText);
+      saveWeightHistories(nextHistories);
+      sound.playSuccess();
+      showToast(`✓ Đã cập nhật cân nặng ${val} kg cho bé ${currentBiometricPet?.name || 'thú cưng'} thành công!`);
+      setIsWeightModalOpen(false);
+    } catch (err) {
+      setWeightModalError(err.message || 'Lỗi khi lưu cân nặng lên máy chủ. Dữ liệu nhập vẫn được giữ nguyên.');
+    }
   };
 
   // Quản lý danh sách việc chăm sóc hôm nay
@@ -253,8 +261,8 @@ export const OwnerDashboardView = ({
 
   useEffect(() => {
     if (schedules && schedules.length > 0) {
-      const today = new Date().toISOString().split('T')[0];
-      const todaySchedules = schedules.filter(s => s.date === today);
+      const today = getTodayVnDate();
+      const todaySchedules = schedules.filter(s => s && getVnDateString(s.date) === today);
       setDailyTasks(todaySchedules.map((s, index) => ({
         id: s.id,
         title: s.title,
@@ -371,15 +379,16 @@ export const OwnerDashboardView = ({
 
   // Tiêu đề ngày được chọn trên lộ trình lâm sàng
   const selectedDayTitle = useMemo(() => {
-    const todayKey = formatDateKey(new Date());
-    const d = String(selectedCalendarDate.getDate()).padStart(2, '0');
-    const m = String(selectedCalendarDate.getMonth() + 1).padStart(2, '0');
+    const todayKey = todayVn;
+    const selYmd = getVnDateString(selectedCalendarDate);
+    const [, selM, selD] = selYmd.split('-');
     if (selectedDateKey === todayKey) {
-      return `Hôm nay (${d}/${m})`;
+      return `Hôm nay (${selD}/${selM})`;
     }
     const days = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-    const dayName = days[selectedCalendarDate.getDay()];
-    return `${dayName} (${d}/${m})`;
+    const dObj = selectedCalendarDate instanceof Date ? selectedCalendarDate : new Date(selYmd);
+    const dayName = days[dObj.getDay()];
+    return `${dayName} (${selD}/${selM})`;
   }, [selectedCalendarDate, selectedDateKey]);
 
   // Tổng hợp lộ trình lâm sàng và lịch trình THEO ĐÚNG NGÀY ĐANG CHỌN (selectedDateKey)
@@ -406,7 +415,7 @@ export const OwnerDashboardView = ({
       .filter(s => s && s.date === selectedDateKey)
       .map(s => {
         const pet = (pets || []).find(p => p.id === s.petId);
-        const petKey = pet?.species === 'cat' ? 'luna' : pet?.species === 'rabbit' ? 'banhbao' : 'mochi';
+        const petKey = pet?.id || s.petId || '';
         const petName = pet?.name || s.petName || 'Thú cưng';
         
         const isVaccine = s.type === 'vaccine';
@@ -454,12 +463,8 @@ export const OwnerDashboardView = ({
   const filteredTimeline = useMemo(() => {
     if (selectedPetFilter === 'all') return activeDayTimelineItems;
     return activeDayTimelineItems.filter(item => {
-      const pKey = (item.petKey || item.petId || '').toLowerCase();
-      const pName = (item.petName || '').toLowerCase();
-      if (selectedPetFilter === 'mochi' || selectedPetFilter === 'luna' || selectedPetFilter === 'banhbao') {
-        return pKey === selectedPetFilter; // Keep logic if filters still use old ids
-      }
-      return pKey === selectedPetFilter;
+      const pId = String(item.petId || item.petKey || '').trim();
+      return pId === String(selectedPetFilter).trim();
     });
   }, [activeDayTimelineItems, selectedPetFilter]);
 
@@ -481,11 +486,23 @@ export const OwnerDashboardView = ({
         {/* Dòng chào hỏi */}
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            <span>Hi, {currentUser?.name || 'Mạnh Đinh'}!</span>
+            <span>Hi, {currentUser?.name || 'Bạn'}!</span>
             <span className="text-xl">🐾</span>
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {pets.length > 0 ? `Bạn đang chăm sóc ${pets.length} bé thú cưng.` : 'Bạn chưa thêm thú cưng nào.'}
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 flex items-center gap-2">
+            {pets.length > 0 ? (
+              `Bạn đang chăm sóc ${pets.length} bé thú cưng.`
+            ) : (
+              <>
+                <span>Bạn chưa thêm thú cưng nào.</span>
+                <button 
+                  onClick={onOpenAddPet}
+                  className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline cursor-pointer flex items-center gap-1"
+                >
+                  <Plus className="w-3 h-3" /> Thêm thú cưng
+                </button>
+              </>
+            )}
           </p>
         </div>
 
@@ -541,7 +558,8 @@ export const OwnerDashboardView = ({
           <button
             onClick={() => {
               sound.playPop();
-              onAskAiPrompt('Xin chào Bác sĩ Dr. Paw! Hôm nay thể trạng các bé Mochi, Luna và Bánh Bao thế nào?');
+              const petNamesStr = pets.length > 0 ? pets.map(p => p.name).join(', ') : 'thú cưng';
+              onAskAiPrompt(`Xin chào Bác sĩ Dr. Paw! Hôm nay thể trạng các bé ${petNamesStr} thế nào?`);
             }}
             className="flex items-center gap-2 px-3 sm:px-3.5 py-2 rounded-2xl bg-gradient-to-r from-indigo-900 via-indigo-950 to-purple-950 hover:from-indigo-800 hover:to-purple-900 border border-indigo-500/40 text-white transition-all shadow-lg shadow-indigo-950/40 shrink-0 cursor-pointer group"
           >
@@ -619,7 +637,7 @@ export const OwnerDashboardView = ({
                     <span className="text-[9px] text-slate-500 dark:text-slate-400">10m trước</span>
                   </div>
                   <p className="text-[11px] text-slate-700 dark:text-slate-200 mt-0.5 leading-snug">
-                    "Theo dõi phản ứng sau tiêm của bé Mochi. Nếu thân nhiệt &gt;39.5°C hãy kích hoạt cấp cứu ngay."
+                    "Theo dõi phản ứng sau tiêm hoặc dùng thuốc của bé. Nếu thân nhiệt &gt;39.5°C hãy kích hoạt cấp cứu ngay."
                   </p>
                 </div>
               </div>
@@ -650,62 +668,80 @@ export const OwnerDashboardView = ({
                   Việc Chăm Sóc Hôm Nay
                 </h2>
               </div>
-              <span className="text-[10px] font-mono text-cyan-700 dark:text-cyan-300 bg-cyan-500/15 px-2 py-0.5 rounded-full border border-cyan-400/30">
-                {completedTasksCount} / {dailyTasks.length} hoàn thành
+              <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                dailyTasks.length === 0
+                  ? 'text-slate-500 bg-slate-500/10 border-slate-500/20'
+                  : completedTasksCount === dailyTasks.length
+                  ? 'text-emerald-700 dark:text-emerald-300 bg-emerald-500/15 border-emerald-400/30'
+                  : 'text-cyan-700 dark:text-cyan-300 bg-cyan-500/15 border-cyan-400/30'
+              }`}>
+                {dailyTasks.length === 0 
+                  ? 'Chưa có lịch hôm nay' 
+                  : completedTasksCount === dailyTasks.length
+                  ? `Đã hoàn thành tất cả (${completedTasksCount}/${dailyTasks.length})`
+                  : `${completedTasksCount} / ${dailyTasks.length} hoàn thành`}
               </span>
             </div>
 
             {/* Tasks List */}
             <div className="flex-1 min-h-0 flex flex-col justify-around py-1 gap-2 overflow-y-auto custom-scrollbar">
-              {dailyTasks.map(task => {
-                const isTaskDone = Boolean(task.isCompleted);
-                const dueDisplay = task.dueTime ? `Hạn ${task.dueTime}` : (task.deadline || 'Hôm nay');
-                const petLabel = task.pet || task.petName || 'Mochi';
-                const progressVal = task.progress !== undefined ? task.progress : (isTaskDone ? 100 : 0);
+              {dailyTasks.length === 0 ? (
+                <div className="flex-1 flex flex-col items-center justify-center py-6 text-center text-slate-400">
+                  <CalendarCheck className="w-8 h-8 text-slate-400/40 mb-2" />
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">Chưa có lịch chăm sóc hôm nay</p>
+                  <p className="text-[11px] text-slate-400 mt-0.5">Bấm nút [+] phía trên để lên lịch mới cho thú cưng</p>
+                </div>
+              ) : (
+                dailyTasks.map(task => {
+                  const isTaskDone = Boolean(task.isCompleted);
+                  const dueDisplay = task.dueTime ? `Hạn ${task.dueTime}` : (task.deadline || 'Hôm nay');
+                  const petLabel = task.pet || task.petName || 'Thú cưng';
+                  const progressVal = task.progress !== undefined ? task.progress : (isTaskDone ? 100 : 0);
 
-                return (
-                  <div 
-                    key={task.id} 
-                    onClick={() => handleToggleTask(task.id)}
-                    className="p-2.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06] border border-slate-200/80 dark:border-white/[0.06] transition-all cursor-pointer select-none group/task"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-all ${
-                          isTaskDone 
-                            ? 'bg-cyan-500 dark:bg-cyan-400 border-cyan-500 dark:border-cyan-400 text-white dark:text-[#0B0C10]' 
-                            : 'border-slate-300 dark:border-white/30 text-transparent group-hover/task:border-cyan-400'
-                        }`}>
-                          <Check className="w-3 h-3 stroke-[3]" />
+                  return (
+                    <div 
+                      key={task.id} 
+                      onClick={() => handleToggleTask(task.id)}
+                      className="p-2.5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/[0.06] border border-slate-200/80 dark:border-white/[0.06] transition-all cursor-pointer select-none group/task"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-4 h-4 rounded-full flex items-center justify-center border transition-all ${
+                            isTaskDone 
+                              ? 'bg-cyan-500 dark:bg-cyan-400 border-cyan-500 dark:border-cyan-400 text-white dark:text-[#0B0C10]' 
+                              : 'border-slate-300 dark:border-white/30 text-transparent group-hover/task:border-cyan-400'
+                          }`}>
+                            <Check className="w-3 h-3 stroke-[3]" />
+                          </div>
+                          <span className={`text-xs font-bold transition-all ${isTaskDone ? 'text-slate-400 dark:text-slate-500 line-through opacity-70' : 'text-slate-800 dark:text-white'}`}>
+                            {task.title}
+                          </span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">({petLabel})</span>
                         </div>
-                        <span className={`text-xs font-bold transition-all ${isTaskDone ? 'text-slate-400 dark:text-slate-500 line-through opacity-70' : 'text-slate-800 dark:text-white'}`}>
-                          {task.title}
-                        </span>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">({petLabel})</span>
+
+                        <div className="flex items-center gap-1.5">
+                          <Clock className="w-3 h-3 text-slate-400" />
+                          <span className="text-[10px] font-mono text-slate-600 dark:text-slate-300">{dueDisplay}</span>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-1.5">
-                        <Clock className="w-3 h-3 text-slate-400" />
-                        <span className="text-[10px] font-mono text-slate-600 dark:text-slate-300">{dueDisplay}</span>
+                      {/* Thanh tiến độ Cyan / Indigo */}
+                      <div className="mt-2 w-full h-1.5 rounded-full bg-slate-200 dark:bg-white/[0.08] overflow-hidden">
+                        <div 
+                          className={`h-full rounded-full transition-all duration-500 ${
+                            task.color === 'cyan' 
+                              ? 'bg-cyan-500 dark:bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.7)]' 
+                              : task.color === 'indigo'
+                              ? 'bg-indigo-600 dark:bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.7)]'
+                              : 'bg-slate-400 dark:bg-slate-600'
+                          }`}
+                          style={{ width: `${progressVal}%` }}
+                        />
                       </div>
                     </div>
-
-                    {/* Thanh tiến độ Cyan / Indigo */}
-                    <div className="mt-2 w-full h-1.5 rounded-full bg-slate-200 dark:bg-white/[0.08] overflow-hidden">
-                      <div 
-                        className={`h-full rounded-full transition-all duration-500 ${
-                          task.color === 'cyan' 
-                            ? 'bg-cyan-500 dark:bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.7)]' 
-                            : task.color === 'indigo'
-                            ? 'bg-indigo-600 dark:bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.7)]'
-                            : 'bg-slate-400 dark:bg-slate-600'
-                        }`}
-                        style={{ width: `${progressVal}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
 
             {/* Bottom action */}
@@ -782,7 +818,7 @@ export const OwnerDashboardView = ({
                   </div>
                   <h4 className="text-xs font-bold text-slate-800 dark:text-white">
                     {selectedPetFilter !== 'all' 
-                      ? `Không có ca khám nào của bé ${selectedPetFilter === 'mochi' ? 'Mochi' : selectedPetFilter === 'luna' ? 'Luna' : 'Bánh Bao'}` 
+                      ? `Không có ca khám nào của bé ${(pets || []).find(p => p.id === selectedPetFilter)?.name || 'được chọn'}` 
                       : 'Không có ca khám hoặc lịch trình nào'}
                   </h4>
                   <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-[240px]">
@@ -1264,7 +1300,10 @@ export const OwnerDashboardView = ({
                   <button
                     onClick={() => {
                       sound.playClick();
-                      onOpenVetBooking(upcomingAppointment);
+                      onOpenVetBooking({
+                        ...upcomingAppointment,
+                        isAiVision: false
+                      });
                     }}
                     className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-white/[0.05] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-xs font-semibold border border-slate-200 dark:border-white/10 transition-all cursor-pointer"
                   >
@@ -1295,7 +1334,10 @@ export const OwnerDashboardView = ({
                   type="button"
                   onClick={() => {
                     sound.playClick();
-                    onOpenVetBooking();
+                    onOpenVetBooking({
+                      petId: selectedPetId && selectedPetId !== 'all' ? selectedPetId : null,
+                      isAiVision: false
+                    });
                   }}
                   className="px-3.5 py-1.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/20 hover:bg-indigo-100 dark:hover:bg-indigo-500/30 text-indigo-700 dark:text-indigo-300 font-bold text-xs border border-indigo-200 dark:border-indigo-500/30 transition-all cursor-pointer inline-flex items-center gap-1.5 shadow-xs active:scale-95"
                 >

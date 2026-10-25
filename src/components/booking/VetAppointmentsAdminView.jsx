@@ -39,11 +39,37 @@ export const VetAppointmentsAdminView = ({
   onUpdateAppointment,
   onDeleteAppointment,
   onOpenCreateBooking,
-  pets = []
+  pets = [],
+  users = []
 }) => {
   const [filterStatus, setFilterStatus] = useState('all'); // 'all' | 'Chờ duyệt' | 'Đã duyệt' | 'Đang khám' | 'Hoàn thành' | 'Đã hủy'
   const [searchQuery, setSearchQuery] = useState('');
   const [filterFacility, setFilterFacility] = useState('all');
+
+  // Chuẩn hóa trạng thái lịch khám (hỗ trợ cả mã tiếng Anh và nhãn tiếng Việt)
+  const normalizeStatus = (status) => {
+    if (!status) return 'Chờ duyệt';
+    const s = String(status).toLowerCase();
+    if (s === 'pending' || s === 'chờ duyệt') return 'Chờ duyệt';
+    if (s === 'confirmed' || s === 'đã duyệt') return 'Đã duyệt';
+    if (s === 'in_progress' || s === 'đang khám') return 'Đang khám';
+    if (s === 'completed' || s === 'hoàn thành') return 'Hoàn thành';
+    if (s === 'cancelled' || s === 'đã hủy') return 'Đã hủy';
+    return status;
+  };
+
+  // Danh sách bác sĩ thực tế từ cơ sở dữ liệu tài khoản
+  const availableVetDoctors = React.useMemo(() => {
+    const fromUsers = (users || []).filter(u => u.role === 'vet_doctor' && (!u.vetStatus || u.vetStatus === 'approved') && !u.isLocked);
+    if (fromUsers.length > 0) {
+      return fromUsers.map(u => ({
+        id: u.id,
+        name: u.name.startsWith('BS.') ? u.name : `BS. ${u.name}`,
+        spec: u.specialty || 'Khoa Khám & Điều trị Thú y'
+      }));
+    }
+    return VET_DOCTORS;
+  }, [users]);
 
   // Modal đổi giờ / từ chối
   const [rescheduleItem, setRescheduleItem] = useState(null);
@@ -52,20 +78,21 @@ export const VetAppointmentsAdminView = ({
 
   // Modal chỉ định Bác sĩ
   const [assignDoctorItem, setAssignDoctorItem] = useState(null);
-  const [selectedDoctor, setSelectedDoctor] = useState(VET_DOCTORS[0].name);
+  const [selectedDoctor, setSelectedDoctor] = useState(availableVetDoctors[0].name);
 
   // Thống kê nhanh
   const totalCount = appointments.length;
-  const pendingCount = appointments.filter(a => a.status === 'Chờ duyệt').length;
-  const approvedCount = appointments.filter(a => a.status === 'Đã duyệt').length;
-  const inProgressCount = appointments.filter(a => a.status === 'Đang khám').length;
-  const completedCount = appointments.filter(a => a.status === 'Hoàn thành').length;
+  const pendingCount = appointments.filter(a => normalizeStatus(a.status) === 'Chờ duyệt').length;
+  const approvedCount = appointments.filter(a => normalizeStatus(a.status) === 'Đã duyệt').length;
+  const inProgressCount = appointments.filter(a => normalizeStatus(a.status) === 'Đang khám').length;
+  const completedCount = appointments.filter(a => normalizeStatus(a.status) === 'Hoàn thành').length;
   const emergencyCount = appointments.filter(a => a.isEmergency || (a.service || '').includes('Cấp cứu')).length;
 
   // Lọc danh sách lịch khám
   const filteredAppointments = appointments.filter(app => {
-    const matchStatus = filterStatus === 'all' || app.status === filterStatus;
-    const matchFacility = filterFacility === 'all' || app.facility.includes(filterFacility);
+    const norm = normalizeStatus(app.status);
+    const matchStatus = filterStatus === 'all' || norm === filterStatus;
+    const matchFacility = filterFacility === 'all' || (app.facility || '').includes(filterFacility);
     
     const q = searchQuery.toLowerCase().trim();
     const matchQuery = !q || (
@@ -84,7 +111,8 @@ export const VetAppointmentsAdminView = ({
     try { sound.playSuccess(); } catch (_) {}
     onUpdateAppointment(appointment.id, {
       status: 'Đã duyệt',
-      assignedVet: appointment.assignedVet === 'Đang xếp lịch' ? 'BS. Dr. Paw (AI)' : appointment.assignedVet,
+      assignedVet: appointment.assignedVet === 'Đang xếp lịch' ? availableVetDoctors[0].name : appointment.assignedVet,
+      assignedVetId: appointment.assignedVetId || availableVetDoctors[0].id,
       adminNote: appointment.adminNote || ''
     });
   };
@@ -111,17 +139,24 @@ export const VetAppointmentsAdminView = ({
   const handleOpenAssign = (appointment) => {
     try { sound.playClick(); } catch (_) {}
     setAssignDoctorItem(appointment);
-    setSelectedDoctor(appointment.assignedVet !== 'Đang xếp lịch' ? appointment.assignedVet : VET_DOCTORS[0].name);
+    const existingDoc = availableVetDoctors.find(d => d.id === appointment.assignedVetId || d.name === appointment.assignedVet);
+    setSelectedDoctor(existingDoc ? existingDoc.name : availableVetDoctors[0].name);
   };
 
-  const handleSaveAssign = () => {
+  const handleSaveAssign = async () => {
     if (!assignDoctorItem) return;
     try { sound.playSuccess(); } catch (_) {}
-    onUpdateAppointment(assignDoctorItem.id, {
-      assignedVet: selectedDoctor,
-      status: assignDoctorItem.status === 'Chờ duyệt' ? 'Đã duyệt' : assignDoctorItem.status
-    });
-    setAssignDoctorItem(null);
+    const chosenDoc = availableVetDoctors.find(d => d.name === selectedDoctor) || availableVetDoctors[0];
+    try {
+      await onUpdateAppointment(assignDoctorItem.id, {
+        assignedVet: chosenDoc.name,
+        assignedVetId: chosenDoc.id,
+        status: (normalizeStatus(assignDoctorItem.status) === 'Chờ duyệt') ? 'Đã duyệt' : assignDoctorItem.status
+      });
+      setAssignDoctorItem(null);
+    } catch (err) {
+      alert(err.message || 'Lỗi khi phân công bác sĩ. Vui lòng kiểm tra xung đột trùng lịch khám.');
+    }
   };
 
   // 5. Mở modal từ chối / đổi giờ
@@ -646,7 +681,7 @@ export const VetAppointmentsAdminView = ({
             </p>
 
             <div className="space-y-2">
-              {VET_DOCTORS.map((doc) => {
+              {availableVetDoctors.map((doc) => {
                 const isSelected = selectedDoctor === doc.name;
                 return (
                   <button

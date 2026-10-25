@@ -34,6 +34,84 @@ html, body, #root {
     background-color: #0B0C10;
     color: #f8fafc;
   }
+
+  /* Universal Form Control High-Contrast Clarity & Placeholders */
+  input, select, textarea {
+    color: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: #94a3b8;
+    opacity: 1;
+  }
+
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #64748b;
+    opacity: 1;
+  }
+
+  /* Date & Time Input Defaults & High Contrast Controls */
+  input[type="date"],
+  input[type="time"] {
+    color-scheme: light;
+  }
+
+  .dark input[type="date"],
+  .dark input[type="time"] {
+    color-scheme: dark;
+  }
+
+  input[type="date"].light-scheme,
+  input[type="time"].light-scheme,
+  [data-theme="light"] input[type="date"],
+  [data-theme="light"] input[type="time"] {
+    color-scheme: light;
+  }
+
+  input[type="date"]::-webkit-datetime-edit,
+  input[type="time"]::-webkit-datetime-edit {
+    color: inherit;
+    font-weight: 600;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-fields-wrapper,
+  input[type="time"]::-webkit-datetime-edit-fields-wrapper {
+    color: inherit;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-text,
+  input[type="time"]::-webkit-datetime-edit-text {
+    color: inherit;
+    opacity: 0.85;
+  }
+
+  input[type="date"]::-webkit-datetime-edit-month-field,
+  input[type="date"]::-webkit-datetime-edit-day-field,
+  input[type="date"]::-webkit-datetime-edit-year-field,
+  input[type="time"]::-webkit-datetime-edit-hour-field,
+  input[type="time"]::-webkit-datetime-edit-minute-field {
+    color: inherit;
+    font-weight: 600;
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.15s ease-in-out;
+  }
+
+  .dark input[type="date"]:not(.light-scheme)::-webkit-calendar-picker-indicator,
+  .dark input[type="time"]:not(.light-scheme)::-webkit-calendar-picker-indicator {
+    filter: invert(0.9);
+  }
+
+  input[type="date"]::-webkit-calendar-picker-indicator:hover,
+  input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
 }
 
 /* Aura Light Glassmorphism Design Tokens */
@@ -189,30 +267,153 @@ button {
 /* ========================================================================== */
 /* WSAVA PET PASSPORT PRINT ENGINE - A4 PORTRAIT FORMAT                       */
 /* ========================================================================== */
+/* KHUNG IN TOÀN CỤC (PRINT PORTALS - ẨN MẶC ĐỊNH TRÊN MÀN HÌNH)               */
+/* ========================================================================== */
+#pet-id-print-portal,
+#wsava-print-portal {
+  display: none !important;
+}
+
 @media print {
   @page {
     size: A4 portrait;
     margin: 8mm 10mm 8mm 10mm;
   }
 
-  /* Reset viewport constraints for printing */
+  /* Reset toàn bộ ràng buộc viewport và body khi in */
   html, body {
     height: auto !important;
+    min-height: 0 !important;
     max-height: none !important;
-    overflow: visible !important;
     background: #ffffff !important;
     color: #0f172a !important;
     margin: 0 !important;
     padding: 0 !important;
-  }
-
-  body {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  /* -------------------------------------------------------------------------- */
+  /* 1. CHẾ ĐỘ IN THẺ CĂN CƯỚC THÚ CƯNG (DUY NHẤT 1 TRANG HOÀN HẢO)            */
+  /* -------------------------------------------------------------------------- */
+  html:has(body.pet-id-printing),
+  body.pet-id-printing {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Triệt tiêu hoàn toàn tất cả các phần tử con trực tiếp của body ngoại trừ #pet-id-print-portal */
+  body.pet-id-printing > *:not(#pet-id-print-portal) {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    position: absolute !important;
+    top: -9999px !important;
+    left: -9999px !important;
+  }
+
+  /* Triệt tiêu nguy cơ render trùng với khung in khác */
+  body.pet-id-printing #wsava-print-portal {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Định tuyến cổng in Thẻ Căn Cước Pet ID: Khóa trang đơn, chống tràn và chống ngắt trang */
+  body.pet-id-printing #pet-id-print-portal {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Thẻ căn cước in ấn: Rộng 170mm, căn giữa, margin-bottom = 0 triệt tiêu margin collapse gây tràn trang 2 */
+  body.pet-id-printing .pet-id-print-card {
+    display: block !important;
+    visibility: visible !important;
+    width: 170mm !important;
+    max-width: 100% !important;
+    margin: 6mm auto 0 auto !important;
+    padding: 5mm 7mm !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    border: 2px solid #047857 !important;
+    border-radius: 4mm !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
+    page-break-before: avoid !important;
+    break-before: avoid !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body.pet-id-printing .pet-id-print-card * {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /* 2. CHẾ ĐỘ IN SỔ HỘ CHIẾU TIÊM CHỦNG WSAVA PASSPORT                         */
+  /* -------------------------------------------------------------------------- */
+  body.wsava-modal-active {
+    overflow: visible !important;
+  }
+
+  body.wsava-modal-active > *:not(#wsava-print-portal) {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  body.wsava-modal-active #pet-id-print-portal {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+  }
+
+  body.wsava-modal-active #wsava-print-portal {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
   /* Ẩn toàn bộ chrome ứng dụng, sidebar, header, chatbot và floating elements khi in */
-  body.wsava-modal-active #root,
   .no-print,
   .no-print *,
   header,
@@ -223,18 +424,6 @@ button {
   [role="navigation"] {
     display: none !important;
     visibility: hidden !important;
-  }
-
-  /* Định tuyến khung in WSAVA Passport */
-  #wsava-print-portal {
-    display: block !important;
-    position: static !important;
-    width: 100% !important;
-    height: auto !important;
-    overflow: visible !important;
-    background: #ffffff !important;
-    padding: 0 !important;
-    margin: 0 !important;
   }
 
   .no-print-wrapper {

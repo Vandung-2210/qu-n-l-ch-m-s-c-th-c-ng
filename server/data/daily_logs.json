@@ -1,0 +1,17 @@
+[
+  {
+    "id": "log_user_owner_demo_pet-demo-1792858945034_2026-10-26",
+    "petId": "pet-demo-1792858945034",
+    "ownerId": "user_vet_pro",
+    "date": "2026-10-26",
+    "mood": "alert",
+    "questsDone": [],
+    "gesturesRecorded": [
+      "g1",
+      "g2",
+      "g3"
+    ],
+    "updatedAt": "2026-10-25T17:06:07.614Z",
+    "createdAt": "2026-10-25T17:05:59.541Z"
+  }
+]

@@ -23,6 +23,8 @@ import {
 import { NotificationDropdown } from './NotificationDropdown';
 import { DayNightSwitch } from '../common/DayNightSwitch';
 import { sound } from '../../services/soundService';
+import { getTodayVnDate, getVnDateString } from '../../utils/dateUtils.js';
+import { useCurrentVnDate } from '../../hooks/useCurrentVnDate';
 
 export const Navbar = ({ 
   pets = [], 
@@ -54,13 +56,15 @@ export const Navbar = ({
 
   const handleLogout = () => {
     try { sound?.playClick?.(); } catch {}
-    localStorage.removeItem('petcare_active_user');
-    localStorage.removeItem('petcare_current_user');
-    localStorage.removeItem('petcare_is_authenticated');
-    localStorage.removeItem('petcare_current_portal');
     if (onLogout) {
       onLogout();
     } else {
+      localStorage.removeItem('petcare_active_user');
+      localStorage.removeItem('petcare_current_user');
+      localStorage.removeItem('petcare_is_authenticated');
+      localStorage.removeItem('petcare_current_portal');
+      localStorage.removeItem('petcare_token');
+      localStorage.removeItem('petcare_auth_token');
       window.location.reload();
     }
   };
@@ -74,8 +78,8 @@ export const Navbar = ({
     }
   };
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const urgentCount = schedules.filter(s => (s.date <= todayStr) && !s.completed).length;
+  const todayStr = useCurrentVnDate();
+  const urgentCount = schedules.filter(s => s && s.date && (getVnDateString(s.date) <= todayStr) && !s.completed).length;
 
   const quickTabs = [
     { id: 'dashboard', label: 'Dashboard' },

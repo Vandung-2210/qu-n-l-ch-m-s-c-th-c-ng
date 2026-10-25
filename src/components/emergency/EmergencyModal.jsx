@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { sound } from '../../services/soundService';
 import { saveActiveAppointments, getActiveAppointments } from '../../services/storageService';
+import { getTodayVnDate } from '../../utils/dateUtils';
 
 /**
  * EmergencyModal - Trung tâm Cấp Cứu Thú Y 24/7 & Hồi Sức Tích Cực
@@ -39,11 +40,11 @@ export const EmergencyModal = ({
 
   if (!isOpen) return null;
 
-  // Lấy thông tin bé cưng tự động theo yêu cầu (Mochi - Golden Retriever, 24.5kg)
-  const petName = currentPet?.name || 'Mochi';
-  const petBreed = currentPet?.breed || (currentPet?.species === 'cat' ? 'Mèo Anh Lông Ngắn' : currentPet?.species === 'rabbit' ? 'Thỏ Minilop' : 'Golden Retriever');
-  const petWeight = currentPet?.weight ? `${currentPet.weight}kg` : '24.5kg';
-  const petEmergencyTitle = `${petName} - ${petBreed}, ${petWeight}`;
+  // Lấy thông tin bé cưng từ state hiện tại
+  const petName = currentPet?.name || 'Thú cưng';
+  const petBreed = currentPet?.breed || (currentPet?.species === 'cat' ? 'Mèo' : currentPet?.species === 'dog' ? 'Chó' : (currentPet?.species || 'Chưa rõ giống'));
+  const petWeight = currentPet?.weight ? `${currentPet.weight}kg` : 'Chưa rõ cân nặng';
+  const petEmergencyTitle = currentPet ? `${petName} - ${petBreed}, ${petWeight}` : 'Chưa chọn thú cưng';
 
   // Xử lý gửi tín hiệu báo động đỏ tới phòng khám (Trigger Emergency Triage)
   const handleTriggerEmergencyTriage = () => {
@@ -63,7 +64,7 @@ export const EmergencyModal = ({
       priority: 'emergency',
       note: 'Báo động cấp cứu khẩn cấp từ chủ nuôi qua nút SOS',
       time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-      date: new Date().toISOString().split('T')[0],
+      date: getTodayVnDate(),
       ownerName: 'Nguyễn Văn An (Chủ nuôi)',
       phone: '0912 345 678',
       service: '🚨 CẤP CỨU KHẨN CẤP (BÁO ĐỘNG ĐỎ)',
@@ -204,7 +205,7 @@ export const EmergencyModal = ({
                 </span>
               </div>
 
-              {/* Tên bé gặp nạn: Tự động lấy tên bé đang chọn (Mochi - Golden Retriever, 24.5kg) */}
+              {/* Tên bé gặp nạn: Tự động lấy thông tin từ pet đang chọn */}
               <div className="mt-1 flex items-center gap-2 flex-wrap text-xs sm:text-sm">
                 <span className="text-slate-400">Bệnh nhân cần cấp cứu:</span>
                 <span className="font-extrabold text-amber-300 bg-amber-500/10 px-2.5 py-0.5 rounded-lg border border-amber-500/30">

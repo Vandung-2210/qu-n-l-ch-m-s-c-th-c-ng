@@ -15,6 +15,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { analyzeDailyHealthTrend } from '../../services/aiService';
+import { getTodayVnDate } from '../../utils/dateUtils';
 
 export const DailyActivityView = ({
   dailyLogs = [],
@@ -26,7 +27,7 @@ export const DailyActivityView = ({
 
   const [formData, setFormData] = useState({
     petId: pets[0]?.id || '',
-    date: new Date().toISOString().split('T')[0],
+    date: getTodayVnDate(),
     poopStatus: 'normal',
     peeStatus: 'normal',
     walkMinutes: 30,
@@ -209,8 +210,8 @@ export const DailyActivityView = ({
 
       {/* Modal Add Daily Log */}
       {isLogModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#181926] text-slate-900 dark:text-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-white/10 transition-colors">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
               Ghi Nhật Ký Sinh Hoạt Cho {selectedPet ? selectedPet.name : 'Bé'}
             </h3>
@@ -223,7 +224,7 @@ export const DailyActivityView = ({
                   required
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark] outline-hidden focus:border-emerald-500 transition-all cursor-pointer font-medium"
                 />
               </div>
 
@@ -232,12 +233,12 @@ export const DailyActivityView = ({
                 <select
                   value={formData.poopStatus}
                   onChange={(e) => setFormData({ ...formData, poopStatus: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-hidden cursor-pointer"
                 >
-                  <option value="normal">Khuôn mềm đẹp, màu nâu bình thường</option>
-                  <option value="soft">Phân mềm hơi nhão</option>
-                  <option value="diarrhea">Tiêu chảy lỏng / Mùi tanh khắm</option>
-                  <option value="constipated">Táo bón khô cứng / Rặn khó</option>
+                  <option value="normal" className="text-slate-900 dark:text-white dark:bg-slate-800">Khuôn mềm đẹp, màu nâu bình thường</option>
+                  <option value="soft" className="text-slate-900 dark:text-white dark:bg-slate-800">Phân mềm hơi nhão</option>
+                  <option value="diarrhea" className="text-slate-900 dark:text-white dark:bg-slate-800">Tiêu chảy lỏng / Mùi tanh khắm</option>
+                  <option value="constipated" className="text-slate-900 dark:text-white dark:bg-slate-800">Táo bón khô cứng / Rặn khó</option>
                 </select>
               </div>
 
@@ -246,11 +247,11 @@ export const DailyActivityView = ({
                 <select
                   value={formData.peeStatus}
                   onChange={(e) => setFormData({ ...formData, peeStatus: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-hidden cursor-pointer"
                 >
-                  <option value="normal">Vàng nhạt trong suốt, tiểu êm</option>
-                  <option value="dark">Vàng đậm / Màu nâu sẫm</option>
-                  <option value="painful">Rặn kêu đau / Tiểu rắt nhiều lần / Có máu</option>
+                  <option value="normal" className="text-slate-900 dark:text-white dark:bg-slate-800">Vàng nhạt trong suốt, tiểu êm</option>
+                  <option value="dark" className="text-slate-900 dark:text-white dark:bg-slate-800">Vàng đậm / Màu nâu sẫm</option>
+                  <option value="painful" className="text-slate-900 dark:text-white dark:bg-slate-800">Rặn kêu đau / Tiểu rắt nhiều lần / Có máu</option>
                 </select>
               </div>
 
@@ -261,7 +262,7 @@ export const DailyActivityView = ({
                     type="number"
                     value={formData.walkMinutes}
                     onChange={(e) => setFormData({ ...formData, walkMinutes: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-500 transition-all font-semibold"
                   />
                 </div>
 
@@ -270,11 +271,11 @@ export const DailyActivityView = ({
                   <select
                     value={formData.mealStatus}
                     onChange={(e) => setFormData({ ...formData, mealStatus: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-hidden cursor-pointer"
                   >
-                    <option value="good">Ăn hết sạch</option>
-                    <option value="picky">Kén ăn / Bỏ thừa</option>
-                    <option value="refused">Bỏ ăn hoàn toàn</option>
+                    <option value="good" className="text-slate-900 dark:text-white dark:bg-slate-800">Ăn hết sạch</option>
+                    <option value="picky" className="text-slate-900 dark:text-white dark:bg-slate-800">Kén ăn / Bỏ thừa</option>
+                    <option value="refused" className="text-slate-900 dark:text-white dark:bg-slate-800">Bỏ ăn hoàn toàn</option>
                   </select>
                 </div>
               </div>
@@ -284,12 +285,12 @@ export const DailyActivityView = ({
                 <select
                   value={formData.mood}
                   onChange={(e) => setFormData({ ...formData, mood: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-hidden cursor-pointer"
                 >
-                  <option value="happy">😄 Vui vẻ / Đùa giỡn tích cực</option>
-                  <option value="calm">😌 Ngoan ngoãn / Thư thái</option>
-                  <option value="anxious">😟 Bồn chồn / Hay giật mình sợ hãi</option>
-                  <option value="lethargic">🤒 Lừ đừ / Nằm yên một chỗ</option>
+                  <option value="happy" className="text-slate-900 dark:text-white dark:bg-slate-800">😄 Vui vẻ / Đùa giỡn tích cực</option>
+                  <option value="calm" className="text-slate-900 dark:text-white dark:bg-slate-800">😌 Ngoan ngoãn / Thư thái</option>
+                  <option value="anxious" className="text-slate-900 dark:text-white dark:bg-slate-800">😟 Bồn chồn / Hay giật mình sợ hãi</option>
+                  <option value="lethargic" className="text-slate-900 dark:text-white dark:bg-slate-800">🤒 Lừ đừ / Nằm yên một chỗ</option>
                 </select>
               </div>
 
@@ -300,7 +301,7 @@ export const DailyActivityView = ({
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   placeholder="Hôm nay bé đi dạo công viên, ăn pate cá hồi..."
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-500 transition-all"
                 />
               </div>
 
@@ -308,13 +309,13 @@ export const DailyActivityView = ({
                 <button
                   type="button"
                   onClick={() => setIsLogModalOpen(false)}
-                  className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-xl"
+                  className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl shadow-xs"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
                 >
                   Lưu Nhật Ký
                 </button>

@@ -79,48 +79,48 @@ export const AiScheduleModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 my-8 max-h-[92vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs overflow-y-auto">
+      <div className="bg-white dark:bg-[#181926] text-slate-900 dark:text-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-white/10 my-8 max-h-[92vh] overflow-y-auto transition-colors">
         
         {/* Header with AI Gradient */}
-        <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
+        <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-white/10 mb-5">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-500 text-white flex items-center justify-center shadow-md shadow-emerald-500/20">
               <Sparkles className="w-5 h-5 animate-pulse" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-black text-slate-900">AI Sinh Lộ Trình Chăm Sóc</h2>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 text-emerald-800 uppercase tracking-wider">
+                <h2 className="text-xl font-black text-slate-900 dark:text-white">AI Sinh Lộ Trình Chăm Sóc</h2>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-100 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 uppercase tracking-wider">
                   Chuẩn WSAVA
                 </span>
               </div>
-              <p className="text-xs text-slate-500">Tự động tính toán các mốc vắc-xin, tẩy giun và spa theo tuổi & giống loài</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Tự động tính toán các mốc vắc-xin, tẩy giun và spa theo tuổi & giống loài</p>
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors"
+            className="p-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 rounded-xl hover:bg-slate-100 dark:hover:bg-white/10 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Pet Selection Dropdown */}
-        <div className="mb-5 p-4 rounded-2xl bg-emerald-50/50 border border-emerald-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="mb-5 p-4 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <Bot className="w-5 h-5 text-emerald-700 shrink-0" />
-            <span className="text-xs font-bold text-emerald-900">Chọn thú cưng cần AI lên lịch:</span>
+            <Bot className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0" />
+            <span className="text-xs font-bold text-emerald-900 dark:text-emerald-300">Chọn thú cưng cần AI lên lịch:</span>
           </div>
 
           <select
             value={selectedPetId}
             onChange={(e) => setSelectedPetId(e.target.value)}
-            className="px-3.5 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-bold text-slate-800 shadow-xs outline-hidden"
+            className="px-3.5 py-2 bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-500/40 rounded-xl text-xs font-bold text-slate-800 dark:text-white shadow-xs outline-hidden cursor-pointer"
           >
             {pets.map(p => (
-              <option key={p.id} value={p.id}>
+              <option key={p.id} value={p.id} className="text-slate-900 dark:text-white dark:bg-slate-800">
                 {p.name} ({p.breed} • {p.weight}kg)
               </option>
             ))}
@@ -129,19 +129,19 @@ export const AiScheduleModal = ({
 
         {/* AI Insight Box */}
         {selectedPet && (
-          <div className="mb-5 p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-start gap-2.5">
-            <Info className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div className="mb-5 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 text-xs text-slate-600 dark:text-slate-300 flex items-start gap-2.5">
+            <Info className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
             <div>
-              <strong>Đánh giá AI cho {selectedPet.name}:</strong> Dựa trên giống {selectedPet.breed}, cân nặng {selectedPet.weight}kg và độ tuổi, hệ thống đã tối ưu phác đồ tiêm ngừa và phòng ngừa ký sinh trùng phù hợp nhất.
+              <strong className="text-slate-800 dark:text-slate-200">Đánh giá AI cho {selectedPet.name}:</strong> Dựa trên giống {selectedPet.breed}, cân nặng {selectedPet.weight}kg và độ tuổi, hệ thống đã tối ưu phác đồ tiêm ngừa và phòng ngừa ký sinh trùng phù hợp nhất.
             </div>
           </div>
         )}
 
         {/* Care Plan Generated List */}
         <div className="space-y-3 mb-6">
-          <div className="flex items-center justify-between text-xs font-bold text-slate-500 uppercase tracking-wider px-1">
+          <div className="flex items-center justify-between text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider px-1">
             <span>Danh sách các mốc thời gian ({generatedPlan.length})</span>
-            <span className="text-emerald-700 font-semibold">
+            <span className="text-emerald-700 dark:text-emerald-400 font-semibold">
               Đã chọn {Object.values(selectedIndexes).filter(Boolean).length}/{generatedPlan.length}
             </span>
           </div>
@@ -156,13 +156,13 @@ export const AiScheduleModal = ({
                   onClick={() => toggleSelectIndex(idx)}
                   className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-start gap-3 ${
                     isSelected
-                      ? 'bg-white border-emerald-400 shadow-xs'
-                      : 'bg-slate-50/70 border-slate-200 opacity-60'
+                      ? 'bg-white dark:bg-slate-800/90 border-emerald-400 dark:border-emerald-500 shadow-xs'
+                      : 'bg-slate-50/70 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800 opacity-60'
                   }`}
                 >
-                  <button className="mt-0.5 text-emerald-600 shrink-0">
+                  <button className="mt-0.5 text-emerald-600 dark:text-emerald-400 shrink-0">
                     {isSelected ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 fill-emerald-100" />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400 fill-emerald-100 dark:fill-emerald-950" />
                     ) : (
                       <Circle className="w-5 h-5 text-slate-400" />
                     )}
@@ -170,12 +170,12 @@ export const AiScheduleModal = ({
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2 mb-1 flex-wrap">
-                      <h4 className="text-xs font-bold text-slate-900">{item.title}</h4>
+                      <h4 className="text-xs font-bold text-slate-900 dark:text-white">{item.title}</h4>
                       <ScheduleBadge type={item.type} />
                     </div>
 
-                    <div className="flex items-center gap-3 text-[11px] text-slate-500 mb-1">
-                      <span className="font-semibold text-emerald-700 flex items-center gap-1">
+                    <div className="flex items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                         <Calendar className="w-3 h-3" /> Ngày: {item.date}
                       </span>
                       <span>•</span>
@@ -183,7 +183,7 @@ export const AiScheduleModal = ({
                     </div>
 
                     {item.notes && (
-                      <p className="text-[11px] text-slate-500 italic bg-slate-50 p-1.5 rounded-lg border border-slate-100">
+                      <p className="text-[11px] text-slate-600 dark:text-slate-300 italic bg-slate-50 dark:bg-slate-900/80 p-1.5 rounded-lg border border-slate-100 dark:border-slate-800">
                         {item.notes}
                       </p>
                     )}
@@ -195,18 +195,18 @@ export const AiScheduleModal = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+        <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-white/10">
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+            className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
           >
             Hủy bỏ
           </button>
 
           <button
             onClick={handleApply}
-            className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1.5"
+            className="px-5 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Sparkles className="w-4 h-4" />
             <span>Thêm Các Mốc Đã Chọn Vào Lịch</span>

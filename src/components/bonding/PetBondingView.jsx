@@ -1,202 +1,290 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { 
-  Heart, Sparkles, CheckCircle2, Play, Pause, RotateCcw, 
-  Flame, Clock, Lightbulb, Brain, Award, Check
+  Heart, Sparkles, Play, Pause, RotateCcw, 
+  Lightbulb, Brain, Check, Plus, AlertCircle, Clock
 } from 'lucide-react';
 import { sound } from '../../services/soundService';
+import { apiGetAll, apiCreate, apiUpdate } from '../../services/apiService';
+import { getTodayVnDate } from '../../utils/dateUtils';
 
-export const INITIAL_DATA = {
-  mochi: {
-    id: 'mochi',
-    name: 'Mochi',
-    species: 'Golden Retriever (Chó)',
-    shortSpecies: 'Chó Golden',
-    iconEmoji: '🐶',
-    archetype: 'Bé Bám Người & Tràn Năng Lượng',
-    score: 91,
-    level: 'Bạn Tri Kỷ',
-    tags: ['Thích vuốt ngực', 'Thích ném bóng', 'Ham khen ngợi', 'Sợ sấm'],
-    vetAdvice: 'Không ép Mochi nhìn mắt khi bé đang căng thẳng hoặc nhìn chằm chằm kẻ thù; chỉ thực hiện khi bé đang thư thái bên bạn.',
-    science: 'Nghiên cứu từ ĐH Azabu (Nhật Bản) chứng minh khi chó và chủ nhìn âu yếm vào mắt nhau, lượng Oxytocin tăng 130% - 300%. Đây là cơ chế tiến hóa độc nhất vô nhị giữa loài chó và con người.',
+export const REFERENCE_DATA = {
+  dog: {
+    archetype: 'Thích tương tác & Năng động',
+    vetAdvice: 'Không ép bé nhìn mắt khi bé đang căng thẳng; chỉ thực hiện khi bé đang thư thái bên bạn.',
+    science: 'Nghiên cứu chứng minh khi chó và chủ giao tiếp bằng mắt tích cực, lượng hormone gắn kết sẽ tăng đáng kể.',
     quests: [
-      { id: 1, title: 'Tập giao tiếp bằng mắt (Eye Contact) 3 phút', duration: 180, category: 'Kích Hoạt Oxytocin', reward: 2, desc: 'Nhìn âu yếm vào mắt Mochi khi bé ngồi yên và thì thầm khen ngợi để kích hoạt hormone Oxytocin gắn kết.', done: false },
-      { id: 2, title: 'Tìm đồ ăn bằng khứu giác trên thảm hít (Snuffle Mat)', duration: 600, category: 'Kích Thích Trí Não', reward: 3, desc: 'Giấu thức ăn vào nếp gấp thảm để bé dùng mũi tìm kiếm, giúp tiêu hao năng lượng và giảm lo âu.', done: true },
-      { id: 3, title: 'Massage vuốt dọc sống lưng & gốc tai', duration: 300, category: 'Thư Giãn Cơ Thể', reward: 2, desc: 'Dùng lòng bàn tay vuốt chậm rãi từ trán qua tai xuống lưng theo chiều lông mọc để hạ nhịp tim.', done: false },
-      { id: 4, title: 'Rèn luyện phản xạ "Chờ lệnh (Wait)" trước bữa ăn', duration: 300, category: 'Kỷ Luật Tích Cực', reward: 3, desc: 'Đặt bát thức ăn xuống và yêu cầu Mochi ngồi chờ 10 giây trước khi ra lệnh "Ăn đi".', done: false }
+      { id: 'q1', title: 'Tập giao tiếp bằng mắt (Eye Contact)', duration: 180, category: 'Gắn Kết', desc: 'Nhìn âu yếm vào mắt bé khi bé ngồi yên và khen ngợi.', reward: 2 },
+      { id: 'q2', title: 'Tìm đồ ăn bằng khứu giác', duration: 600, category: 'Trí Não', desc: 'Giấu thức ăn để bé dùng mũi tìm kiếm, giúp tiêu hao năng lượng.', reward: 2 },
+      { id: 'q3', title: 'Massage vuốt dọc sống lưng', duration: 300, category: 'Thư Giãn', desc: 'Vuốt chậm rãi từ trán qua tai xuống lưng theo chiều lông mọc.', reward: 2 }
     ],
     gestures: [
-      { id: 'g1', sign: 'Đuôi vẫy vòng tròn hình cánh quạt', meaning: 'Hạnh phúc cực độ, cảm thấy an toàn tuyệt đối', recorded: true },
-      { id: 'g2', sign: 'Liếm mép liên tục khi bị ôm', meaning: 'Đang căng thẳng nhẹ, cần bạn thả lỏng vòng tay', recorded: false },
-      { id: 'g3', sign: 'Cúi thấp hai chân trước, mông chổng lên', meaning: 'Tư thế mời chơi đùa (Play Bow)', recorded: false }
-    ]
+      { id: 'g1', sign: 'Đuôi vẫy vòng tròn hình cánh quạt', meaning: 'Hạnh phúc cực độ, an toàn tuyệt đối' },
+      { id: 'g2', sign: 'Liếm mép liên tục khi bị ôm', meaning: 'Đang căng thẳng nhẹ, cần bạn thả lỏng' },
+      { id: 'g3', sign: 'Cúi thấp hai chân trước', meaning: 'Tư thế mời chơi đùa (Play Bow)' }
+    ],
+    tags: ['Thích vuốt ngực', 'Ham khen ngợi', 'Năng động']
   },
-  luna: {
-    id: 'luna',
-    name: 'Luna',
-    species: 'Mèo Anh Lông Ngắn (BSH)',
-    shortSpecies: 'Mèo BSH',
-    iconEmoji: '🐱',
-    archetype: 'Độc Lập & Nhạy Cảm Không Gian',
-    score: 74,
-    level: 'Thân Thiết Tin Cậy',
-    tags: ['Thích yên tĩnh', 'Chỉ thích gãi cằm', 'Ghét bế xốc', 'Thích rình mồi'],
-    vetAdvice: 'Tuyệt đối không nhìn trừng trừng vào mắt mèo! Hãy chớp mắt thật chậm (Cat Kiss) rồi quay nhẹ mặt đi để báo hiệu sự thân thiện.',
-    science: 'Chớp mắt chậm rãi giúp hạ nhịp tim ở mèo và kích thích sự tin tưởng, thúc đẩy mèo chủ động tiếp cận người nuôi.',
+  cat: {
+    archetype: 'Độc Lập & Nhạy Cảm',
+    vetAdvice: 'Tuyệt đối không nhìn trừng trừng vào mắt mèo! Hãy chớp mắt thật chậm rồi quay nhẹ mặt đi.',
+    science: 'Chớp mắt chậm rãi giúp hạ nhịp tim ở mèo và kích thích sự tin tưởng.',
     quests: [
-      { id: 1, title: 'Thực hành "Chớp mắt chậm" (Slow Blink - Cat Kiss)', duration: 120, category: 'Tôn Trọng Ranh Giới', reward: 2, desc: 'Nhìn nhẹ vào mắt bé rồi từ từ nhắm mắt lại 2 giây rồi mở ra, đợi bé chớp mắt đáp lại.', done: true },
-      { id: 2, title: 'Mô phỏng chu trình săn mồi với cần câu mèo', duration: 600, category: 'Bản Năng Tự Nhiên', reward: 4, desc: 'Vờn mồi giật chậm theo nhịp, để bé tóm trúng mồi ở cuối hiệp và thưởng ngay súp thưởng.', done: false },
-      { id: 3, title: 'Chải lông & gãi nhẹ tuyến mùi cằm/má', duration: 300, category: 'Thư Giãn Cơ Thể', reward: 2, desc: 'Chỉ vuốt ve vùng má và dưới cằm nơi tiết pheromone an toàn, tránh vuốt vùng bụng.', done: false }
+      { id: 'q1', title: 'Thực hành "Chớp mắt chậm"', duration: 120, category: 'Ranh Giới', desc: 'Nhìn nhẹ vào mắt bé rồi từ từ nhắm mắt lại 2 giây rồi mở ra.', reward: 2 },
+      { id: 'q2', title: 'Mô phỏng chu trình săn mồi', duration: 600, category: 'Bản Năng', desc: 'Vờn mồi giật chậm theo nhịp với cần câu mèo.', reward: 2 },
+      { id: 'q3', title: 'Chải lông & gãi nhẹ cằm', duration: 300, category: 'Thư Giãn', desc: 'Chỉ vuốt ve vùng má và dưới cằm, tránh vùng bụng.', reward: 2 }
     ],
     gestures: [
-      { id: 'g1', sign: 'Đầu chóp đuôi giật rung nhẹ lên cao', meaning: 'Rất hào hứng và chào đón bạn về nhà', recorded: false },
-      { id: 'g2', sign: 'Đập mạnh cả đuôi xuống sàn liên hồi', meaning: 'Bực bội hoặc quá tải kích thích, hãy dừng vuốt ve ngay', recorded: false },
-      { id: 'g3', sign: 'Cọ má và tuyến mùi quanh cằm vào tay', meaning: 'Đánh dấu bạn là "người nhà" an toàn', recorded: true }
-    ]
+      { id: 'g1', sign: 'Đầu chóp đuôi giật rung nhẹ', meaning: 'Rất hào hứng và chào đón bạn' },
+      { id: 'g2', sign: 'Đập mạnh cả đuôi xuống sàn', meaning: 'Bực bội hoặc quá tải kích thích' },
+      { id: 'g3', sign: 'Cọ má quanh cằm vào tay', meaning: 'Đánh dấu bạn là "người nhà"' }
+    ],
+    tags: ['Thích yên tĩnh', 'Ghét bế xốc', 'Thích rình mồi']
   },
-  banhbao: {
-    id: 'banhbao',
-    name: 'Bánh Bao',
-    species: 'Thỏ Minilop',
-    shortSpecies: 'Thỏ Minilop',
-    iconEmoji: '🐰',
-    archetype: 'Nhút Nhát & Thận Trọng Tự Nhiên',
-    score: 62,
-    level: 'Đang Gây Dựng Niềm Tin',
-    tags: ['Sợ bế bổng', 'Thích ăn cỏ cầm tay', 'Cần sàn chống trượt'],
-    vetAdvice: 'Thỏ là loài con mồi. Muốn thân thiết, hãy hạ mình xuống cùng tầm mắt của bé trên sàn nhà, không với tay bắt từ trên cao xuống.',
-    science: 'Hành vi thỏ nằm thư giãn duỗi thẳng hai chân sau (Flop) là minh chứng nồng độ hormone căng thẳng Cortisol đã hạ xuống mức tối thiểu.',
+  other: {
+    archetype: 'Thú Cưng Đáng Yêu',
+    vetAdvice: 'Quan sát hành vi của bé mỗi ngày để hiểu rõ sở thích và giới hạn của bé.',
+    science: 'Dành thời gian tương tác nhẹ nhàng giúp giảm căng thẳng cho cả người và vật nuôi.',
     quests: [
-      { id: 1, title: 'Nằm cùng tầm mắt trên sàn (Floor Time) 10 phút', duration: 600, category: 'Gây Dựng Niềm Tin', reward: 3, desc: 'Nằm yên tĩnh trên thảm ngang tầm mắt, để bé tự tiến lại gần ngửi tay và khám phá.', done: false },
-      { id: 2, title: 'Cho ăn cọng thảo mộc tươi trực tiếp trên tay', duration: 300, category: 'Tương Tác Chủ Động', reward: 3, desc: 'Cầm cọng rau thơm mở lòng bàn tay đặt sát đất, kiên nhẫn để bé chủ động tới ăn.', done: false },
-      { id: 3, title: 'Đồ chơi lõi giấy cuộn cỏ khô Timothy', duration: 300, category: 'Giải Tỏa Bản Năng', reward: 2, desc: 'Nhét cỏ khô vào lõi giấy để bé lăn lộn, kéo cỏ và gặm nhấm xả stress.', done: true }
+      { id: 'q1', title: 'Tương tác nhẹ nhàng', duration: 300, category: 'Gắn Kết', desc: 'Ở bên cạnh và nói chuyện nhẹ nhàng với bé.', reward: 2 },
+      { id: 'q2', title: 'Cho ăn bằng tay', duration: 300, category: 'Niềm Tin', desc: 'Sử dụng thức ăn bé thích để tạo liên kết tích cực.', reward: 2 },
+      { id: 'q3', title: 'Quan sát hành vi', duration: 600, category: 'Thấu Hiểu', desc: 'Dành thời gian quan sát bé hoạt động tự do.', reward: 2 }
     ],
     gestures: [
-      { id: 'g1', sign: 'Chạy vòng tròn quanh chân bạn', meaning: 'Thể hiện niềm vui mừng và sự gắn bó thân thiết', recorded: true },
-      { id: 'g2', sign: 'Đập mạnh hai chân sau xuống đất (Thumping)', meaning: 'Báo động nguy hiểm hoặc đang cực kỳ hoảng sợ', recorded: false },
-      { id: 'g3', sign: 'Nghiêng người ngã lăn ra sàn (Flop)', meaning: 'Cực kỳ tin tưởng và cảm thấy hoàn toàn bình yên', recorded: false }
-    ]
+      { id: 'g1', sign: 'Tiến lại gần tự nguyện', meaning: 'Cảm thấy tò mò và an toàn' },
+      { id: 'g2', sign: 'Lùi lại hoặc trốn', meaning: 'Đang sợ hãi hoặc cần không gian riêng' }
+    ],
+    tags: ['Cần thời gian', 'Thích quan sát']
   }
 };
 
-// Backwards compatibility mappings for HabitsUnifiedView and PetBondingWidget
-Object.keys(INITIAL_DATA).forEach(key => {
-  INITIAL_DATA[key].todayTask = INITIAL_DATA[key].quests[0];
-  INITIAL_DATA[key].todayBondingTask = INITIAL_DATA[key].quests[0];
-  INITIAL_DATA[key].doctorPawTip = INITIAL_DATA[key].vetAdvice;
-  INITIAL_DATA[key].scienceBehindBonding = INITIAL_DATA[key].science;
-  INITIAL_DATA[key].bondingScore = INITIAL_DATA[key].score;
-  INITIAL_DATA[key].levelTitle = INITIAL_DATA[key].level;
-});
-
-export const PET_DATA = INITIAL_DATA;
-export const PET_PSYCHOLOGY_DATABASE = INITIAL_DATA;
-export const PET_BONDING_DATA = INITIAL_DATA;
-export const PET_QUESTS_DATA = {
-  mochi: INITIAL_DATA.mochi.quests,
-  luna: INITIAL_DATA.luna.quests,
-  banhbao: INITIAL_DATA.banhbao.quests
+export const getPetReferenceData = (species = '') => {
+  const s = String(species).toLowerCase();
+  if (s.includes('chó') || s.includes('dog')) return REFERENCE_DATA.dog;
+  if (s.includes('mèo') || s.includes('cat')) return REFERENCE_DATA.cat;
+  return REFERENCE_DATA.other;
 };
 
-const STORAGE_KEY = 'petcare_bonding_state_v4';
+// Dummy exports to prevent breaking other components
+export const PET_DATA = {};
+export const PET_PSYCHOLOGY_DATABASE = {};
+export const PET_BONDING_DATA = {};
+export const PET_QUESTS_DATA = {};
 
-export const PetBondingView = ({ pets = [] }) => {
-  const [selectedPetId, setSelectedPetId] = useState('mochi');
-  const [data, setData] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed && parsed.mochi && parsed.luna && parsed.banhbao) {
-          return parsed;
-        }
-      }
-    } catch {}
-    return INITIAL_DATA;
-  });
+const STORAGE_KEY = 'petcare_bonding_real_data_v1';
 
-  const [selectedMood, setSelectedMood] = useState('happy');
+export const PetBondingView = ({ pets = [], currentUser }) => {
+  const [selectedPetId, setSelectedPetId] = useState(pets.length > 0 ? pets[0].id : null);
+  
+  // Quản lý dữ liệu gắn kết lưu trữ từ server
+  const [bondingData, setBondingData] = useState({});
 
-  // Quản lý bộ bấm giờ cho nhiệm vụ đang tập
+  const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Quản lý bộ bấm giờ
   const [activeTimerId, setActiveTimerId] = useState(null);
   const [timeLeft, setTimeLeft] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
 
-  // Lưu trạng thái vào localStorage khi có thay đổi
+  // Get current date in Vietnam time (YYYY-MM-DD)
+  const getTodayStr = () => getTodayVnDate();
+
+  // Tải dữ liệu nhật ký gắn kết thực tế từ Backend Server
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {}
-  }, [data]);
-
-  const currentPet = data[selectedPetId] || data.mochi;
-  const quests = currentPet.quests;
-  const completedCount = quests.filter(q => q.done).length;
-  const progressPercent = Math.round((completedCount / quests.length) * 100);
-  const recordedGesturesCount = currentPet.gestures.filter(g => g.recorded).length;
-
-  const handleCompleteQuest = (id, forceDone = null) => {
-    setData(prev => {
-      const pet = prev[selectedPetId];
-      const updatedQuests = pet.quests.map(q => {
-        if (q.id === id) {
-          const nextDone = forceDone !== null ? forceDone : !q.done;
-          return { ...q, done: nextDone };
-        }
-        return q;
-      });
-      const targetQuest = updatedQuests.find(q => q.id === id);
-      const isNowDone = targetQuest ? targetQuest.done : false;
-
-      if (isNowDone) {
-        try {
-          sound?.playSuccess?.();
-          confetti({
-            particleCount: 60,
-            spread: 55,
-            origin: { y: 0.6 }
+    let isMounted = true;
+    const loadLogs = async () => {
+      setIsLoading(true);
+      try {
+        const logs = await apiGetAll('daily_logs');
+        if (isMounted && Array.isArray(logs)) {
+          const map = {};
+          logs.forEach(item => {
+            const oId = item.ownerId || currentUser?.id;
+            const pId = item.petId;
+            const dStr = item.date;
+            if (!oId || !pId || !dStr) return;
+            if (!map[oId]) map[oId] = {};
+            if (!map[oId][pId]) map[oId][pId] = {};
+            map[oId][pId][dStr] = {
+              id: item.id,
+              mood: item.mood || '',
+              questsDone: Array.isArray(item.questsDone) ? item.questsDone : [],
+              gesturesRecorded: Array.isArray(item.gesturesRecorded) ? item.gesturesRecorded : []
+            };
           });
-        } catch {}
-      } else {
-        try { sound?.playClick?.(); } catch {}
-      }
-
-      return {
-        ...prev,
-        [selectedPetId]: {
-          ...pet,
-          score: isNowDone ? Math.min(100, pet.score + (targetQuest?.reward || 2)) : Math.max(0, pet.score - (targetQuest?.reward || 2)),
-          quests: updatedQuests,
-          todayTask: updatedQuests[0],
-          todayBondingTask: updatedQuests[0]
+          setBondingData(map);
         }
-      };
-    });
+      } catch (err) {
+        console.warn('Lỗi tải nhật ký gắn kết từ máy chủ:', err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+    loadLogs();
+    return () => { isMounted = false; };
+  }, [currentUser?.id]);
 
-    if (activeTimerId === id) {
-      setIsRunning(false);
+  // Handle switching pets
+  useEffect(() => {
+    if (pets.length > 0 && (!selectedPetId || !pets.find(p => p.id === selectedPetId))) {
+      setSelectedPetId(pets[0].id);
     }
-  };
+  }, [pets, selectedPetId]);
 
-  // Xử lý đếm ngược thời gian thực
+  // Reset timer khi đổi thú cưng
+  useEffect(() => {
+    setIsRunning(false);
+    setActiveTimerId(null);
+    setTimeLeft(0);
+  }, [selectedPetId]);
+
+  // Reset timer khi qua ngày mới
+  const currentDateRef = useRef(getTodayStr());
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const today = getTodayStr();
+      if (today !== currentDateRef.current) {
+        currentDateRef.current = today;
+        setIsRunning(false);
+        setActiveTimerId(null);
+        setTimeLeft(0);
+      }
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Xử lý đếm ngược
   useEffect(() => {
     let interval = null;
     if (isRunning && timeLeft > 0) {
       interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
     } else if (timeLeft === 0 && isRunning) {
       setIsRunning(false);
-      handleCompleteQuest(activeTimerId, true);
+      // Không tự hoàn thành, người dùng phải tự bấm
     }
     return () => clearInterval(interval);
-  }, [isRunning, timeLeft, activeTimerId]);
+  }, [isRunning, timeLeft]);
+
+  if (!pets || pets.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl bg-white dark:bg-[#12192A] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-lg h-full min-h-[400px]">
+        <Heart className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-4 opacity-50" />
+        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Bạn chưa có thú cưng</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+          Vui lòng thêm thú cưng để bắt đầu theo dõi tâm lý và gắn kết.
+        </p>
+        <button 
+          onClick={() => {
+            try { sound?.playClick?.(); } catch {}
+            window.dispatchEvent(new CustomEvent('petcare_open_add_pet'));
+          }}
+          className="mt-6 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+        >
+          <Plus className="w-4 h-4" />
+          Thêm Thú Cưng
+        </button>
+      </div>
+    );
+  }
+
+  const currentPet = pets.find(p => p.id === selectedPetId) || pets[0];
+  const refData = getPetReferenceData(currentPet?.species);
+  const todayStr = getTodayStr();
+  const userId = currentUser?.id || 'guest';
+
+  const getTodayData = () => {
+    return bondingData[userId]?.[currentPet.id]?.[todayStr] || {
+      mood: '',
+      questsDone: [],
+      gesturesRecorded: []
+    };
+  };
+
+  const todayData = getTodayData();
+  const completedCount = todayData.questsDone.length;
+  const progressPercent = refData.quests.length > 0 ? Math.round((completedCount / refData.quests.length) * 100) : 0;
+  const recordedGesturesCount = todayData.gesturesRecorded.length;
+
+  const updateTodayData = async (updates) => {
+    if (isSaving || !currentPet) return;
+    setIsSaving(true);
+    setErrorMsg('');
+    
+    // Lưu dữ liệu thực tế lên Backend Server
+    try {
+      const existing = todayData;
+      const merged = { ...existing, ...updates };
+      const logId = existing.id || `log_${userId}_${currentPet.id}_${todayStr}`;
+      const payload = {
+        id: logId,
+        petId: currentPet.id,
+        ownerId: userId,
+        date: todayStr,
+        mood: merged.mood,
+        questsDone: merged.questsDone,
+        gesturesRecorded: merged.gesturesRecorded,
+        updatedAt: new Date().toISOString()
+      };
+
+      if (existing.id) {
+        await apiUpdate('daily_logs', existing.id, payload);
+      } else {
+        await apiCreate('daily_logs', payload);
+      }
+
+      setBondingData(prev => {
+        const userScope = prev[userId] || {};
+        const petScope = userScope[currentPet.id] || {};
+        const dayScope = petScope[todayStr] || { mood: '', questsDone: [], gesturesRecorded: [] };
+        
+        return {
+          ...prev,
+          [userId]: {
+            ...userScope,
+            [currentPet.id]: {
+              ...petScope,
+              [todayStr]: { ...dayScope, ...updates, id: logId }
+            }
+          }
+        };
+      });
+    } catch (err) {
+      console.error('Lỗi khi lưu dữ liệu gắn kết lên máy chủ:', err);
+      setErrorMsg('Không thể lưu dữ liệu lên máy chủ. Vui lòng kiểm tra kết nối.');
+      throw err;
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleToggleQuest = async (id) => {
+    if (isSaving) return;
+    const isDone = todayData.questsDone.includes(id);
+    const newQuests = isDone 
+      ? todayData.questsDone.filter(q => q !== id)
+      : [...todayData.questsDone, id];
+    
+    await updateTodayData({ questsDone: newQuests });
+    
+    if (!isDone) {
+      try {
+        sound?.playSuccess?.();
+        confetti({ particleCount: 60, spread: 55, origin: { y: 0.6 } });
+      } catch {}
+    } else {
+      try { sound?.playClick?.(); } catch {}
+    }
+
+    if (activeTimerId === id) {
+      setIsRunning(false);
+    }
+  };
 
   const handleStartTimer = (quest) => {
     if (activeTimerId === quest.id) {
-      if (isRunning) {
-        setIsRunning(false);
-      } else {
-        setIsRunning(true);
-      }
+      setIsRunning(!isRunning);
       try { sound?.playClick?.(); } catch {}
     } else {
       setActiveTimerId(quest.id);
@@ -212,39 +300,29 @@ export const PetBondingView = ({ pets = [] }) => {
     try { sound?.playClick?.(); } catch {}
   };
 
-  const handleToggleGesture = (gestureId) => {
-    setData(prev => {
-      const pet = prev[selectedPetId];
-      let willBeRecorded = false;
-      const updatedGestures = pet.gestures.map(g => {
-        if (g.id === gestureId) {
-          willBeRecorded = !g.recorded;
-          return { ...g, recorded: !g.recorded };
-        }
-        return g;
-      });
+  const handleToggleGesture = async (id) => {
+    if (isSaving) return;
+    const isRecorded = todayData.gesturesRecorded.includes(id);
+    const newGestures = isRecorded
+      ? todayData.gesturesRecorded.filter(g => g !== id)
+      : [...todayData.gesturesRecorded, id];
+      
+    await updateTodayData({ gesturesRecorded: newGestures });
+    
+    if (!isRecorded) {
+      try {
+        sound?.playPop?.();
+        confetti({ particleCount: 35, spread: 45, origin: { y: 0.7 } });
+      } catch {}
+    } else {
+      try { sound?.playClick?.(); } catch {}
+    }
+  };
 
-      if (willBeRecorded) {
-        try {
-          sound?.playPop?.();
-          confetti({
-            particleCount: 35,
-            spread: 45,
-            origin: { y: 0.7 }
-          });
-        } catch {}
-      } else {
-        try { sound?.playClick?.(); } catch {}
-      }
-
-      return {
-        ...prev,
-        [selectedPetId]: {
-          ...pet,
-          gestures: updatedGestures
-        }
-      };
-    });
+  const handleMoodSelect = async (moodId) => {
+    if (isSaving) return;
+    await updateTodayData({ mood: moodId });
+    try { sound?.playPop?.(); } catch {}
   };
 
   const formatTime = (seconds) => {
@@ -256,7 +334,14 @@ export const PetBondingView = ({ pets = [] }) => {
   return (
     <div className="w-full h-full max-w-7xl mx-auto p-3 sm:p-4 md:p-6 space-y-4 overflow-y-auto custom-scrollbar">
       
-      {/* 1. KHÔI PHỤC BANNER HEADER 3 Ô CHỈ SỐ */}
+      {errorMsg && (
+        <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-2xl flex items-center gap-2 text-sm">
+          <AlertCircle className="w-5 h-5" />
+          <span>{errorMsg}</span>
+        </div>
+      )}
+
+      {/* 1. HEADER */}
       <div className="bg-gradient-to-r from-pink-950/40 via-purple-950/30 to-slate-900 border border-pink-500/20 rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 backdrop-blur-md shadow-xl shadow-pink-950/10">
         <div className="flex items-center gap-3">
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500 to-amber-500 flex items-center justify-center text-white text-2xl shadow-lg shadow-pink-500/20 shrink-0">
@@ -265,36 +350,33 @@ export const PetBondingView = ({ pets = [] }) => {
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h1 className="text-base sm:text-lg font-bold text-white">Tâm Lý & Gắn Kết Thú Cưng</h1>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-500/30">
-                Dr. Paw Science
-              </span>
             </div>
             <p className="text-xs text-slate-400 mt-0.5">
-              Đang chăm sóc: <strong className="text-slate-200">{currentPet.name} ({currentPet.species})</strong> • Kích hoạt Oxytocin và nuôi dưỡng niềm tin mỗi ngày.
+              Đang xem: <strong className="text-slate-200">{currentPet.name}</strong> • Tiến độ hôm nay.
             </p>
           </div>
         </div>
 
-        {/* 3 Khối thống kê cốt lõi */}
+        {/* Khối thống kê thực tế */}
         <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap sm:flex-nowrap">
           <div className="flex-1 sm:flex-none bg-slate-900/80 border border-white/10 px-3.5 sm:px-4 py-2 rounded-2xl text-center shadow-inner">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Điểm Gắn Kết</span>
-            <span className="text-base sm:text-lg font-black text-pink-400">{currentPet.score}%</span>
-          </div>
-          <div className="flex-1 sm:flex-none bg-slate-900/80 border border-white/10 px-3.5 sm:px-4 py-2 rounded-2xl text-center shadow-inner">
-            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Danh Hiệu</span>
-            <span className="text-xs sm:text-sm font-bold text-amber-300 whitespace-nowrap">{currentPet.level}</span>
+            <span className="text-[10px] text-slate-400 font-semibold uppercase block">Tiến Độ Hoạt Động</span>
+            <span className="text-base sm:text-lg font-black text-pink-400">
+              {refData.quests.length > 0 ? `${progressPercent}%` : 'Chưa có'}
+            </span>
           </div>
           <div className="flex-1 sm:flex-none bg-slate-900/80 border border-white/10 px-3.5 sm:px-4 py-2 rounded-2xl text-center shadow-inner">
             <span className="text-[10px] text-slate-400 font-semibold uppercase block">Nhiệm Vụ Ngày</span>
-            <span className="text-xs sm:text-sm font-bold text-emerald-400 whitespace-nowrap">{completedCount}/{quests.length} Đã xong</span>
+            <span className="text-xs sm:text-sm font-bold text-emerald-400 whitespace-nowrap">
+              {refData.quests.length > 0 ? `${completedCount}/${refData.quests.length} Đã xong` : 'Chưa có hoạt động hôm nay'}
+            </span>
           </div>
         </div>
       </div>
 
-      {/* 2. BỘ CHỌN THÚ CƯNG GỌN GÀNG */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {Object.values(data).map(p => {
+      {/* 2. BỘ CHỌN THÚ CƯNG */}
+      <div className="flex flex-col md:flex-row gap-3 overflow-x-auto custom-scrollbar pb-1">
+        {pets.map(p => {
           const isActive = selectedPetId === p.id;
           return (
             <button
@@ -305,22 +387,22 @@ export const PetBondingView = ({ pets = [] }) => {
                 setActiveTimerId(null); 
                 setIsRunning(false); 
               }}
-              className={`p-3 rounded-2xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+              className={`min-w-[200px] p-3 rounded-2xl border text-left flex items-center gap-3 transition-all cursor-pointer ${
                 isActive 
                   ? 'bg-gradient-to-r from-pink-500/20 to-purple-500/20 border-pink-500/50 shadow-lg shadow-pink-500/10 ring-1 ring-pink-500/30' 
                   : 'bg-slate-900/60 border-white/5 hover:border-white/15 opacity-70 hover:opacity-100'
               }`}
             >
-              <div className="flex items-center gap-2.5">
-                <span className="text-2xl">{p.id === 'mochi' ? '🐶' : p.id === 'luna' ? '🐱' : '🐰'}</span>
-                <div>
-                  <span className="text-xs sm:text-sm font-bold text-white block">{p.name}</span>
-                  <span className="text-[10px] text-slate-400 line-clamp-1">{p.archetype}</span>
+              {p.avatar ? (
+                <img src={p.avatar} alt={p.name} className="w-10 h-10 rounded-full object-cover" />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-lg">
+                  {p.species?.toLowerCase().includes('mèo') ? '🐱' : p.species?.toLowerCase().includes('chó') ? '🐶' : '🐾'}
                 </div>
-              </div>
-              <div className="text-right shrink-0">
-                <span className="text-xs sm:text-sm font-black text-pink-400">{p.score}%</span>
-                <span className="text-[9px] text-slate-400 block">{p.level}</span>
+              )}
+              <div className="flex-1">
+                <span className="text-xs sm:text-sm font-bold text-white block truncate">{p.name}</span>
+                <span className="text-[10px] text-slate-400 line-clamp-1">{p.species || 'Chưa cập nhật'}</span>
               </div>
             </button>
           );
@@ -330,48 +412,29 @@ export const PetBondingView = ({ pets = [] }) => {
       {/* 3. BỐ CỤC 2 CỘT CHÍNH */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         
-        {/* CỘT TRÁI (4 cols): Profile, Thước đo Oxytocin, Tâm trạng & Lời khuyên */}
+        {/* CỘT TRÁI (4 cols): Profile, Tâm trạng & Lời khuyên */}
         <div className="lg:col-span-4 bg-slate-900/60 border border-white/5 rounded-3xl p-4 sm:p-5 space-y-4 backdrop-blur-md">
           {/* Header Profile */}
           <div className="flex items-center gap-3 pb-3 border-b border-white/5">
-            <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl shrink-0">
-              {currentPet.id === 'mochi' ? '🐶' : currentPet.id === 'luna' ? '🐱' : '🐰'}
-            </div>
+            {currentPet.avatar ? (
+              <img src={currentPet.avatar} alt={currentPet.name} className="w-12 h-12 rounded-2xl object-cover shrink-0 border border-white/10" />
+            ) : (
+              <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl shrink-0">
+                {currentPet.species?.toLowerCase().includes('mèo') ? '🐱' : currentPet.species?.toLowerCase().includes('chó') ? '🐶' : '🐾'}
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-sm font-bold text-white">{currentPet.name}</h3>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pink-500/10 text-pink-300 border border-pink-500/20">
-                  {currentPet.species}
-                </span>
               </div>
-              <p className="text-[11px] text-slate-400 mt-0.5">{currentPet.archetype}</p>
-            </div>
-          </div>
-
-          {/* Thước đo Oxytocin */}
-          <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 space-y-2">
-            <div className="flex justify-between text-xs">
-              <span className="font-bold text-slate-300 flex items-center gap-1.5">
-                <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse"/> Chỉ số gắn kết Oxytocin
-              </span>
-              <span className="font-black text-rose-400">{currentPet.score}/100</span>
-            </div>
-            <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-gradient-to-r from-pink-500 to-amber-500 rounded-full transition-all duration-700"
-                style={{ width: `${currentPet.score}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[10px] text-slate-400">
-              <span>{currentPet.level}</span>
-              <span className="text-amber-400 font-bold">Còn {Math.max(0, 100 - currentPet.score)}% tới Tri Kỷ Tuyệt Đối 🏆</span>
+              <p className="text-[11px] text-slate-400 mt-0.5">{refData.archetype}</p>
             </div>
           </div>
 
           {/* Check-in tâm trạng hôm nay */}
           <div>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-2">
-              Tâm trạng hôm nay của bé:
+              Ghi nhận tâm trạng hôm nay:
             </span>
             <div className="grid grid-cols-4 gap-1.5">
               {[
@@ -382,36 +445,37 @@ export const PetBondingView = ({ pets = [] }) => {
               ].map(m => (
                 <button
                   key={m.id}
-                  onClick={() => {
-                    try { sound?.playPop?.(); } catch {}
-                    setSelectedMood(m.id);
-                  }}
+                  disabled={isSaving}
+                  onClick={() => handleMoodSelect(m.id)}
                   className={`py-2 rounded-xl border text-[10px] font-bold flex flex-col items-center transition-all cursor-pointer ${
-                    selectedMood === m.id
+                    todayData.mood === m.id
                       ? 'bg-pink-500/20 border-pink-500/50 text-pink-300 shadow-md shadow-pink-500/10'
                       : 'bg-white/[0.02] border-white/5 text-slate-400 hover:border-white/20'
-                  }`}
+                  } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <span className="text-sm mb-0.5">{m.icon}</span>
                   <span>{m.label}</span>
                 </button>
               ))}
             </div>
+            {!todayData.mood && (
+              <p className="text-[10px] text-slate-500 mt-2 text-center italic">Chưa cập nhật tâm trạng hôm nay.</p>
+            )}
           </div>
 
-          {/* Lời khuyên Bác sĩ Paw */}
+          {/* Gợi ý chăm sóc tham khảo */}
           <div className="p-3.5 rounded-2xl bg-cyan-950/20 border border-cyan-500/20">
             <span className="text-[10px] font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1 mb-1">
-              <Lightbulb className="w-3.5 h-3.5"/> Lời Khuyên Bác Sĩ Paw
+              <Lightbulb className="w-3.5 h-3.5"/> Gợi Ý Chăm Sóc Tham Khảo
             </span>
-            <p className="text-[11px] text-slate-300 italic leading-relaxed">"{currentPet.vetAdvice}"</p>
+            <p className="text-[11px] text-slate-300 italic leading-relaxed">"{refData.vetAdvice}"</p>
           </div>
 
-          {/* Tags đặc tính */}
+          {/* Tags đặc tính tham khảo */}
           <div>
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Đặc tính hành vi:</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1.5">Đặc tính tham khảo của loài:</span>
             <div className="flex flex-wrap gap-1.5">
-              {currentPet.tags.map((t, i) => (
+              {refData.tags.map((t, i) => (
                 <span key={i} className="text-[10px] font-medium px-2 py-0.5 rounded-lg bg-white/5 text-slate-300 border border-white/5">
                   #{t}
                 </span>
@@ -429,39 +493,37 @@ export const PetBondingView = ({ pets = [] }) => {
               <div>
                 <h2 className="text-sm font-bold text-white flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-pink-400"/>
-                  Nhiệm Vụ Gắn Kết Hôm Nay
+                  Tiến Độ Hoạt Động Hôm Nay
                 </h2>
-                <p className="text-[11px] text-slate-400 mt-0.5">
-                  Hoàn thành chuỗi hoạt động để giải phóng hormone Oxytocin cùng {currentPet.name}
-                </p>
-              </div>
-              <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-3 py-1 rounded-full text-amber-300 text-xs font-bold shrink-0 self-start sm:self-auto">
-                <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400"/>
-                <span>Chuỗi gắn kết: 14 ngày</span>
               </div>
             </div>
 
             {/* Tiến độ ngày */}
-            <div className="flex items-center justify-between gap-3 text-xs">
-              <span className="text-slate-400">Tiến độ hôm nay: {completedCount}/{quests.length} việc</span>
-              <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-gradient-to-r from-pink-500 to-indigo-500 rounded-full transition-all duration-500"
-                  style={{ width: `${progressPercent}%` }}
-                />
+            {refData.quests.length > 0 ? (
+              <div className="flex items-center justify-between gap-3 text-xs">
+                <span className="text-slate-400">Đã xong: {completedCount}/{refData.quests.length} việc</span>
+                <div className="flex-1 h-2 bg-slate-800 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-pink-500 to-indigo-500 rounded-full transition-all duration-500"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+                <span className="font-bold text-pink-400">{progressPercent}%</span>
               </div>
-              <span className="font-bold text-pink-400">{progressPercent}%</span>
-            </div>
+            ) : (
+              <p className="text-xs text-slate-400">Chưa có hoạt động tham khảo cho loài này.</p>
+            )}
 
             {/* Danh sách bài tập có đồng hồ đếm ngược tương tác */}
             <div className="space-y-3">
-              {quests.map(q => {
+              {refData.quests.map(q => {
+                const isDone = todayData.questsDone.includes(q.id);
                 const isThisTimerActive = activeTimerId === q.id;
                 return (
                   <div 
                     key={q.id}
                     className={`rounded-2xl border p-4 transition-all ${
-                      q.done 
+                      isDone 
                         ? 'bg-emerald-950/20 border-emerald-500/30' 
                         : isThisTimerActive 
                           ? 'bg-pink-950/25 border-pink-500/50 ring-1 ring-pink-500/30 shadow-md shadow-pink-950/20' 
@@ -469,20 +531,10 @@ export const PetBondingView = ({ pets = [] }) => {
                     }`}
                   >
                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-                      {/* Tiêu đề & Thông tin */}
+                      {/* Tiêu đề & Thông vị */}
                       <div className="flex items-start gap-3 flex-1 min-w-0">
-                        <button
-                          type="button"
-                          onClick={() => handleCompleteQuest(q.id)}
-                          className={`w-6 h-6 mt-0.5 rounded-lg flex items-center justify-center border transition-all shrink-0 cursor-pointer ${
-                            q.done ? 'bg-emerald-500 border-emerald-400 text-slate-950 font-bold' : 'border-slate-600 hover:border-pink-400'
-                          }`}
-                          title={q.done ? 'Đánh dấu chưa hoàn thành' : 'Đánh dấu hoàn thành'}
-                        >
-                          {q.done && <Check className="w-4 h-4 stroke-[3]"/>}
-                        </button>
                         <div className="min-w-0 flex-1">
-                          <h4 className={`text-xs md:text-sm font-bold ${q.done ? 'line-through text-slate-400' : 'text-white'}`}>
+                          <h4 className={`text-xs md:text-sm font-bold ${isDone ? 'line-through text-slate-400' : 'text-white'}`}>
                             {q.title}
                           </h4>
                           <div className="flex flex-wrap items-center gap-2 mt-1">
@@ -492,16 +544,15 @@ export const PetBondingView = ({ pets = [] }) => {
                             <span className="text-[10px] text-slate-400 flex items-center gap-1">
                               <Clock className="w-3 h-3"/> {Math.floor(q.duration / 60)} phút
                             </span>
-                            <span className="text-[10px] font-bold text-amber-400">+{q.reward}% Oxytocin</span>
                           </div>
                           <p className="text-[11px] text-slate-300 mt-2 leading-relaxed bg-black/25 p-2.5 rounded-xl border border-white/5">
-                            💡 <strong className="text-white">Hướng dẫn:</strong> {q.desc}
+                            💡 <strong className="text-white">Tham khảo:</strong> {q.desc}
                           </p>
                         </div>
                       </div>
 
-                      {/* Cụm Đồng hồ đếm ngược tương tác thời gian thực */}
-                      <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                      {/* Nút hành động */}
+                      <div className="flex flex-wrap items-center gap-2 self-end md:self-center shrink-0">
                         {isThisTimerActive ? (
                           <div className="flex items-center gap-2 bg-slate-900 border border-pink-500/40 px-3 py-1.5 rounded-2xl shadow-inner">
                             <span className="font-mono text-sm font-black text-pink-400">
@@ -527,29 +578,30 @@ export const PetBondingView = ({ pets = [] }) => {
                         ) : (
                           <button
                             type="button"
-                            disabled={q.done}
+                            disabled={isDone || isSaving}
                             onClick={() => handleStartTimer(q)}
                             className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                              q.done 
+                              isDone 
                                 ? 'bg-white/5 text-slate-500 cursor-not-allowed border border-white/5' 
                                 : 'bg-gradient-to-r from-pink-500 to-purple-600 text-white hover:opacity-90 shadow-md shadow-pink-500/20 active:scale-95'
-                            }`}
+                            } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                           >
                             <Play className="w-3 h-3 fill-white"/>
-                            <span>Bắt đầu bài tập</span>
+                            <span>Bắt đầu</span>
                           </button>
                         )}
 
                         <button
                           type="button"
-                          onClick={() => handleCompleteQuest(q.id)}
+                          disabled={isSaving}
+                          onClick={() => handleToggleQuest(q.id)}
                           className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
-                            q.done 
+                            isDone 
                               ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25' 
                               : 'bg-white/5 border-white/10 text-slate-300 hover:border-white/30 hover:bg-white/10 active:scale-95'
-                          }`}
+                          } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                          {q.done ? '✓ Đã xong' : 'Xong'}
+                          {isDone ? '✓ Đã hoàn thành' : 'Hoàn thành'}
                         </button>
                       </div>
                     </div>
@@ -559,69 +611,73 @@ export const PetBondingView = ({ pets = [] }) => {
             </div>
           </div>
 
-          {/* KHỐI 2: KHÔI PHỤC TỪ ĐIỂN CƠ THỂ TƯƠNG TÁC (CÓ NÚT GHI NHẬN HÀNH VI) */}
+          {/* KHỐI 2: TỪ ĐIỂN CƠ THỂ TƯƠNG TÁC */}
           <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-4 sm:p-5 backdrop-blur-md space-y-3">
             <div className="flex items-center justify-between pb-2 border-b border-white/5 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-base">📖</span>
                 <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                  Từ Điển Ngôn Ngữ Cơ Thể • {currentPet.name}
+                  Ghi Nhận Hành Vi Hôm Nay
                 </h3>
               </div>
               <span className="text-xs text-slate-400">
-                Quan sát thấy hôm nay: <strong className="text-pink-400">{recordedGesturesCount}/{currentPet.gestures.length}</strong>
+                Đã ghi nhận: <strong className="text-pink-400">{recordedGesturesCount}/{refData.gestures.length}</strong>
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {currentPet.gestures.map(g => (
-                <div 
-                  key={g.id}
-                  className={`p-3.5 rounded-2xl border flex flex-col justify-between gap-3 transition-all ${
-                    g.recorded 
-                      ? 'bg-pink-950/20 border-pink-500/40 ring-1 ring-pink-500/20' 
-                      : 'bg-white/[0.02] border-white/5 hover:border-white/10'
-                  }`}
-                >
-                  <div>
-                    <h5 className="text-xs font-bold text-white mb-1">{g.sign}</h5>
-                    <p className="text-[11px] text-slate-400 leading-relaxed">{g.meaning}</p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => handleToggleGesture(g.id)}
-                    className={`w-full py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
-                      g.recorded 
-                        ? 'bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/20' 
-                        : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:border-white/20 hover:bg-white/10'
+              {refData.gestures.map(g => {
+                const isRecorded = todayData.gesturesRecorded.includes(g.id);
+                return (
+                  <div 
+                    key={g.id}
+                    className={`p-3.5 rounded-2xl border flex flex-col justify-between gap-3 transition-all ${
+                      isRecorded 
+                        ? 'bg-pink-950/20 border-pink-500/40 ring-1 ring-pink-500/20' 
+                        : 'bg-white/[0.02] border-white/5 hover:border-white/10'
                     }`}
                   >
-                    {g.recorded ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 stroke-[3]"/>
-                        <span>Đã ghi nhận hôm nay</span>
-                      </>
-                    ) : (
-                      'Nhấn để ghi nhận'
-                    )}
-                  </button>
-                </div>
-              ))}
+                    <div>
+                      <h5 className="text-xs font-bold text-white mb-1">{g.sign}</h5>
+                      <p className="text-[11px] text-slate-400 leading-relaxed">{g.meaning}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled={isSaving}
+                      onClick={() => handleToggleGesture(g.id)}
+                      className={`w-full py-1.5 rounded-xl text-[11px] font-bold border transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 ${
+                        isRecorded 
+                          ? 'bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/20' 
+                          : 'bg-white/5 border-white/10 text-slate-400 hover:text-white hover:border-white/20 hover:bg-white/10'
+                      } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {isRecorded ? (
+                        <>
+                          <Check className="w-3.5 h-3.5 stroke-[3]"/>
+                          <span>Đã ghi nhận hôm nay</span>
+                        </>
+                      ) : (
+                        'Nhấn để ghi nhận'
+                      )}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* KHỐI 3: KHOA HỌC HÀNH VI & OXYTOCIN */}
+          {/* KHỐI 3: KHOA HỌC HÀNH VI */}
           <div className="bg-slate-900/60 border border-white/5 rounded-3xl p-4 backdrop-blur-md flex items-start gap-3">
             <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 shrink-0 mt-0.5">
               <Brain className="w-4 h-4"/>
             </div>
             <div>
               <h4 className="text-xs font-bold text-indigo-300 uppercase tracking-wider">
-                Vòng lặp Hormone Hạnh Phúc (Oxytocin Loop)
+                Thông tin khoa học tham khảo
               </h4>
               <p className="text-[11px] text-slate-300 leading-relaxed mt-1">
-                {currentPet.science}
+                {refData.science}
               </p>
             </div>
           </div>

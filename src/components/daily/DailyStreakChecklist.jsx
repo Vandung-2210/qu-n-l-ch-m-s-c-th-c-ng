@@ -198,7 +198,7 @@ export default function DailyStreakChecklist({
                 value={newTitle}
                 onChange={(e) => setNewTitle(e.target.value)}
                 placeholder="VD: Nhỏ mắt thuốc dưỡng, Đi dạo 30p..."
-                className="w-full text-xs px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                 required
               />
             </div>
@@ -206,21 +206,21 @@ export default function DailyStreakChecklist({
               <select
                 value={newTimeSlot}
                 onChange={(e) => setNewTimeSlot(e.target.value)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
               >
-                <option value="morning">🌅 Buổi sáng</option>
-                <option value="noon">☀️ Buổi trưa</option>
-                <option value="evening">🌙 Buổi tối</option>
+                <option value="morning" className="text-slate-900 dark:text-white dark:bg-slate-900">🌅 Buổi sáng</option>
+                <option value="noon" className="text-slate-900 dark:text-white dark:bg-slate-900">☀️ Buổi trưa</option>
+                <option value="evening" className="text-slate-900 dark:text-white dark:bg-slate-900">🌙 Buổi tối</option>
               </select>
             </div>
             <div>
               <select
                 value={newPetId}
                 onChange={(e) => setNewPetId(e.target.value)}
-                className="w-full text-xs px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none"
+                className="w-full text-xs px-3 py-2 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100 focus:outline-none cursor-pointer"
               >
                 {pets.map(p => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
+                  <option key={p.id} value={p.id} className="text-slate-900 dark:text-white dark:bg-slate-900">{p.name}</option>
                 ))}
               </select>
             </div>
@@ -232,7 +232,7 @@ export default function DailyStreakChecklist({
                 type="time"
                 value={newScheduledTime}
                 onChange={(e) => setNewScheduledTime(e.target.value)}
-                className="text-xs px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+                className="text-xs px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark] cursor-pointer"
               />
             </div>
             <div className="flex items-center gap-2">

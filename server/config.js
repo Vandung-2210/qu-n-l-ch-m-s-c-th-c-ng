@@ -19,3 +19,5 @@ export const config = {
   EMAIL_FROM: process.env.EMAIL_FROM || 'PetCare PRO AI <no-reply@petcare.ai>',
   DEV_MODE_ALLOW_CONSOLE_EMAIL: process.env.DEV_MODE_ALLOW_CONSOLE_EMAIL === 'true'
 };
+
+export const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-dev';

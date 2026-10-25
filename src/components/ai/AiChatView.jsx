@@ -362,20 +362,20 @@ Dưới đây là danh sách các cơ sở thú y uy tín hàng đầu trong m�
 > 🚨 **CẢNH BÁO CẤP CỨU:** Nếu thú cưng xuất hiện triệu chứng hôn mê, co giật liên tục, sốc nhiệt hoặc hóc dị vật khó thở, vui lòng gọi ngay Hotline **1900 6868** trước khi di chuyển để kíp trực chuẩn bị lồng ấp oxy sẵn sàng!`
   },
 
-  // CHỦ ĐỀ 2: DINH DƯỠNG & DỊ ỨNG THỊT BÒ (DÀNH CHO MOCHI)
+  // CHỦ ĐỀ 2: DINH DƯỠNG & DỊ ỨNG THỊT BÒ
   {
     id: 'beef_allergy_nutrition',
-    category: 'DINH DƯỠNG & DỊ ỨNG THỊT BÒ (DÀNH CHO MOCHI)',
+    category: 'DINH DƯỠNG & DỊ ỨNG THỊT BÒ',
     keywords: [
       'thịt bò', 'thit bo', 'dị ứng', 'di ung', 'thức ăn cho cún dị ứng', 'thuc an cho cun di ung', 
-      'thực đơn', 'thuc don', 'mochi ăn gì', 'mochi an gi', 'đổi hạt', 'doi hat',
+      'thực đơn', 'thuc don', 'ăn gì', 'an gi', 'đổi hạt', 'doi hat',
       'dị ứng thịt bò', 'di ung thit bo', 'thịt gì thay bò', 'thit gi thay bo'
     ],
     cardCategory: 'nutrition',
     getResponse: (pet) => {
-      const petName = pet?.name || 'Mochi';
-      const weight = pet?.weight || 24.5;
-      return `### 🥩 PHÁC ĐỒ DINH DƯỠNG ĐẶC BIỆT: LOẠI TRỪ ĐẠM BÒ CHO ${petName.toUpperCase()} (${weight} KG)
+      const petName = pet?.name || 'thú cưng';
+      const weightStr = pet?.weight ? ` (${pet.weight} KG)` : '';
+      return `### 🥩 PHÁC ĐỒ DINH DƯỠNG ĐẶC BIỆT: LOẠI TRỪ ĐẠM BÒ CHO ${petName.toUpperCase()}${weightStr}
 
 Hồ sơ y bạ ghi nhận **${petName}** có tiền sử **dị ứng nhẹ với đạm thịt bò** (triệu chứng ngứa kẽ móng, đỏ vành tai hoặc phân sống nhão khi ăn phải). Dưới đây là giải pháp dinh dưỡng thay thế chuẩn y khoa:
 
@@ -563,17 +563,17 @@ Mèo cưng có tập tính liếm lông làm sạch thường xuyên và cơ ch�
 - Quan sát viên vón nước tiểu: Nếu kích thước viên tiểu nhỏ bất thường, hoặc bé ngồi rặn buốt, kêu khóc khi đi vệ sinh -> Đưa đi siêu âm bàng quang tầm soát sỏi Struvite ngay lập tức!`
   },
 
-  // CHỦ ĐỀ 8: CHĂM SÓC THỎ BÁNH BAO (MINILOP)
+  // CHỦ ĐỀ 8: CHĂM SÓC THỎ CẢNH (MINILOP)
   {
-    id: 'rabbit_banhbao_care',
-    category: 'CHĂM SÓC THỎ BÁNH BAO (MINILOP)',
+    id: 'rabbit_care_minilop',
+    category: 'CHĂM SÓC THỎ CẢNH (MINILOP)',
     keywords: [
-      'bánh bao', 'banh bao', 'thỏ', 'tho', 'cỏ timothy', 'co timothy', 
+      'thỏ', 'tho', 'cỏ timothy', 'co timothy', 
       'đình trệ dạ dày', 'dinh tre da day', 'mài răng', 'mai rang', 'chải lông', 
       'chai long', 'gi stasis', 'thỏ ăn gì', 'tho an gi', 'thỏ minilop'
     ],
     cardCategory: 'general',
-    getResponse: () => `### 🐰 HƯỚNG DẪN CHĂM SÓC CHUYÊN SÂU: THỎ BÁNH BAO (DÒNG MINILOP)
+    getResponse: () => `### 🐰 HƯỚNG DẪN CHĂM SÓC CHUYÊN SÂU: THỎ CẢNH (DÒNG MINILOP)
 
 Hệ tiêu hóa của loài thỏ là hệ thống lên men manh tràng cực kỳ mỏng manh và phụ thuộc hoàn toàn vào chất xơ thô:
 
@@ -1155,44 +1155,42 @@ Bạn đang lo lắng triệu chứng gì về **${selectedPet ? selectedPet.nam
     setInputMessage('');
     setIsLoading(true);
 
-    // =========================================================================
-    // XỬ LÝ HOÀN TOÀN CỤC BỘ QUA BỘ CƠ SỞ TRI THỨC Y KHOA NỘI TẠI DR. PAW
-    // =========================================================================
-    const kbMatch = findKnowledgeBaseMatch(userMessage, selectedPet);
-    setTimeout(() => {
+    try {
+      const { apiFetch } = await import('../../services/apiService.js');
+      const res = await apiFetch('/chat', 'POST', {
+        message: userMessage,
+        petContext: selectedPet
+      });
+
       try { sound.playSuccess(); } catch (_) {}
 
-      if (kbMatch) {
-        setMessages(prev => [
-          ...prev,
-          {
-            id: `ai-${Date.now()}`,
-            sender: 'ai',
-            text: kbMatch.text,
-            severity: (kbMatch.id === 'clinic_locations' || kbMatch.id === 'chocolate_poisoning' || kbMatch.id === 'forbidden_foods') ? 'WARNING' : 'NORMAL',
-            suggestedCards: kbMatch.suggestedCards || detectSuggestedCards(kbMatch.text),
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }
-        ]);
-      } else {
-        const outOfScopeText = getOutOfScopeResponse(userMessage, selectedPet);
-        const matchingCards = detectSuggestedCards(userMessage);
-
-        setMessages(prev => [
-          ...prev,
-          {
-            id: `ai-${Date.now()}`,
-            sender: 'ai',
-            text: outOfScopeText,
-            severity: 'NORMAL',
-            suggestedCards: matchingCards,
-            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }
-        ]);
-      }
-
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: res.reply || 'Không có phản hồi.',
+          severity: 'NORMAL',
+          suggestedCards: detectSuggestedCards(userMessage),
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          source: res.source
+        }
+      ]);
+    } catch (err) {
+      console.error('Chat error', err);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: `ai-${Date.now()}`,
+          sender: 'ai',
+          text: `Lỗi: ${err.message || 'Không thể kết nối đến máy chủ.'}`,
+          severity: 'WARNING',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+    } finally {
       setIsLoading(false);
-    }, 350);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -1353,7 +1351,7 @@ Bạn đang lo lắng triệu chứng gì về **${selectedPet ? selectedPet.nam
             className="px-2.5 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-semibold text-slate-200 flex items-center gap-1.5 transition-all cursor-pointer"
           >
             <span>🐾</span>
-            <span>{selectedPet ? `${selectedPet.name} (${selectedPet.breed || (selectedPet.species === 'cat' ? 'Mèo' : selectedPet.species === 'rabbit' ? 'Thỏ' : 'Golden')})` : 'Mochi (Golden)'}</span>
+            <span>{selectedPet ? `${selectedPet.name} (${selectedPet.breed || (selectedPet.species === 'cat' ? 'Mèo' : selectedPet.species === 'rabbit' ? 'Thỏ' : 'Chó')})` : (pets.length > 0 ? 'Chọn thú cưng' : 'Chưa có thú cưng')}</span>
             <ChevronDown size={12} className={`text-slate-400 transition-transform ${isPetDropdownOpen ? 'rotate-180' : ''}`} />
           </button>
 
@@ -1439,6 +1437,12 @@ Bạn đang lo lắng triệu chứng gì về **${selectedPet ? selectedPet.nam
 
                 {/* Formatted Markdown Body */}
                 <FormattedAiMessage text={msg.text} />
+                
+                {isAi && msg.source && (
+                  <div className="mt-2 text-[10px] text-slate-400 italic">
+                    Nguồn tài liệu tham khảo: {msg.source}
+                  </div>
+                )}
 
                 {/* Thẻ đề xuất dịch vụ & thuốc (Xóa bỏ truncate, hiển thị trọn vẹn thông tin) */}
                 {isAi && (

@@ -8,16 +8,8 @@ import { useTheme } from '../../context/ThemeContext';
  * - Light Mode: Pristine frosted spatial canvas (#f1f5f9) with fresh aqua, sky cyan, and gentle lavender glows.
  */
 export const AuraBackground = ({ children, className = '' }) => {
-  let isDark = true;
-  try {
-    const themeContext = useTheme();
-    isDark = themeContext.isDark;
-  } catch {
-    // Fallback if rendered outside ThemeProvider
-    if (typeof document !== 'undefined') {
-      isDark = document.documentElement.classList.contains('dark');
-    }
-  }
+  const themeContext = useTheme();
+  const isDark = themeContext?.isDark ?? true;
 
   return (
     <div 

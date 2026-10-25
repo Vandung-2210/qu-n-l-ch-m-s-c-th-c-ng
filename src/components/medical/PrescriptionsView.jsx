@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getTodayVnDate, getVnDateString, addDaysLocal } from '../../utils/dateUtils.js';
 import { 
   Pill, 
   Plus, 
@@ -24,7 +25,7 @@ export const PrescriptionsView = ({
     petId: pets[0]?.id || '',
     medicineName: '',
     dosage: '',
-    startDate: new Date().toISOString().split('T')[0],
+    startDate: getTodayVnDate(),
     durationDays: 7,
     prescribedBy: '',
     purpose: '',
@@ -42,7 +43,7 @@ export const PrescriptionsView = ({
       petId: pets[0]?.id || '',
       medicineName: '',
       dosage: '',
-      startDate: new Date().toISOString().split('T')[0],
+      startDate: getTodayVnDate(),
       durationDays: 7,
       prescribedBy: '',
       purpose: '',
@@ -51,16 +52,16 @@ export const PrescriptionsView = ({
     setIsAddModalOpen(false);
   };
 
-  // Tính số ngày còn lại
+  // Tính số ngày còn lại theo chuẩn Asia/Ho_Chi_Minh
   const calculateDaysRemaining = (startDateStr, durationDays) => {
-    const start = new Date(startDateStr);
-    const end = new Date(start);
-    end.setDate(end.getDate() + Number(durationDays));
-
-    const today = new Date();
-    const diffTime = end - today;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
+    const startStr = getVnDateString(startDateStr);
+    const endStr = addDaysLocal(startStr, Number(durationDays) || 7);
+    const todayStr = getTodayVnDate();
+    const [ey, em, ed] = endStr.split('-').map(Number);
+    const [ty, tm, td] = todayStr.split('-').map(Number);
+    const endUtc = Date.UTC(ey, em - 1, ed);
+    const todayUtc = Date.UTC(ty, tm - 1, td);
+    return Math.round((endUtc - todayUtc) / (1000 * 60 * 60 * 24));
   };
 
   return (
@@ -126,17 +127,23 @@ export const PrescriptionsView = ({
                         {pet ? pet.name : 'Thú cưng'}
                       </span>
                       <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">
-                        {pres.medicineName}
+                        {pres.title || pres.medicineName || 'Đơn thuốc điều trị'}
                       </h3>
                     </div>
 
-                    <button
-                      onClick={() => onDeletePrescription(pres.id)}
-                      className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
-                      title="Xóa đơn thuốc"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {!pres.isFinal ? (
+                      <button
+                        onClick={() => onDeletePrescription(pres.id)}
+                        className="text-slate-400 hover:text-rose-600 p-1 transition-colors"
+                        title="Xóa đơn thuốc"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    ) : (
+                      <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800">
+                        ✓ Đã ký chốt
+                      </span>
+                    )}
                   </div>
 
                   <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-700/50 space-y-1 text-xs mb-3">
@@ -192,8 +199,8 @@ export const PrescriptionsView = ({
 
       {/* Add Modal */}
       {isAddModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
-          <div className="bg-white dark:bg-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 dark:border-slate-700">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <div className="bg-white dark:bg-[#181926] text-slate-900 dark:text-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-white/10 transition-colors">
             <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4">
               Thêm Đơn Thuốc Điều Trị Mới
             </h3>
@@ -204,10 +211,10 @@ export const PrescriptionsView = ({
                 <select
                   value={formData.petId}
                   onChange={(e) => setFormData({ ...formData, petId: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white outline-hidden cursor-pointer"
                 >
                   {pets.map(p => (
-                    <option key={p.id} value={p.id}>{p.name} ({p.breed})</option>
+                    <option key={p.id} value={p.id} className="text-slate-900 dark:text-white dark:bg-slate-800">{p.name} ({p.breed})</option>
                   ))}
                 </select>
               </div>
@@ -220,7 +227,7 @@ export const PrescriptionsView = ({
                   placeholder="Ví dụ: Kháng sinh Clavamox, Men Biotic..."
                   value={formData.medicineName}
                   onChange={(e) => setFormData({ ...formData, medicineName: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-500 transition-all font-medium"
                 />
               </div>
 
@@ -232,7 +239,7 @@ export const PrescriptionsView = ({
                   placeholder="Ví dụ: 1 viên/ngày chia 2 lần sau ăn..."
                   value={formData.dosage}
                   onChange={(e) => setFormData({ ...formData, dosage: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-500 transition-all font-medium"
                 />
               </div>
 
@@ -244,7 +251,7 @@ export const PrescriptionsView = ({
                     required
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white [color-scheme:light] dark:[color-scheme:dark] outline-hidden focus:border-emerald-500 transition-all cursor-pointer font-medium"
                   />
                 </div>
 
@@ -255,7 +262,7 @@ export const PrescriptionsView = ({
                     required
                     value={formData.durationDays}
                     onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                    className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-500 transition-all font-semibold"
                   />
                 </div>
               </div>
@@ -267,7 +274,7 @@ export const PrescriptionsView = ({
                   placeholder="Ví dụ: BS. Tuấn - BV PetHealth"
                   value={formData.prescribedBy}
                   onChange={(e) => setFormData({ ...formData, prescribedBy: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-500 transition-all font-medium"
                 />
               </div>
 
@@ -278,7 +285,7 @@ export const PrescriptionsView = ({
                   placeholder="Trộn vào pate ấm, tránh cho uống cùng sữa..."
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-xl outline-hidden"
+                  className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-500 outline-hidden focus:border-emerald-500 transition-all"
                 />
               </div>
 
@@ -286,13 +293,13 @@ export const PrescriptionsView = ({
                 <button
                   type="button"
                   onClick={() => setIsAddModalOpen(false)}
-                  className="px-4 py-2 text-slate-500 hover:bg-slate-100 rounded-xl"
+                  className="px-4 py-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl shadow-xs"
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-xs cursor-pointer transition-colors"
                 >
                   Lưu Đơn Thuốc
                 </button>

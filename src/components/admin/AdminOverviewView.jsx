@@ -15,7 +15,8 @@ import {
   KeyRound,
   Shield,
   UserPlus,
-  Trash2
+  Trash2,
+  RefreshCw
 } from 'lucide-react';
 import { auditOrphanedPets } from '../../services/storageService';
 import { OrphanedPetsCleanupModal } from './OrphanedPetsCleanupModal';
@@ -23,6 +24,9 @@ import { sound } from '../../services/soundService';
 
 export const AdminOverviewView = ({
   users = [],
+  usersLoading = false,
+  usersError = null,
+  onRetry = null,
   pets = [],
   schedules = [],
   onNavigateTab
@@ -68,39 +72,43 @@ export const AdminOverviewView = ({
   const statCards = [
     {
       title: 'Tổng Tài Khoản',
-      value: totalAccounts,
-      sub: `${activeCount} đang hoạt động, gồm cả Admin`,
+      value: usersError ? '—' : (usersLoading ? '...' : totalAccounts),
+      sub: usersError ? 'Không thể tải từ máy chủ' : `${activeCount} đang hoạt động, gồm cả Admin`,
       icon: Users,
-      badge: `${totalAccounts} tài khoản`
+      badge: usersError ? 'Lỗi kết nối' : (usersLoading ? 'Đang tải...' : `${totalAccounts} tài khoản`),
+      highlight: Boolean(usersError)
     },
     {
       title: 'Quản Trị Viên (Admin)',
-      value: adminCount,
-      sub: 'Quyền vận hành & kiểm soát hệ thống',
+      value: usersError ? '—' : (usersLoading ? '...' : adminCount),
+      sub: usersError ? 'Không thể tải từ máy chủ' : 'Quyền vận hành & kiểm soát hệ thống',
       icon: ShieldCheck,
-      badge: `${adminCount} quản trị viên`
+      badge: usersError ? 'Lỗi kết nối' : (usersLoading ? 'Đang tải...' : `${adminCount} quản trị viên`),
+      highlight: Boolean(usersError)
     },
     {
       title: 'Bác Sĩ Thú Y (Vet Doctor)',
-      value: vetCount,
-      sub: 'Được cấp quyền khám & Clinic OS',
+      value: usersError ? '—' : (usersLoading ? '...' : vetCount),
+      sub: usersError ? 'Không thể tải từ máy chủ' : 'Được cấp quyền khám & Clinic OS',
       icon: Stethoscope,
-      badge: `${vetCount} bác sĩ`
+      badge: usersError ? 'Lỗi kết nối' : (usersLoading ? 'Đang tải...' : `${vetCount} bác sĩ`),
+      highlight: Boolean(usersError)
     },
     {
       title: 'Chủ Nuôi (Pet Owner)',
-      value: ownerCount,
-      sub: `${totalAccounts > 0 ? ((ownerCount / totalAccounts) * 100).toFixed(0) : 0}% tổng người dùng`,
+      value: usersError ? '—' : (usersLoading ? '...' : ownerCount),
+      sub: usersError ? 'Không thể tải từ máy chủ' : `${totalAccounts > 0 ? ((ownerCount / totalAccounts) * 100).toFixed(0) : 0}% tổng người dùng`,
       icon: UserCheck,
-      badge: `${ownerCount} chủ nuôi`
+      badge: usersError ? 'Lỗi kết nối' : (usersLoading ? 'Đang tải...' : `${ownerCount} chủ nuôi`),
+      highlight: Boolean(usersError)
     },
     {
       title: 'Tài Khoản Bị Khóa',
-      value: lockedCount,
-      sub: lockedCount > 0 ? 'Bị chặn đăng nhập & ngắt phiên' : 'Không có tài khoản bị khóa',
+      value: usersError ? '—' : (usersLoading ? '...' : lockedCount),
+      sub: usersError ? 'Không thể tải từ máy chủ' : (lockedCount > 0 ? 'Bị chặn đăng nhập & ngắt phiên' : 'Không có tài khoản bị khóa'),
       icon: Lock,
-      highlight: lockedCount > 0,
-      badge: lockedCount > 0 ? 'Cảnh báo bảo mật' : 'An toàn'
+      highlight: usersError ? false : lockedCount > 0,
+      badge: usersError ? 'Lỗi kết nối' : (lockedCount > 0 ? 'Cảnh báo bảo mật' : 'An toàn')
     },
     {
       title: 'Hồ Sơ Thú Cưng',
@@ -162,6 +170,43 @@ export const AdminOverviewView = ({
         {/* Ambient background decoration */}
         <div className="absolute right-0 top-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
       </div>
+
+      {/* Banner Lỗi tải dữ liệu tài khoản kèm nút Thử lại */}
+      {usersError && (
+        <div className="p-4 sm:p-5 rounded-3xl bg-rose-500/10 border border-rose-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in fade-in duration-200 shadow-sm">
+          <div className="flex items-start gap-3.5">
+            <div className="w-10 h-10 rounded-2xl bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 flex items-center justify-center shrink-0 mt-0.5">
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>Không thể tải danh sách tài khoản từ máy chủ</span>
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-rose-500/20 text-rose-600 dark:text-rose-300">
+                  Lỗi kết nối
+                </span>
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                {usersError}. Số liệu hiển thị có thể chưa đầy đủ hoặc không phản ánh đúng cơ sở dữ liệu. Vui lòng bấm "Thử lại" để tải lại.
+              </p>
+            </div>
+          </div>
+
+          {onRetry && (
+            <button
+              type="button"
+              onClick={() => {
+                sound?.playClick?.();
+                onRetry();
+              }}
+              disabled={usersLoading}
+              className="px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-xs font-bold transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 cursor-pointer shrink-0 disabled:opacity-50"
+            >
+              <RefreshCw className={`w-4 h-4 ${usersLoading ? 'animate-spin' : ''}`} />
+              <span>{usersLoading ? 'Đang tải lại...' : 'Thử lại'}</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Banner Cảnh báo Dọn Dẹp Dữ Liệu Tồn Đọng của Tài Khoản Đã Xóa */}
       {orphanedAudit.confirmedDeletedOwnerPets.length > 0 && (

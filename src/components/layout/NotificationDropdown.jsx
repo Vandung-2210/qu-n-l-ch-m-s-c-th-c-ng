@@ -9,6 +9,8 @@ import {
   PawPrint
 } from 'lucide-react';
 import { ScheduleBadge } from '../common/Badges';
+import { getTodayVnDate, getVnDateString } from '../../utils/dateUtils.js';
+import { useCurrentVnDate } from '../../hooks/useCurrentVnDate';
 
 export const NotificationDropdown = ({
   isOpen,
@@ -18,11 +20,11 @@ export const NotificationDropdown = ({
   onToggleComplete,
   onNavigateTab
 }) => {
-  if (!isOpen) return null;
+  const todayStr = useCurrentVnDate();
 
-  const todayStr = new Date().toISOString().split('T')[0];
-  const overdueItems = schedules.filter(s => s.date < todayStr && !s.completed);
-  const todayItems = schedules.filter(s => s.date === todayStr && !s.completed);
+  if (!isOpen) return null;
+  const overdueItems = schedules.filter(s => s && s.date && getVnDateString(s.date) < todayStr && !s.completed);
+  const todayItems = schedules.filter(s => s && s.date && getVnDateString(s.date) === todayStr && !s.completed);
 
   return (
     <div className="absolute right-0 top-14 z-50 w-80 sm:w-96 bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-4 animate-in fade-in zoom-in-95 duration-150">

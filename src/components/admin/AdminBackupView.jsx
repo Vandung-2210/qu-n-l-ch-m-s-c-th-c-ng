@@ -21,6 +21,7 @@ import {
   resetSystemData 
 } from '../../services/storageService';
 import { sound } from '../../services/soundService';
+import { getTodayVnDate } from '../../utils/dateUtils';
 
 export const AdminBackupView = ({
   currentAdmin = null,
@@ -33,14 +34,14 @@ export const AdminBackupView = ({
   const [importPreview, setImportPreview] = useState(null);
 
   // 1. Xuất sao lưu toàn hệ thống
-  const handleExportSystem = () => {
+  const handleExportSystem = async () => {
     try {
-      const jsonString = exportSystemData();
+      const jsonString = await exportSystemData();
       const blob = new Blob([jsonString], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `petcare_SYSTEM_BACKUP_${new Date().toISOString().split('T')[0]}.json`;
+      link.download = `petcare_SYSTEM_BACKUP_${getTodayVnDate()}.json`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -72,7 +73,8 @@ export const AdminBackupView = ({
             petsCount: Array.isArray(parsed.pets) ? parsed.pets.length : 0,
             schedulesCount: Array.isArray(parsed.schedules) ? parsed.schedules.length : 0,
             expensesCount: Array.isArray(parsed.expenses) ? parsed.expenses.length : 0,
-            appointmentsCount: Array.isArray(parsed.appointments) ? parsed.appointments.length : 0
+            appointmentsCount: Array.isArray(parsed.appointments) ? parsed.appointments.length : 0,
+            medicalRecordsCount: Array.isArray(parsed.medicalRecords || parsed.medical_records) ? (parsed.medicalRecords || parsed.medical_records).length : 0
           });
           setIsImportConfirmOpen(true);
         } catch (err) {
@@ -89,9 +91,9 @@ export const AdminBackupView = ({
   };
 
   // 3. Thực hiện khôi phục hệ thống sau khi đã xác nhận
-  const handleConfirmImport = () => {
+  const handleConfirmImport = async () => {
     if (!pendingImportContent) return;
-    const res = importSystemData(pendingImportContent);
+    const res = await importSystemData(pendingImportContent);
     setIsImportConfirmOpen(false);
     setPendingImportContent(null);
     setImportPreview(null);

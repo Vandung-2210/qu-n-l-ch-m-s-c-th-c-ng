@@ -111,10 +111,24 @@ const getRemainingDaysInfo = (dueDateStr, remainingDaysVal) => {
 
 export const MedicalRecordsView = ({
   pets = [],
-  schedules = []
+  schedules = [],
+  medicalRecords = [],
+  prescriptions = []
 }) => {
-  const [selectedPetId, setSelectedPetId] = useState(pets[0]?.id || 'pet-1');
-  const selectedPet = pets.find(p => p.id === selectedPetId) || pets[0] || null;
+  const [selectedPetId, setSelectedPetId] = useState(pets[0]?.id || null);
+  const [activeMainTab, setActiveMainTab] = useState('vaccines'); // 'vaccines' | 'soap' | 'prescriptions'
+
+  React.useEffect(() => {
+    if (pets.length === 0) {
+      setSelectedPetId(null);
+    } else if (selectedPetId && !pets.find(p => p.id === selectedPetId)) {
+      setSelectedPetId(pets[0].id);
+    } else if (!selectedPetId && pets.length > 0) {
+      setSelectedPetId(pets[0].id);
+    }
+  }, [pets, selectedPetId]);
+
+  const selectedPet = pets.find(p => p.id === selectedPetId) || null;
 
   const [isExporting, setIsExporting] = useState(false);
   const [vaccineFilter, setVaccineFilter] = useState('all'); // 'all' | 'valid' | 'due'
@@ -200,8 +214,38 @@ export const MedicalRecordsView = ({
   const nearestDueDate = rawVaccines.length > 0 && rawVaccines[0]?.nextDue ? rawVaccines[0].nextDue : 'Chưa có';
   const dewormsCount = displayedDeworms.length;
 
+  // Lọc bệnh án SOAP và đơn thuốc đã công bố của thú cưng
+  const petMedicalRecords = useMemo(() => {
+    if (!selectedPet) return [];
+    return (medicalRecords || []).filter(r => r.petId === selectedPet.id);
+  }, [medicalRecords, selectedPet]);
+
+  const petPrescriptions = useMemo(() => {
+    if (!selectedPet) return [];
+    return (prescriptions || []).filter(p => p.petId === selectedPet.id);
+  }, [prescriptions, selectedPet]);
+
+  if (!selectedPet) {
+    return (
+      <div className="flex flex-col items-center justify-center p-12 text-center rounded-3xl bg-white dark:bg-[#12192A] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-lg mt-8">
+        <PawPrint className="w-16 h-16 text-slate-300 dark:text-slate-600 mb-4 opacity-50" />
+        <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Bạn chưa có thú cưng</h2>
+        <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md">
+          Vui lòng thêm thú cưng vào hệ thống để bắt đầu quản lý sổ tiêm chủng và y bạ điện tử (WSAVA).
+        </p>
+        <button 
+          onClick={() => window.dispatchEvent(new CustomEvent('petcare_open_add_pet'))}
+          className="mt-6 px-5 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl shadow-lg hover:bg-indigo-700 transition-all active:scale-95 flex items-center gap-2"
+        >
+          <PawPrint className="w-4 h-4" />
+          Thêm Thú Cưng
+        </button>
+      </div>
+    );
+  }
+
   // Microchip chuẩn cá thể duy nhất
-  const petMicrochip = selectedPet.microchip || 'Chưa cập nhật';
+  const petMicrochip = selectedPet.microchip || 'Chưa ghi nhận';
 
   const petGenderLabel = selectedPet.gender === 'male' || selectedPet.gender === 'Đực' ? 'Đực' : 'Cái';
   const petWeightLabel = selectedPet.weight ? `${selectedPet.weight} kg` : 'Chưa có dữ liệu';
@@ -299,7 +343,7 @@ export const MedicalRecordsView = ({
           
           {/* CỘT TRÁI (5 Cột): Avatar viền vàng kim, Tên, Thông số, Microchip & Huy hiệu WSAVA */}
           <div className="lg:col-span-5 flex items-center gap-4">
-            {/* Avatar Mochi có khung viền vàng kim bảo chứng */}
+            {/* Avatar thú cưng có khung viền bảo chứng */}
             <div className="relative shrink-0">
               <div className="w-20 h-20 rounded-2xl p-0.5 bg-gradient-to-br from-amber-300 via-amber-500 to-amber-600 shadow-[0_0_20px_rgba(251,191,36,0.25)]">
                 <img
@@ -314,7 +358,7 @@ export const MedicalRecordsView = ({
               </span>
             </div>
 
-            {/* Thông tin Mochi */}
+            {/* Thông tin thú cưng */}
             <div className="space-y-1">
               <div className="flex items-center gap-2 flex-wrap">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{selectedPet.name}</h2>
@@ -416,6 +460,52 @@ export const MedicalRecordsView = ({
         </div>
       </div>
 
+      {/* ---------------------------------------------------------------------- */}
+      {/* THANH ĐIỀU HƯỚNG 3 PHÂN HỆ Y KHOA: VẮC-XIN, SOAP, ĐƠN THUỐC              */}
+      {/* ---------------------------------------------------------------------- */}
+      <div className="flex items-center gap-2 p-1.5 bg-slate-100 dark:bg-slate-800/60 rounded-2xl border border-slate-200/80 dark:border-white/10 overflow-x-auto">
+        <button
+          type="button"
+          onClick={() => setActiveMainTab('vaccines')}
+          className={`flex-1 min-w-[170px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeMainTab === 'vaccines'
+              ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/20'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Syringe className="w-4 h-4" />
+          <span>Sổ Tiêm Chủng & Ký Sinh Trùng</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveMainTab('soap')}
+          className={`flex-1 min-w-[170px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeMainTab === 'soap'
+              ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Stethoscope className="w-4 h-4" />
+          <span>Bệnh Án Lâm Sàng SOAP ({petMedicalRecords.length})</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveMainTab('prescriptions')}
+          className={`flex-1 min-w-[170px] py-2.5 px-4 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+            activeMainTab === 'prescriptions'
+              ? 'bg-purple-600 text-white shadow-md shadow-purple-600/20'
+              : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+          }`}
+        >
+          <Pill className="w-4 h-4" />
+          <span>Đơn Thuốc Điều Trị ({petPrescriptions.length})</span>
+        </button>
+      </div>
+
+      {activeMainTab === 'vaccines' && (
+      <>
       {/* ---------------------------------------------------------------------- */}
       {/* 3. BẢNG VẮC-XIN THEO DẠNG "TEM NIÊM PHONG" (VACCINE STAMPS) */}
       {/* ---------------------------------------------------------------------- */}
@@ -675,7 +765,172 @@ export const MedicalRecordsView = ({
           </table>
         </div>
       </div>
-      {/* Khối in ấn được xử lý qua WsavaPassportModal toàn cục độc lập tab */}
+      </>
+      )}
+
+      {activeMainTab === 'soap' && (
+        <div className="p-6 rounded-3xl bg-white dark:bg-[#12192A] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-lg space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center border border-indigo-500/30">
+                <Stethoscope className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Hồ Sơ Bệnh Án Lâm Sàng (SOAP)
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Bệnh án chính thức do Bác sĩ Thú y phụ trách thăm khám, chẩn đoán và công bố
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-mono font-bold text-slate-500">
+              {petMedicalRecords.length} hồ sơ bệnh án
+            </span>
+          </div>
+
+          {petMedicalRecords.length === 0 ? (
+            <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+              <Stethoscope className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-2 opacity-60" />
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Chưa có bệnh án lâm sàng nào được công bố</p>
+              <p className="text-xs text-slate-400 mt-1">Khi bác sĩ hoàn thành ca khám và chốt bệnh án (SOAP), thông tin sẽ hiển thị minh bạch tại đây.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {petMedicalRecords.map((rec) => (
+                <div key={rec.id} className="p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-white/10">
+                    <div className="flex items-center gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        rec.isFinal 
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-300 dark:bg-emerald-500/20 dark:text-emerald-300' 
+                          : 'bg-amber-50 text-amber-800 border border-amber-300 dark:bg-amber-500/20 dark:text-amber-300'
+                      }`}>
+                        {rec.isFinal ? '✓ BỆNH ÁN ĐÃ CHỐT' : '📝 BẢN NHÁP'}
+                      </span>
+                      <span className="text-xs text-slate-500 font-mono">
+                        Ngày khám: {formatDateVi(rec.confirmedAt || rec.updatedAt || rec.createdAt)}
+                      </span>
+                    </div>
+                    <div className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                      Bác sĩ phụ trách: {rec.authorName || rec.confirmedBy || 'Bác sĩ thú y'}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className="p-3 rounded-xl bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-slate-500 block">S - Triệu chứng / Lý do khám (Subjective)</span>
+                      <p className="text-slate-800 dark:text-slate-200">{rec.soap?.subjective || rec.soap?.symptoms || 'Chưa ghi nhận'}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-slate-500 block">O - Khám lâm sàng & Sinh hiệu (Objective)</span>
+                      <p className="text-slate-800 dark:text-slate-200">{rec.soap?.objective || 'Chưa ghi nhận'}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-slate-500 block">A - Chẩn đoán bệnh học (Assessment)</span>
+                      <p className="text-slate-800 dark:text-slate-200 font-semibold">{rec.soap?.assessment || rec.soap?.diagnosis || 'Chưa ghi nhận'}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white dark:bg-white/[0.02] border border-slate-200/80 dark:border-white/5 space-y-1">
+                      <span className="text-[10px] font-bold uppercase text-slate-500 block">P - Hướng điều trị & Dặn dò (Plan)</span>
+                      <p className="text-slate-800 dark:text-slate-200">{rec.soap?.plan || 'Chưa ghi nhận'}</p>
+                    </div>
+                  </div>
+
+                  {rec.history && rec.history.length > 0 && (
+                    <div className="pt-2 border-t border-slate-200 dark:border-white/10 text-[11px] text-slate-500">
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">Lịch sử cập nhật:</span> {rec.history.length} lần bổ sung có kiểm soát phiên bản.
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeMainTab === 'prescriptions' && (
+        <div className="p-6 rounded-3xl bg-white dark:bg-[#12192A] backdrop-blur-xl border border-slate-200/80 dark:border-white/10 shadow-lg space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-white/10">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-purple-500/15 text-purple-600 dark:text-purple-400 flex items-center justify-center border border-purple-500/30">
+                <Pill className="w-4 h-4" />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+                  Danh Sách Đơn Thuốc Đã Kê
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                  Đơn thuốc chính thức do Bác sĩ Thú y chỉ định liều lượng và cách dùng
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-mono font-bold text-slate-500">
+              {petPrescriptions.length} đơn thuốc
+            </span>
+          </div>
+
+          {petPrescriptions.length === 0 ? (
+            <div className="py-12 text-center text-slate-500 dark:text-slate-400">
+              <Pill className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-2 opacity-60" />
+              <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Chưa có đơn thuốc nào</p>
+              <p className="text-xs text-slate-400 mt-1">Đơn thuốc được kê từ bác sĩ trong các ca khám sẽ hiển thị tại đây.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {petPrescriptions.map((pres) => (
+                <div key={pres.id} className="p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-white/10">
+                    <div>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">{pres.diagnosis || pres.title || pres.medicineName || 'Đơn thuốc điều trị'}</h4>
+                      <p className="text-xs text-slate-500">Bác sĩ kê đơn: {pres.vetName || pres.authorName || pres.prescribedBy || 'Bác sĩ thú y'} • Ngày cấp: {formatDateVi(pres.createdAt || pres.date || pres.startDate)}</p>
+                    </div>
+                  </div>
+                  {pres.medications && Array.isArray(pres.medications) && pres.medications.length > 0 ? (
+                    <div className="divide-y divide-slate-200 dark:divide-white/5 text-xs">
+                      {pres.medications.map((med, mIdx) => (
+                        <div key={mIdx} className="py-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <strong className="text-slate-900 dark:text-white text-sm">{med.name}</strong>
+                            {(med.dosage || med.dose) && (
+                              <span className="px-2 py-0.5 rounded-md bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 font-mono text-[11px] font-bold">
+                                Liều: {med.dosage || med.dose}
+                              </span>
+                            )}
+                            {med.route && (
+                              <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+                                ({med.route})
+                              </span>
+                            )}
+                            {med.freq && (
+                              <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+                                • {med.freq}
+                              </span>
+                            )}
+                            {(med.days || med.durationDays) && (
+                              <span className="text-slate-500 dark:text-slate-400 text-[11px]">
+                                • {med.days || med.durationDays} ngày
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-slate-600 dark:text-slate-300 font-medium italic sm:text-right">
+                            {med.instructions || med.instruction || med.usage || 'Uống theo chỉ định'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-xs space-y-1">
+                      <div className="font-bold text-slate-800 dark:text-slate-200">{pres.medicineName}</div>
+                      {pres.dosage && <div className="text-slate-600 dark:text-slate-300">Liều dùng: {pres.dosage}</div>}
+                      <p className="text-xs text-slate-500 dark:text-slate-400 italic">{pres.instructions || pres.notes || 'Thực hiện theo hướng dẫn của bác sĩ'}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
